@@ -1,0 +1,26 @@
+[
+  {
+    "query_id": "Q-1",
+    "query": "What are the reactor containment safety rules defined by the NRC?"
+  },
+  {
+    "query_id": "Q-2",
+    "query": "Describe the safety analysis report guidelines for commercial nuclear power plants."
+  },
+  {
+    "query_id": "Q-3",
+    "query": "What safety and risk assessment standards does the FAA enforce for spaceport operations?"
+  },
+  {
+    "query_id": "Q-4",
+    "query": "FAA rules"
+  },
+  {
+    "query_id": "Q-5",
+    "query": "Commercial nuclear power plants safety analysis guidelines."
+  },
+  {
+    "query_id": "Q-6",
+    "query": "What are the reactor containment safety rules defined by the NRC OR the FAA AND spaceport operations?"
+  }
+]

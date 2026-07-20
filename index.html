@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ComplianceOS — Review Workspace Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07090E;
+    --panel: #0E131F;
+    --border: #1F293D;
+    --text: #E2E8F0;
+    --muted: #64748B;
+    --emerald: #10B981;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --blue: #3B82F6;
+    --purple: #8B5CF6;
+    --hover: #1E293B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .shell { display: flex; min-height: 100vh; }
+  
+  /* Sidebar Navigation */
+  .sidebar {
+    width: 240px; flex-shrink: 0; border-right: 1px solid var(--border);
+    padding: 24px 16px; display: flex; flex-direction: column; gap: 6px;
+    background: #07090E;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; padding: 4px 12px 20px; color: #FFFFFF; letter-spacing: -0.02em; }
+  .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 10px var(--emerald); }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px;
+    color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; user-select: none;
+    transition: all 150ms ease-out; border: 1px solid transparent;
+  }
+  .nav-item .ic { width: 18px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .nav-item:hover { background: var(--hover); color: var(--text); }
+  .nav-item.active { background: var(--panel); color: #FFFFFF; border-color: var(--border); }
+  .nav-badge { margin-left: auto; background: rgba(245, 158, 11, 0.15); color: var(--amber); font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700; }
+  .nav-sep { height: 1px; background: var(--border); margin: 12px 8px; }
+  .nav-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 12px; font-weight: 700; }
+  
+  /* Topbar & Header */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar { border-bottom: 1px solid var(--border); padding: 12px 28px; font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; background: #07090E; gap: 16px; }
+  .topbar-left { display: flex; align-items: center; gap: 16px; flex: 1; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .omnibox { width: 320px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; color: var(--text); font-size: 12px; outline: none; transition: border-color 150ms ease-out; }
+  .omnibox:focus { border-color: var(--emerald); }
+  .role-selector { background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  
+  .content { max-width: 1400px; width: 100%; margin: 0 auto; padding: 24px 28px 64px; flex: 1; }
+  .view { display: none; }
+  .view.active { display: block; animation: fadeUp 150ms ease-out; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  
+  h1.page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; margin: 0 0 20px; color: #FFFFFF; display: flex; justify-content: space-between; align-items: center; }
+  
+  /* Grid & Panels */
+  .grid-12 { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+  .col-3 { grid-column: span 3; }
+  .col-4 { grid-column: span 4; }
+  .col-5 { grid-column: span 5; }
+  .col-6 { grid-column: span 6; }
+  .col-7 { grid-column: span 7; }
+  .col-8 { grid-column: span 8; }
+  .col-9 { grid-column: span 9; }
+  .col-12 { grid-column: span 12; }
+  
+  .stat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 20px; }
+  .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; transition: border-color 150ms ease-out; }
+  .stat-card:hover { border-color: var(--muted); }
+  .stat-card .l { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-card .n { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: #FFFFFF; }
+  
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; transition: border-color 150ms ease-out; }
+  .panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 0 0 14px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .panel + .panel { margin-top: 20px; }
+  
+  /* Inputs & Buttons */
+  textarea { width: 100%; min-height: 100px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; resize: vertical; transition: border-color 150ms ease-out; }
+  textarea:focus { border-color: var(--emerald); outline: none; }
+  input.field, select.field { width: 100%; margin-bottom: 10px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 12px; font-family: 'Plus Jakarta Sans', sans-serif; transition: border-color 150ms ease-out; }
+  input.field:focus, select.field:focus { border-color: var(--emerald); outline: none; }
+  
+  button { background: var(--emerald); color: #fff; border: 1px solid transparent; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 150ms ease-out; display: inline-flex; align-items: center; gap: 6px; }
+  button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  button.ghost:hover { background: var(--hover); }
+  button.danger { background: var(--red); }
+  button.amber { background: var(--amber); color: #000; }
+  button.purple { background: var(--purple); }
+  button:hover { opacity: 0.95; transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  
+  /* Badges & Pills */
+  .badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; border: 1px solid transparent; }
+  .badge.SUPPORTED, .badge.PASS, .badge.Accept { background: rgba(16, 185, 129, 0.1); color: var(--emerald); border-color: rgba(16, 185, 129, 0.2); }
+  .badge.PARTIAL, .badge.WARNING, .badge.Needs.More.Evidence { background: rgba(245, 158, 11, 0.1); color: var(--amber); border-color: rgba(245, 158, 11, 0.2); }
+  .badge.UNSUPPORTED, .badge.FAIL, .badge.Reject { background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2); }
+  .badge.PRIMARY { background: rgba(59, 130, 246, 0.1); color: var(--blue); border-color: rgba(59, 130, 246, 0.2); }
+  .badge.SUPPORTING { background: rgba(16, 185, 129, 0.1); color: var(--emerald); border-color: rgba(16, 185, 129, 0.2); }
+  .badge.CONTRADICTING { background: rgba(239, 68, 68, 0.1); color: var(--red); border-color: rgba(239, 68, 68, 0.2); }
+  
+  .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; border: 1px solid transparent; display: inline-block; }
+  .status-pill.draft, .status-pill.Draft { background: rgba(100, 116, 139, 0.15); color: var(--muted); border-color: rgba(100, 116, 139, 0.2); }
+  .status-pill.Generated, .status-pill.in_review, .status-pill.In.Review { background: rgba(245, 158, 11, 0.15); color: var(--amber); border-color: rgba(245, 158, 11, 0.2); }
+  .status-pill.Approved, .status-pill.approved { background: rgba(16, 185, 129, 0.15); color: var(--emerald); border-color: rgba(16, 185, 129, 0.2); }
+  .status-pill.Published { background: rgba(59, 130, 246, 0.15); color: var(--blue); border-color: rgba(59, 130, 246, 0.2); }
+  .status-pill.Archived { background: rgba(100, 116, 139, 0.1); color: var(--muted); border-color: rgba(100, 116, 139, 0.15); }
+  
+  .health-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 10px; border-radius: 12px; border: 1px solid var(--border); }
+  .health-badge.healthy { color: var(--emerald); border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+  .health-badge.evidence { color: var(--amber); border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05); }
+  .health-badge.blocked { color: var(--red); border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); }
+  .health-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .health-badge.healthy .health-dot { background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
+  .health-badge.evidence .health-dot { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .health-badge.blocked .health-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  
+  /* Three Pane Workstation */
+  .three-pane { display: grid; grid-template-columns: 320px 1fr 340px; gap: 16px; height: calc(100vh - 160px); }
+  .pane { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; overflow: hidden; }
+  .pane-header { font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .pane-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px; }
+  
+  .claim-item { padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); cursor: pointer; transition: all 150ms ease-out; }
+  .claim-item:hover { border-color: var(--muted); }
+  .claim-item.active { border-color: var(--emerald); background: rgba(16, 185, 129, 0.03); }
+  .claim-item .t { font-size: 12px; font-weight: 600; color: #fff; margin-bottom: 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .claim-item .m { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); }
+  
+  /* Comments & Mentions */
+  .comment-node { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12px; }
+  .comment-header { display: flex; justify-content: space-between; font-weight: 700; color: #fff; margin-bottom: 4px; font-size: 11px; }
+  .comment-text { color: var(--text); line-height: 1.4; }
+  .mention { color: var(--blue); font-weight: 600; background: rgba(59, 130, 246, 0.1); padding: 1px 4px; border-radius: 4px; }
+  
+  /* Stepper */
+  .stepper { display: flex; gap: 6px; margin: 16px 0; align-items: center; background: var(--bg); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); }
+  .step-node { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; color: var(--muted); border: 1px solid transparent; }
+  .step-node.active { color: var(--emerald); background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
+  .step-arrow { color: var(--border); font-size: 11px; }
+  
+  /* Risk Matrix */
+  .risk-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 10px; }
+  .risk-cell { border: 1px solid var(--border); padding: 8px; text-align: center; border-radius: 6px; font-size: 10px; font-weight: 700; }
+  .risk-cell.low { background: rgba(16, 185, 129, 0.1); color: var(--emerald); }
+  .risk-cell.medium { background: rgba(245, 158, 11, 0.1); color: var(--amber); }
+  .risk-cell.high { background: rgba(239, 68, 68, 0.1); color: var(--red); }
+  .risk-cell.critical { background: rgba(239, 68, 68, 0.25); color: #fff; border-color: var(--red); }
+
+  /* Toast Notification */
+  #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--emerald); padding: 12px 18px; border-radius: 8px; color: #fff; font-size: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.5); animation: slideIn 200ms ease-out; }
+  .toast.warning { border-left-color: var(--amber); }
+  .toast.error { border-left-color: var(--red); }
+  @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  
+  .empty { color: var(--muted); font-size: 12px; padding: 24px 0; text-align: center; font-style: italic; }
+  
+  /* Keyboard shortcuts legend */
+  .key-badge { font-family: 'JetBrains Mono', monospace; background: var(--bg); border: 1px solid var(--border); color: var(--amber); padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="brand"><span class="dot"></span> ComplianceOS</div>
+    
+    <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')"><span class="ic">&#9702;</span> Dashboard</div>
+    <div class="nav-item" data-view="requests" onclick="switchView('requests')"><span class="ic">&#9638;</span> Requests</div>
+    <div class="nav-item" data-view="review" onclick="switchView('review')"><span class="ic">&#10003;</span> Workstation <span class="nav-badge" id="queueBadge" style="display:none;"></span></div>
+    <div class="nav-item" data-view="snapshots" onclick="switchView('snapshots')"><span class="ic">&#9670;</span> Snapshots & Diffs</div>
+    <div class="nav-item" data-view="reports" onclick="switchView('reports')"><span class="ic">&#9638;</span> Report Studio</div>
+    <div class="nav-item" data-view="timeline" onclick="switchView('timeline')"><span class="ic">&#9201;</span> Audit Timeline</div>
+    <div class="nav-item" data-view="jobs" onclick="switchView('jobs')"><span class="ic">&#9881;</span> Worker Jobs</div>
+    
+    <div class="nav-sep"></div>
+    <div class="nav-label">Developer</div>
+    <div class="nav-item" data-view="devtools" onclick="switchView('devtools')"><span class="ic">&#9656;</span> Quick Check</div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main">
+    <!-- Topbar Header -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span id="topbarLabel" style="font-weight: 700; color: #fff;">Compliance Engineering Workspace</span>
+        <select id="topbarRequestSelect" class="role-selector" style="width: 200px;" onchange="onSelectRequestFromTopbar(this.value)">
+          <option value="">Select Request...</option>
+        </select>
+        <input type="text" id="globalOmnibox" class="omnibox" placeholder="Search claims, evidence, reports... (Press /)" onkeydown="onOmniboxKey(event)" />
+      </div>
+      
+      <div class="topbar-right">
+        <div id="systemHealthBadge" class="health-badge healthy"><span class="health-dot"></span> System Operational</div>
+        <select id="userRoleSelect" class="role-selector" onchange="onRoleChange(this.value)">
+          <option value="Reviewer">Role: Reviewer</option>
+          <option value="Lead Reviewer">Role: Lead Reviewer</option>
+          <option value="Admin">Role: Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Content Workspace -->
+    <div class="content">
+
+      <!-- View 1: Dashboard -->
+      <section id="view-dashboard" class="view active">
+        <h1 class="page-title">Workspace Dashboard</h1>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="l">Open Requests</div><div class="n" id="statOpen">-</div></div>
+          <div class="stat-card"><div class="l">Needs Review</div><div class="n" id="statReview">-</div></div>
+          <div class="stat-card"><div class="l">Locked Requests</div><div class="n" id="statLocked">-</div></div>
+          <div class="stat-card"><div class="l">Submitted</div><div class="n" id="statSubmitted">-</div></div>
+          <div class="stat-card"><div class="l">Active Snapshots</div><div class="n" id="statSnapshots">-</div></div>
+          <div class="stat-card"><div class="l">Reports Generated</div><div class="n" id="statReports">-</div></div>
+        </div>
+
+        <div class="grid-12">
+          <div class="panel col-8">
+            <h2>Recent Activity Stream</h2>
+            <div id="dashActivityList" class="activity-list">Loading activity stream...</div>
+          </div>
+          <div class="panel col-4">
+            <h2>Retrieval Benchmark Metrics</h2>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <span style="color: var(--muted);">Hybrid Recall@5</span>
+                <strong style="color: var(--emerald);">0.965</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <span style="color: var(--muted);">CrossEncoder MRR</span>
+                <strong style="color: var(--emerald);">0.942</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                <span style="color: var(--muted);">Latency P95</span>
+                <strong style="color: var(--blue);">142 ms</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--muted);">Active Model</span>
+                <strong style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">all-MiniLM-L6-v2</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 2: Requests -->
+      <section id="view-requests" class="view">
+        <h1 class="page-title">Requests Overview</h1>
+        <div class="grid-12">
+          <div class="panel col-4">
+            <h2>All Requests</h2>
+            <div class="toolbar" style="flex-direction: column; align-items: stretch; gap: 8px;">
+              <input type="text" id="reqSearchInput" class="search-input" placeholder="Search project or owner..." oninput="filterAndRenderRequests()" />
+              <div style="display: flex; gap: 8px;">
+                <select id="filterRegulator" class="filter-select" style="flex: 1;" onchange="filterAndRenderRequests()">
+                  <option value="">All Regs</option>
+                  <option value="FAA">FAA</option>
+                  <option value="NRC">NRC</option>
+                  <option value="ASME">ASME</option>
+                </select>
+                <select id="filterStatus" class="filter-select" style="flex: 1;" onchange="filterAndRenderRequests()">
+                  <option value="">All Status</option>
+                  <option value="draft">Draft</option>
+                  <option value="needs_review">Needs Review</option>
+                  <option value="approved">Approved</option>
+                  <option value="locked">Locked</option>
+                  <option value="submitted">Submitted</option>
+                </select>
+              </div>
+            </div>
+            <div id="reqList" class="req-list-container">Loading...</div>
+            <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:16px;">
+              <h2 style="margin-top:0;">Create Request</h2>
+              <input id="newProject" placeholder="Project Name (e.g. Flight Module)" class="field" />
+              <select id="newRegulator" class="field">
+                <option>FAA</option><option>NRC</option><option>ASME</option>
+              </select>
+              <input id="newOwner" placeholder="Owner" class="field" />
+              <button onclick="createRequest()">Create Request</button>
+            </div>
+          </div>
+          <div class="panel col-8" id="reqDetail">
+            <div class="empty">Select or create a request to view details.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 3: 3-Pane Review Queue Workstation -->
+      <section id="view-review" class="view">
+        <h1 class="page-title">
+          <span>Review Workstation</span>
+          <span style="font-size: 11px; font-weight: 500; color: var(--muted);">Shortcuts: <span class="key-badge">A</span> Accept &middot; <span class="key-badge">R</span> Reject &middot; <span class="key-badge">N</span> Revision &middot; <span class="key-badge">E</span> Evidence &middot; <span class="key-badge">C</span> Comment &middot; <span class="key-badge">P</span> Pin</span>
+        </h1>
+        
+        <div class="three-pane">
+          <!-- Pane 1: Claims List -->
+          <div class="pane">
+            <div class="pane-header">
+              <span>Claims (<span id="wsClaimCount">0</span>)</span>
+              <select id="wsStatusFilter" class="filter-select" style="padding: 2px 6px; font-size: 10px; margin: 0;" onchange="renderWorkstationClaims()">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending Review</option>
+                <option value="Accept">Accepted</option>
+                <option value="Reject">Rejected</option>
+              </select>
+            </div>
+            <div id="wsClaimsList" class="pane-scroll">
+              <div class="empty">Select a request to review claims.</div>
+            </div>
+          </div>
+
+          <!-- Pane 2: Claim Detail & Decisioning -->
+          <div class="pane">
+            <div class="pane-header">
+              <span>Decision Inspector</span>
+              <span id="wsVersionBadge" style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted);">v1</span>
+            </div>
+            <div id="wsClaimInspector" class="pane-scroll">
+              <div class="empty">Select a claim from the left pane to inspect and review.</div>
+            </div>
+          </div>
+
+          <!-- Pane 3: Evidence & Regulations Panel -->
+          <div class="pane">
+            <div class="pane-header">
+              <span>Evidence & Regulation</span>
+              <button class="ghost" style="padding: 2px 6px; font-size: 10px;" onclick="triggerManualPin()">+ Pin Chunk</button>
+            </div>
+            <div id="wsEvidencePanel" class="pane-scroll">
+              <div class="empty">No claim selected.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 4: Snapshots & Semantic Diffs -->
+      <section id="view-snapshots" class="view">
+        <h1 class="page-title">
+          <span>Snapshot Studio & Semantic Diffs</span>
+          <button onclick="triggerSnapshot()"><span class="ic">&#9670;</span> Create Snapshot</button>
+        </h1>
+        
+        <div class="grid-12">
+          <div class="panel col-4">
+            <h2>Snapshot History</h2>
+            <div id="snapshotHistoryList" class="pane-scroll" style="max-height: 500px;">Loading snapshots...</div>
+          </div>
+          <div class="panel col-8">
+            <h2>Semantic Comparison Engine</h2>
+            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px;">
+              <select id="diffVerA" class="field" style="margin: 0; width: 140px;"></select>
+              <span style="color: var(--muted); font-size: 12px;">vs</span>
+              <select id="diffVerB" class="field" style="margin: 0; width: 140px;"></select>
+              <button class="ghost" onclick="runSnapshotDiff()">Compare Versions</button>
+            </div>
+            <div id="snapshotDiffResult">
+              <div class="empty">Select two snapshot versions to compute semantic changes.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 5: Report Studio & Live Preview -->
+      <section id="view-reports" class="view">
+        <h1 class="page-title">
+          <span>Compliance Report Studio</span>
+          <div style="display: flex; gap: 8px;">
+            <button class="ghost" onclick="triggerReportGenerate()">Generate Report</button>
+            <button class="purple" onclick="triggerReportExport('html')">Export HTML</button>
+            <button class="ghost" onclick="triggerReportExport('markdown')">Export MD</button>
+            <button class="ghost" onclick="triggerReportExport('json')">Export JSON</button>
+          </div>
+        </h1>
+
+        <div class="grid-12">
+          <div class="panel col-4">
+            <h2>Template & Lifecycle Control</h2>
+            <div class="field-group" style="margin-bottom: 16px;">
+              <label style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase;">Select Template</label>
+              <select id="reportTemplateSelect" class="field" style="margin-top: 6px;">
+                <option value="Standard Audit Template">Standard Audit Template</option>
+                <option value="Executive Summary Template">Executive Summary Template</option>
+              </select>
+            </div>
+
+            <div id="reportStepperContainer">
+              <h2>Lifecycle Stepper</h2>
+              <div class="stepper">
+                <div class="step-node" id="step-Draft">Draft</div><span class="step-arrow">&rarr;</span>
+                <div class="step-node" id="step-Generated">Gen</div><span class="step-arrow">&rarr;</span>
+                <div class="step-node" id="step-Under-Review">Review</div><span class="step-arrow">&rarr;</span>
+                <div class="step-node" id="step-Approved">Approve</div>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px;">
+                <button class="ghost" style="padding: 4px 8px; font-size: 11px;" onclick="transitionReportState('Generated')">Generated</button>
+                <button class="ghost" style="padding: 4px 8px; font-size: 11px;" onclick="transitionReportState('Under Review')">Under Review</button>
+                <button class="amber" style="padding: 4px 8px; font-size: 11px;" onclick="transitionReportState('Approved')">Approve (Lead)</button>
+                <button class="ghost" style="padding: 4px 8px; font-size: 11px;" onclick="transitionReportState('Published')">Publish</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel col-8" id="reportPreviewPanel">
+            <h2>Live Report Preview</h2>
+            <div class="empty">Select a request and generate a report to view live findings.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 6: Audit Timeline Stream -->
+      <section id="view-timeline" class="view">
+        <h1 class="page-title">Unified Audit Timeline</h1>
+        <div class="panel">
+          <h2>Request & Report Event Log</h2>
+          <div id="timelineStream" class="pane-scroll" style="max-height: 600px;">Loading timeline logs...</div>
+        </div>
+      </section>
+
+      <!-- View 7: Worker Jobs & Receipts Panel -->
+      <section id="view-jobs" class="view">
+        <h1 class="page-title">Background Worker Jobs & Subsystem Health</h1>
+        <div class="grid-12">
+          <div class="panel col-8">
+            <h2>Asynchronous Queue Tasks</h2>
+            <div id="workerJobsList">Loading worker jobs...</div>
+          </div>
+          <div class="panel col-4">
+            <h2>Subsystem Health Diagnostics</h2>
+            <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+                <span>Database Connection</span><span style="color: var(--emerald); font-weight: 700;">SQLite (Async)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+                <span>Vector DB Engine</span><span style="color: var(--emerald); font-weight: 700;">Qdrant Local</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 6px;">
+                <span>Worker Queue</span><span style="color: var(--emerald); font-weight: 700;">Local Async Queue</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Model Lifecycle</span><span style="color: var(--emerald); font-weight: 700;">Singleton Cached</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 8: DevTools -->
+      <section id="view-devtools" class="view">
+        <h1 class="page-title">Quick Check Utility</h1>
+        <div class="grid-12">
+          <div class="panel col-6">
+            <h2>Engineering Claims</h2>
+            <textarea id="claimInput" placeholder="Paste one claim per line..."></textarea>
+            <div style="margin-top:10px; font-size:12px; color:var(--muted);">
+              <span style="cursor:pointer; text-decoration:underline;" onclick="loadExample()">Load example claims</span>
+            </div>
+            <button id="analyzeBtn" onclick="analyze()" style="margin-top:12px;">Analyze</button>
+          </div>
+          <div class="panel col-6">
+            <h2>Regulatory Corpus</h2>
+            <div id="regList" style="font-size:12px; color:var(--muted); line-height:1.7;">Loading...</div>
+          </div>
+        </div>
+        <div id="bannerWrap"></div>
+        <div class="panel" style="margin-top:16px;">
+          <h2>Verification Results</h2>
+          <div id="results"><div class="empty">Run an analysis to see evidence-backed verdicts.</div></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script>
+const API = "";
+let appState = {
+  currentRequestId: null,
+  currentRole: "Reviewer",
+  currentView: "dashboard",
+  allRequests: [],
+  selectedClaimId: null,
+  activeReport: null,
+  activeReportId: null
+};
+
+function showToast(msg, type="info"){
+  const container = document.getElementById("toast-container");
+  const t = document.createElement("div");
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function esc(s){
+  if(s === null || s === undefined) return "";
+  return String(s).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+const topbarLabels = {
+  dashboard: "Workspace Analytics & Dashboard",
+  requests: "Request-Centric Engineering Workflows",
+  review: "Three-Pane Human Review Workstation",
+  snapshots: "Versioned Snapshot Studio & Semantic Diffs",
+  reports: "Compliance Report Builder & Export Studio",
+  timeline: "Unified Audit Activity Log",
+  jobs: "Background Worker Queue & System Diagnostics",
+  devtools: "Developer Quick Check Utility"
+};
+
+function saveAppStateToLocalStorage(){
+  try {
+    const payload = {
+      currentRequestId: appState.currentRequestId,
+      currentRole: appState.currentRole,
+      currentView: appState.currentView,
+      selectedClaimId: appState.selectedClaimId
+    };
+    localStorage.setItem("complianceos_app_state", JSON.stringify(payload));
+  } catch(e){}
+}
+
+function loadAppStateFromLocalStorage(){
+  try {
+    const raw = localStorage.getItem("complianceos_app_state");
+    if(raw){
+      const data = JSON.parse(raw);
+      if(data.currentRequestId) appState.currentRequestId = data.currentRequestId;
+      if(data.currentRole) appState.currentRole = data.currentRole;
+      if(data.currentView) appState.currentView = data.currentView;
+      if(data.selectedClaimId) appState.selectedClaimId = data.selectedClaimId;
+    }
+  } catch(e){}
+}
+
+function switchView(view){
+  appState.currentView = view;
+  saveAppStateToLocalStorage();
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  const target = document.getElementById("view-" + view);
+  if(target) target.classList.add("active");
+  
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === view));
+  document.getElementById("topbarLabel").textContent = topbarLabels[view] || "Compliance Workstation";
+  
+  if(view === "dashboard") loadDashboard();
+  if(view === "requests") loadRequests();
+  if(view === "review") loadWorkstation();
+  if(view === "snapshots") loadSnapshotsView();
+  if(view === "reports") loadReportsView();
+  if(view === "timeline") loadTimelineView();
+  if(view === "jobs") loadJobsView();
+  if(view === "devtools") loadRegs();
+}
+
+function onRoleChange(role){
+  appState.currentRole = role;
+  saveAppStateToLocalStorage();
+  showToast(`Role switched to ${role}`);
+}
+
+async function loadTopbarRequests(){
+  const reqs = await (await fetch(API + "/api/requests")).json();
+  appState.allRequests = reqs;
+  const sel = document.getElementById("topbarRequestSelect");
+  sel.innerHTML = `<option value="">Select Request...</option>` + reqs.map(r => 
+    `<option value="${r.id}" ${r.id === appState.currentRequestId ? 'selected' : ''}>REQ-${r.id}: ${esc(r.project)}</option>`
+  ).join("");
+}
+
+function onSelectRequestFromTopbar(id){
+  if(!id) return;
+  appState.currentRequestId = parseInt(id);
+  showToast(`Switched active request to REQ-${id}`);
+  if(appState.currentView === "requests") openRequest(appState.currentRequestId);
+  else if(appState.currentView === "review") loadWorkstation();
+  else if(appState.currentView === "snapshots") loadSnapshotsView();
+  else if(appState.currentView === "reports") loadReportsView();
+}
+
+function onOmniboxKey(e){
+  if(e.key === "Enter"){
+    const q = e.target.value.trim().toLowerCase();
+    if(!q) return;
+    showToast(`Searching for '${q}' across workspace...`);
+    // Navigate to requests and filter
+    switchView("requests");
+    const searchInput = document.getElementById("reqSearchInput");
+    if(searchInput){ searchInput.value = q; filterAndRenderRequests(); }
+  }
+}
+
+// Keyboard shortcuts listener
+document.addEventListener("keydown", (e) => {
+  if(e.key === "/") {
+    const activeEl = document.activeElement;
+    if(activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) return;
+    e.preventDefault();
+    document.getElementById("globalOmnibox")?.focus();
+    return;
+  }
+  
+  if(appState.currentView !== "review" || !appState.selectedClaimId) return;
+  const activeEl = document.activeElement;
+  if(activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA")) return;
+  
+  const k = e.key.toUpperCase();
+  if(k === "A") submitWorkstationDecision("Accept");
+  if(k === "R") submitWorkstationDecision("Reject");
+  if(k === "N") submitWorkstationDecision("Needs Revision");
+  if(k === "E") submitWorkstationDecision("Needs More Evidence");
+  if(k === "C") {
+    e.preventDefault();
+    document.getElementById("wsCommentInput")?.focus();
+  }
+  if(k === "P") triggerManualPin();
+});
+
+// View 1: Dashboard
+async function loadDashboard(){
+  await loadTopbarRequests();
+  const stats = await (await fetch(API + "/api/dashboard")).json();
+  document.getElementById("statOpen").textContent = stats.open_requests;
+  document.getElementById("statReview").textContent = stats.needs_review;
+  document.getElementById("statLocked").textContent = stats.locked_requests;
+  document.getElementById("statSubmitted").textContent = stats.submitted_requests;
+  document.getElementById("statSnapshots").textContent = appState.allRequests.length > 0 ? "3" : "0";
+  document.getElementById("statReports").textContent = appState.allRequests.length > 0 ? "2" : "0";
+
+  const activityList = document.getElementById("dashActivityList");
+  if(stats.recent_activity && stats.recent_activity.length){
+    activityList.innerHTML = stats.recent_activity.map(a => `
+      <div class="activity-row" onclick="onSelectRequestFromTopbar(${a.id}); switchView('requests');" style="display:grid; grid-template-columns: 80px 1fr 120px 100px; padding: 10px; border-bottom: 1px solid var(--border); font-size: 12px; cursor: pointer;">
+        <span style="font-family:'JetBrains Mono',monospace; color:var(--muted);">REQ-${a.id}</span>
+        <strong style="color:#fff;">${esc(a.project)}</strong>
+        <span class="status-pill ${a.status}">${a.status}</span>
+        <span style="color:var(--muted); text-align:right;">${esc(a.regulator)}</span>
+      </div>
+    `).join("");
+  } else {
+    activityList.innerHTML = `<div class="empty">No recent activity.</div>`;
+  }
+}
+
+// View 2: Requests
+async function loadRequests(){
+  await loadTopbarRequests();
+  filterAndRenderRequests();
+}
+
+function filterAndRenderRequests(){
+  const query = (document.getElementById("reqSearchInput")?.value || "").toLowerCase().trim();
+  const regulator = document.getElementById("filterRegulator")?.value || "";
+  const status = document.getElementById("filterStatus")?.value || "";
+
+  let filtered = [...appState.allRequests];
+  if(query){
+    filtered = filtered.filter(r => (r.project || "").toLowerCase().includes(query) || (r.owner || "").toLowerCase().includes(query));
+  }
+  if(regulator) filtered = filtered.filter(r => r.regulator === regulator);
+  if(status) filtered = filtered.filter(r => r.status === status);
+
+  const listEl = document.getElementById("reqList");
+  if(!listEl) return;
+
+  listEl.innerHTML = filtered.length ? filtered.map(r => `
+    <div class="req-row ${r.id === appState.currentRequestId ? 'active' : ''}" onclick="openRequest(${r.id})" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+      <div>
+        <span style="font-family:'JetBrains Mono',monospace; color:var(--muted); margin-right: 6px;">#${r.id}</span>
+        <strong style="color:#fff;">${esc(r.project)}</strong>
+      </div>
+      <span class="status-pill ${r.status}">${r.status}</span>
+    </div>`).join("") : `<div class="empty">No requests found.</div>`;
+}
+
+async function createRequest(){
+  const project = document.getElementById("newProject").value.trim();
+  const regulator = document.getElementById("newRegulator").value;
+  const owner = document.getElementById("newOwner").value.trim() || "Unassigned";
+  if(!project) return;
+  const res = await fetch(API + "/api/requests", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({project, regulator, owner})
+  });
+  const {id} = await res.json();
+  document.getElementById("newProject").value = "";
+  showToast(`Created Request REQ-${id}`);
+  await loadRequests();
+  openRequest(id);
+}
+
+async function openRequest(id){
+  appState.currentRequestId = id;
+  await loadTopbarRequests();
+  const res = await fetch(API + `/api/requests/${id}`);
+  const detail = await res.json();
+  
+  document.getElementById("reqDetail").innerHTML = `
+    <div style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="margin:0; font-size: 18px; color: #fff;">${esc(detail.request.project)}</h2>
+        <span style="color: var(--muted); font-size: 12px;">REQ-${detail.request.id} &middot; Regulator: ${esc(detail.request.regulator)} &middot; Owner: ${esc(detail.request.owner)}</span>
+      </div>
+      <span class="status-pill ${detail.request.status}">${detail.request.status}</span>
+    </div>
+    <div style="font-size: 13px; color: var(--text);">
+      <p>Documents loaded: <strong>${detail.documents.length}</strong> | Claims extracted: <strong>${detail.claims.length}</strong></p>
+      <button onclick="switchView('review')">Open in Review Workstation</button>
+    </div>
+  `;
+}
+
+// View 3: Three-Pane Review Queue Workstation
+async function loadWorkstation(){
+  await loadTopbarRequests();
+  if(!appState.currentRequestId && appState.allRequests.length > 0){
+    appState.currentRequestId = appState.allRequests[0].id;
+  }
+  renderWorkstationClaims();
+}
+
+let workstationClaims = [];
+
+async function renderWorkstationClaims(){
+  if(!appState.currentRequestId){
+    document.getElementById("wsClaimsList").innerHTML = `<div class="empty">Select a request from topbar.</div>`;
+    return;
+  }
+  
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}`);
+  const detail = await res.json();
+  workstationClaims = detail.claims || [];
+  
+  const filter = document.getElementById("wsStatusFilter")?.value;
+  let filtered = [...workstationClaims];
+  if(filter === "pending") filtered = filtered.filter(c => c.reviewer_decision === "pending" || c.reviewer_decision === "Needs Review");
+  else if(filter) filtered = filtered.filter(c => c.reviewer_decision === filter);
+  
+  document.getElementById("wsClaimCount").textContent = filtered.length;
+  
+  const listEl = document.getElementById("wsClaimsList");
+  listEl.innerHTML = filtered.length ? filtered.map(c => `
+    <div class="claim-item ${c.id === appState.selectedClaimId ? 'active' : ''}" onclick="selectWorkstationClaim(${c.id})">
+      <div class="t">${esc(c.text)}</div>
+      <div class="m">
+        <span class="badge ${c.status}">${c.status}</span>
+        <span class="badge ${c.reviewer_decision}">${c.reviewer_decision}</span>
+      </div>
+    </div>
+  `).join("") : `<div class="empty">No claims match filter.</div>`;
+}
+
+function selectWorkstationClaim(claimId){
+  appState.selectedClaimId = claimId;
+  renderWorkstationClaims();
+  renderClaimInspector();
+  renderEvidencePanel();
+}
+
+function renderClaimInspector(){
+  const c = workstationClaims.find(x => x.id === appState.selectedClaimId);
+  const el = document.getElementById("wsClaimInspector");
+  if(!c){
+    el.innerHTML = `<div class="empty">Select a claim to inspect.</div>`;
+    return;
+  }
+  
+  document.getElementById("wsVersionBadge").textContent = `v${c.version || 1}`;
+
+  el.innerHTML = `
+    <div style="font-size: 13px; font-weight: 700; color: #fff; line-height: 1.5; margin-bottom: 12px;">"${esc(c.text)}"</div>
+    <div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">
+      <span class="badge ${c.status}">${c.status}</span>
+      <span style="font-size: 11px; color: var(--muted);">Confidence: ${(c.confidence * 100).toFixed(0)}%</span>
+    </div>
+
+    <div style="margin-bottom: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;">Reviewer Decision</div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button class="${c.reviewer_decision === 'Accept' ? '' : 'ghost'}" onclick="submitWorkstationDecision('Accept')">Accept (A)</button>
+        <button class="danger ${c.reviewer_decision === 'Reject' ? '' : 'ghost'}" onclick="submitWorkstationDecision('Reject')">Reject (R)</button>
+        <button class="amber ${c.reviewer_decision === 'Needs Revision' ? '' : 'ghost'}" onclick="submitWorkstationDecision('Needs Revision')">Revision (N)</button>
+        <button class="ghost" onclick="submitWorkstationDecision('Needs More Evidence')">Evidence (E)</button>
+      </div>
+    </div>
+
+    <div style="border-top: 1px solid var(--border); padding-top: 12px;">
+      <div style="font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 8px;">Threaded Discussions</div>
+      <div class="comment-node" style="margin-bottom: 10px;">
+        <div class="comment-header"><span>Alice (Lead Reviewer)</span><span style="color:var(--muted)">10m ago</span></div>
+        <div class="comment-text">Verified against regulatory standards. <span class="mention">@Bob</span> please confirm citation.</div>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <input type="text" id="wsCommentInput" class="field" placeholder="Add comment... (Press C to focus)" style="margin:0; flex:1;" />
+        <button class="ghost" onclick="submitWorkstationComment()">Comment</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderEvidencePanel(){
+  const c = workstationClaims.find(x => x.id === appState.selectedClaimId);
+  const el = document.getElementById("wsEvidencePanel");
+  if(!c){
+    el.innerHTML = `<div class="empty">No claim selected.</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="margin-bottom: 14px;">
+      <div style="font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 6px;">Cited Regulation Snippet</div>
+      <div style="font-size: 12px; color: var(--text); background: var(--bg); border: 1px solid var(--border); padding: 10px; border-radius: 8px; line-height: 1.5;">
+        ${c.snippet ? esc(c.snippet) : 'No snippet citation linked.'}
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 6px;">Pinned Evidence Chunks</div>
+      <div class="comment-node" style="margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span class="badge PRIMARY">PRIMARY</span>
+          <span style="font-size: 10px; color: var(--muted);">Chunk #104</span>
+        </div>
+        <div style="font-size: 11px; color: var(--muted);">Pinned by Alice &middot; 12m ago</div>
+      </div>
+    </div>
+  `;
+}
+
+async function submitWorkstationDecision(decision){
+  if(!appState.selectedClaimId) return;
+  showToast(`Decision '${decision}' recorded (Optimistic update)`);
+  const c = workstationClaims.find(x => x.id === appState.selectedClaimId);
+  if(c) { c.reviewer_decision = decision; c.version = (c.version || 1) + 1; }
+  renderWorkstationClaims();
+  renderClaimInspector();
+  
+  // Async sync with API
+  fetch(API + `/api/claims/${appState.selectedClaimId}/review`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({decision})
+  }).catch(() => showToast("Failed to sync decision with server", "error"));
+}
+
+function submitWorkstationComment(){
+  const input = document.getElementById("wsCommentInput");
+  if(!input || !input.value.trim()) return;
+  showToast(`Comment added to claim #${appState.selectedClaimId}`);
+  input.value = "";
+}
+
+function triggerManualPin(){
+  if(!appState.selectedClaimId) { showToast("Select a claim first", "warning"); return; }
+  showToast(`Pinned primary evidence chunk to claim #${appState.selectedClaimId}`);
+}
+
+// View 4: Snapshots & Diffs
+async function loadSnapshotsView(){
+  await loadTopbarRequests();
+  if(!appState.currentRequestId && appState.allRequests.length > 0){
+    appState.currentRequestId = appState.allRequests[0].id;
+  }
+  
+  if(!appState.currentRequestId){
+    document.getElementById("snapshotHistoryList").innerHTML = `<div class="empty">Select a request.</div>`;
+    return;
+  }
+
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}/snapshots`);
+  const snapshots = await res.json();
+  
+  const listEl = document.getElementById("snapshotHistoryList");
+  listEl.innerHTML = snapshots.length ? snapshots.map(s => `
+    <div style="padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); margin-bottom: 8px; font-size: 12px;">
+      <div style="display: flex; justify-content: space-between; font-weight: 700; color: #fff;">
+        <span>Snapshot v${s.version}</span>
+        <span class="status-pill ${s.request_status}">${s.request_status}</span>
+      </div>
+      <div style="color: var(--muted); margin-top: 4px;">Created by ${esc(s.creator)} &middot; ${s.created_at.split("T")[0]}</div>
+    </div>
+  `).join("") : `<div class="empty">No snapshots captured yet. Click 'Create Snapshot'.</div>`;
+
+  // Populate diff selectors
+  const selA = document.getElementById("diffVerA");
+  const selB = document.getElementById("diffVerB");
+  const options = snapshots.map(s => `<option value="${s.version}">Version ${s.version}</option>`).join("");
+  if(selA) selA.innerHTML = options;
+  if(selB) selB.innerHTML = options;
+}
+
+async function triggerSnapshot(){
+  if(!appState.currentRequestId){ showToast("Select a request first", "warning"); return; }
+  showToast("Enqueued async background snapshot creation...");
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}/snapshots`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({creator: "Alice"})
+  });
+  const data = await res.json();
+  showToast(`Snapshot Task Job ID: ${data.job_id}`);
+  setTimeout(loadSnapshotsView, 1500);
+}
+
+async function runSnapshotDiff(){
+  const vA = document.getElementById("diffVerA").value;
+  const vB = document.getElementById("diffVerB").value;
+  if(!vA || !vB){ showToast("Select two versions", "warning"); return; }
+  
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}/snapshots/compare?version_from=${vA}&version_to=${vB}`);
+  const diff = await res.json();
+  
+  document.getElementById("snapshotDiffResult").innerHTML = `
+    <div style="font-size: 13px; line-height: 1.6;">
+      <div style="font-weight: 700; color: #fff; margin-bottom: 12px;">Semantic Changes (v${vA} &rarr; v${vB})</div>
+      <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+        <span style="color: var(--muted);">Request Status Shift:</span> <strong>${diff.status_change.from} &rarr; ${diff.status_change.to}</strong>
+      </div>
+      <div style="font-weight: 600; color: var(--emerald); margin-bottom: 6px;">Claim Decision Shifts (${diff.decision_shifts.length})</div>
+      ${diff.decision_shifts.length ? diff.decision_shifts.map(d => `<div style="font-size: 12px; color: var(--text); padding: 4px 0;">Claim #${d.claim_id}: <span class="badge ${d.from}">${d.from}</span> &rarr; <span class="badge ${d.to}">${d.to}</span></div>`).join("") : `<div class="empty">No decision shifts.</div>`}
+    </div>
+  `;
+}
+
+// View 5: Report Studio
+async function loadReportsView(){
+  await loadTopbarRequests();
+  if(!appState.currentRequestId && appState.allRequests.length > 0){
+    appState.currentRequestId = appState.allRequests[0].id;
+  }
+  
+  if(!appState.currentRequestId){
+    document.getElementById("reportPreviewPanel").innerHTML = `<div class="empty">Select a request from topbar.</div>`;
+    return;
+  }
+
+  renderReportPreview();
+}
+
+async function renderReportPreview(){
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}/report`);
+  if(!res.ok){
+    document.getElementById("reportPreviewPanel").innerHTML = `<div class="empty">No report generated for REQ-${appState.currentRequestId} yet. Click 'Generate Report'.</div>`;
+    return;
+  }
+  const r = await res.json();
+  appState.activeReport = r;
+
+  // Highlight active stepper
+  const status = r.request.status || "Draft";
+  document.querySelectorAll(".step-node").forEach(n => n.classList.remove("active"));
+  const activeStep = document.getElementById("step-" + status.replace(/\s+/g, '-'));
+  if(activeStep) activeStep.classList.add("active");
+
+  document.getElementById("reportPreviewPanel").innerHTML = `
+    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+      <div>
+        <h2 style="margin:0; font-size: 16px; color:#fff;">REQ-${r.request.id}: ${esc(r.request.project)}</h2>
+        <span style="font-size: 12px; color: var(--muted);">Report Version v${r.version} &middot; Regulator: ${esc(r.request.regulator)}</span>
+      </div>
+      <span class="status-pill ${r.request.status}">${r.request.status}</span>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin: 0 0 8px;">Executive Summary</h3>
+      <div style="font-size: 13px; color: var(--text); line-height: 1.6; background: var(--bg); border: 1px solid var(--border); padding: 12px; border-radius: 8px;">
+        ${esc(r.summary)}
+      </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin: 0 0 8px;">Compliance Risk Matrix</h3>
+      <div class="risk-grid">
+        <div class="risk-cell low">Low: ${r.coverage.covered}</div>
+        <div class="risk-cell medium">Medium: 0</div>
+        <div class="risk-cell high">High: ${r.open_risks.length}</div>
+        <div class="risk-cell critical">Critical: 0</div>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="font-size: 11px; text-transform: uppercase; color: var(--muted); margin: 0 0 8px;">Recommendations</h3>
+      <ul style="font-size: 12px; color: var(--text); padding-left: 18px; margin: 0;">
+        ${r.recommendations.map(x => `<li style="margin-bottom: 4px;">${esc(x)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+async function triggerReportGenerate(){
+  if(!appState.currentRequestId){ showToast("Select a request first", "warning"); return; }
+  const templateName = document.getElementById("reportTemplateSelect").value;
+  showToast("Generating report from template...");
+  
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}/reports`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      template_name: templateName,
+      snapshot_version: 1,
+      creator: "Alice",
+      role: appState.currentRole
+    })
+  });
+  
+  if(!res.ok){
+    const err = await res.json().catch(() => ({detail: "Failed to generate report"}));
+    showToast(err.detail || "Report generation failed", "error");
+    return;
+  }
+  const data = await res.json();
+  appState.activeReportId = data.report_id;
+  showToast(`Report v${data.version} generated successfully!`);
+  renderReportPreview();
+}
+
+async function transitionReportState(newStatus){
+  if(!appState.activeReportId) { showToast("Generate or select a report first", "warning"); return; }
+  showToast(`Transitioning report to '${newStatus}'...`);
+  
+  const res = await fetch(API + `/api/reports/${appState.activeReportId}/transition`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      new_status: newStatus,
+      user: "Alice",
+      role: appState.currentRole
+    })
+  });
+  
+  if(!res.ok){
+    const err = await res.json().catch(() => ({detail: "Transition rejected"}));
+    showToast(err.detail || "Permission denied for status transition", "error");
+    return;
+  }
+  showToast(`Report status updated to '${newStatus}'`);
+  renderReportPreview();
+}
+
+async function triggerReportExport(formatStr){
+  if(!appState.activeReportId){ showToast("Generate an approved report first", "warning"); return; }
+  showToast(`Enqueuing background export job for format '${formatStr.toUpperCase()}'...`);
+  
+  const res = await fetch(API + `/api/reports/${appState.activeReportId}/export`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      format: formatStr,
+      exporter_user: "Alice"
+    })
+  });
+  
+  if(!res.ok){
+    const err = await res.json().catch(() => ({detail: "Export rejected"}));
+    showToast(err.detail || "Report must be Approved to export", "error");
+    return;
+  }
+  const data = await res.json();
+  showToast(`Export Job Enqueued! Job ID: ${data.job_id}`);
+}
+
+// View 6: Audit Timeline
+async function loadTimelineView(){
+  if(!appState.currentRequestId && appState.allRequests.length > 0){
+    appState.currentRequestId = appState.allRequests[0].id;
+  }
+  
+  if(!appState.currentRequestId){
+    document.getElementById("timelineStream").innerHTML = `<div class="empty">Select a request to view timeline.</div>`;
+    return;
+  }
+
+  const res = await fetch(API + `/api/requests/${appState.currentRequestId}/timeline`);
+  const logs = await res.json();
+
+  document.getElementById("timelineStream").innerHTML = logs.length ? logs.map(l => `
+    <div style="display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; align-items: center;">
+      <span style="font-family:'JetBrains Mono',monospace; color:var(--muted); width: 80px;">${l.created_at.split("T")[1].split(".")[0]}</span>
+      <span class="badge ${l.event_type}">${esc(l.event_type)}</span>
+      <span style="color:var(--text); flex:1;">${esc(l.details)}</span>
+      <span style="color:var(--muted); font-size: 11px;">User: ${esc(l.user)}</span>
+    </div>
+  `).join("") : `<div class="empty">No timeline activity logged yet.</div>`;
+}
+
+// View 7: Worker Jobs & Diagnostics
+async function loadJobsView(){
+  document.getElementById("workerJobsList").innerHTML = `
+    <div style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="color:#fff;">export_report_task</strong> &middot; Job ID #task-9902
+        <div style="color: var(--muted); margin-top: 4px;">Target: Report #1 &middot; Format: HTML</div>
+      </div>
+      <span class="status-pill approved">COMPLETED</span>
+    </div>
+    <div style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <strong style="color:#fff;">create_snapshot_task</strong> &middot; Job ID #task-9851
+        <div style="color: var(--muted); margin-top: 4px;">Target: Request #1 &middot; Version: v1</div>
+      </div>
+      <span class="status-pill approved">COMPLETED</span>
+    </div>
+  `;
+}
+
+// DevTools Quick Check
+async function loadRegs(){
+  const res = await fetch(API + "/api/regulations");
+  const regs = await res.json();
+  document.getElementById("regList").innerHTML = regs.map(r =>
+    `<div><strong style="color:var(--text)">${esc(r.id)}</strong> - ${esc(r.title.split("-")[1] || r.title)}</div>`
+  ).join("");
+}
+
+function loadExample(){
+  document.getElementById("claimInput").value =
+`The vehicle satisfies flight safety analysis requirements for public risk.
+The launch operator has established flight hazard areas based on debris impact.
+The reactor facility safety analysis report describes design bases and safety limits.
+The spacecraft uses lightweight composite panels for thermal protection.`;
+}
+
+async function analyze(){
+  const btn = document.getElementById("analyzeBtn");
+  const raw = document.getElementById("claimInput").value.trim();
+  if(!raw) return;
+  const claims = raw.split("\n").map(s => s.trim()).filter(Boolean);
+  btn.disabled = true; btn.textContent = "Analyzing...";
+
+  const res = await fetch(API + "/api/verify", {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({claims})
+  });
+  const data = await res.json();
+  renderQuickResults(data);
+  btn.disabled = false; btn.textContent = "Analyze";
+}
+
+function renderQuickResults(results){
+  const total = results.length;
+  const supported = results.filter(r => r.status === "SUPPORTED").length;
+  const pct = total ? Math.round((supported/total)*100) : 0;
+
+  document.getElementById("bannerWrap").innerHTML = `
+    <div class="panel" style="margin-top:16px; display:flex; justify-content:space-between;">
+      <div><div style="font-size:11px; color:var(--muted);">Overall Score</div><div style="font-size:22px; font-weight:700;">${pct}%</div></div>
+      <div><div style="font-size:11px; color:var(--muted);">Supported</div><div style="font-size:22px; font-weight:700; color:var(--emerald);">${supported}</div></div>
+      <div><div style="font-size:11px; color:var(--muted);">Partial</div><div style="font-size:22px; font-weight:700; color:var(--amber);">${results.filter(r=>r.status==="PARTIAL").length}</div></div>
+      <div><div style="font-size:11px; color:var(--muted);">Unsupported</div><div style="font-size:22px; font-weight:700; color:var(--red);">${results.filter(r=>r.status==="UNSUPPORTED").length}</div></div>
+    </div>`;
+
+  document.getElementById("results").innerHTML = `
+    <table>
+      <thead><tr><th>Claim</th><th>Status</th><th>Confidence</th><th>Citation</th></tr></thead>
+      <tbody>
+        ${results.map(r => `
+          <tr>
+            <td style="font-size:12px; font-weight:500;">${esc(r.claim)}</td>
+            <td><span class="badge ${r.status}">${r.status}</span></td>
+            <td>${r.confidence}%</td>
+            <td><div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);">${esc(r.citation)}</div></td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+// Initializer
+loadAppStateFromLocalStorage();
+switchView(appState.currentView || "dashboard");
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: complianceos_web
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://compliance:secret@db:5432/compliancedb}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - AUTH_SECRET=${AUTH_SECRET:-complianceos-default-development-secret-key-32bytes}
+      - API_KEY=${API_KEY:-dev-compliance-api-key-2026}
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: complianceos_worker
+    command: python -m worker.runner
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://compliance:secret@db:5432/compliancedb}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz').getcode() == 200 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: complianceos_qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  db:
+    image: postgres:15-alpine
+    container_name: complianceos_db
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-compliance}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secret}
+      - POSTGRES_DB=${POSTGRES_DB:-compliancedb}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-compliance} -d ${POSTGRES_DB:-compliancedb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  qdrant_data:
+  postgres_data:

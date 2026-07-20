@@ -1,0 +1,97 @@
+parser:
+  engine: pymupdf
+  allow_fallback: true
+
+retrieval:
+  chunker:
+    engine: section  # paragraph, section
+    chunk_size: 512
+    overlap: 50
+  embedding:
+    engine: tfidf  # tfidf, bgem3
+    dimension: 512
+    model_name: "BAAI/bge-small-en-v1.5"
+    device: "auto"
+    allow_fallback: true
+    warmup: true
+  vector_store:
+    engine: local  # local, qdrant
+    qdrant:
+      url: "http://localhost:6333"
+      collection: "compliance_chunks"
+      vector_name: "dense"
+      timeout: 5.0
+      allow_fallback: true
+  retriever:
+    dense_top_k: 20
+    lexical_top_k: 20
+    final_top_k: 5
+    engine: hybrid  # tfidf, bm25, hybrid
+    strategy: parallel  # sequential, parallel, cascade
+    policy: balanced  # strict, balanced, recall
+  reranker:
+    engine: cosine  # cosine, cross_encoder
+    model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    device: "auto"
+    allow_fallback: true
+    warmup: true
+    enabled: true
+  cache:
+    enabled: true
+  active_profile: "balanced"
+  profiles:
+    fast:
+      dense_top_k: 10
+      lexical_top_k: 10
+      rrf_k: 40
+      rerank_limit: 3
+    balanced:
+      dense_top_k: 20
+      lexical_top_k: 20
+      rrf_k: 60
+      rerank_limit: 5
+    quality:
+      dense_top_k: 50
+      lexical_top_k: 50
+      rrf_k: 60
+      rerank_limit: 10
+  adaptive:
+    enabled: true
+    difficulty_thresholds:
+      easy_words: 4
+      hard_words: 10
+  regression_gates:
+    max_recall_drop_pct: 1.0
+    max_mrr_drop_pct: 2.0
+    max_latency_increase_pct: 10.0
+  receipts:
+    enabled: true
+  evaluation:
+    enabled: false
+  thresholds:
+    support: 0.35
+    partial: 0.15
+
+database:
+  provider: postgresql  # postgresql, sqlite
+  url: "postgresql+asyncpg://postgres:postgres@localhost:5432/compliance_os"
+  echo: false
+  pool_size: 10
+  timeout: 30
+  max_overflow: 5
+  allow_sqlite_fallback: true
+  profile: development  # development, testing, production
+
+redis:
+  url: "redis://localhost:6379/0"
+  pool_size: 10
+  allow_fallback: true
+  profile: development
+
+worker:
+  engine: arq  # arq, local
+  concurrency: 4
+  visibility_timeout_sec: 300
+  heartbeat_interval_sec: 15
+  max_retries: 3
+  retry_backoff_factor: 2.0

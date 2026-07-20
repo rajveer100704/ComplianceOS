@@ -1,0 +1,6 @@
+{
+  "name": "ComplianceOS Golden Retrieval Benchmark",
+  "version": "1.0.0",
+  "queries_count": 3,
+  "description": "Standard benchmark dataset representing regulatory compliance queries for testing dense and hybrid search retrieval systems."
+}

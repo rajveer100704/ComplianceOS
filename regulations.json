@@ -1,0 +1,37 @@
+[
+  {
+    "id": "FAA-450.115",
+    "title": "14 CFR 450.115 — Flight Safety Analysis",
+    "text": "An operator must perform a flight safety analysis that identifies all reasonably foreseeable hazards to public safety from normal flight and malfunction flight, and demonstrate that the risk to the public does not exceed acceptable thresholds."
+  },
+  {
+    "id": "FAA-450.117",
+    "title": "14 CFR 450.117 — Flight Hazard Area Analysis",
+    "text": "An operator must establish flight hazard areas by analyzing debris impact locations, casualty area, and probability of impact for each phase of flight."
+  },
+  {
+    "id": "FAA-450.108",
+    "title": "14 CFR 450.108 — Physical Containment",
+    "text": "An operator must demonstrate physical containment of hazards using a suborbital trajectory or other means when overflight of populated areas cannot be avoided."
+  },
+  {
+    "id": "NRC-50.34",
+    "title": "10 CFR 50.34 — Contents of Applications: Technical Information",
+    "text": "Each application must include a safety analysis report describing the facility, its design bases, and the limits on operation, including analysis of the design and performance of structures, systems, and components important to safety."
+  },
+  {
+    "id": "NRC-50.36",
+    "title": "10 CFR 50.36 — Technical Specifications",
+    "text": "Technical specifications must include safety limits, limiting safety system settings, limiting conditions for operation, surveillance requirements, and design features."
+  },
+  {
+    "id": "NRC-100.20",
+    "title": "10 CFR 100.20 — Factors to Be Considered in Site Evaluation",
+    "text": "Site evaluation must consider population density, seismology, geology, and proximity to hazards that could affect the site's suitability for a nuclear facility."
+  },
+  {
+    "id": "ASME-BPVC-III",
+    "title": "ASME BPVC Section III — Nuclear Components",
+    "text": "Components must be designed, fabricated, and inspected in accordance with rules for construction of nuclear facility components, including material, design, and examination requirements."
+  }
+]
