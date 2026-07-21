@@ -13,6 +13,8 @@ ENV/
 .env
 .env.local
 .env.*.local
+config/keys/*.pem
+!config/keys/.gitkeep
 
 # Databases & local runtime storage
 *.db

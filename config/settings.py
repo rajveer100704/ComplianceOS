@@ -32,6 +32,19 @@ class Settings(BaseSettings):
         default="api_key",
         description="Active authentication provider ('api_key' or 'jwt')",
     )
+    AUTH_JWT_ALGORITHM: str = Field(default="RS256", description="JWT algorithm")
+    AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=15, description="Access token TTL in minutes"
+    )
+    AUTH_KEY_ID: str = Field(
+        default="complianceos-key-v1", description="Active RSA key ID"
+    )
+    AUTH_RSA_PRIVATE_KEY: str | None = Field(
+        default=None, description="PEM string for RS256 private key override"
+    )
+    AUTH_RSA_PUBLIC_KEY: str | None = Field(
+        default=None, description="PEM string for RS256 public key override"
+    )
     CORS_ORIGINS: List[str] = Field(default=["*"], description="Allowed CORS origins")
     RATE_LIMIT_PER_MINUTE: int = Field(
         default=120, description="Max requests per minute per client IP"
