@@ -986,6 +986,10 @@ async def compare_reports_endpoint(report_id_a: int, report_id_b: int):
         raise HTTPException(400, str(e))
 
 
+from auth.router import router as auth_router
+
+app.include_router(auth_router)
+
 app.mount("/", StaticFiles(directory=Path(__file__).parent, html=True), name="frontend")
 
 

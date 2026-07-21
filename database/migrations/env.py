@@ -45,6 +45,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
     url = get_database_url()
@@ -58,6 +59,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
@@ -68,10 +70,12 @@ def do_run_migrations(connection: Connection) -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 async def run_async_migrations() -> None:
     """In this scenario we need to create an Engine and associate a connection."""
     url = get_database_url()
     from retrieval.config.loader import ConfigLoader
+
     config_yaml = ConfigLoader.load()
     db_config = config_yaml.get("database", {})
     allow_fallback = db_config.get("allow_sqlite_fallback", True)
@@ -90,7 +94,9 @@ async def run_async_migrations() -> None:
         await connectable.dispose()
     except Exception as e:
         if allow_fallback:
-            print("PostgreSQL connection refused in Alembic. Falling back to local SQLite migration...")
+            print(
+                "PostgreSQL connection refused in Alembic. Falling back to local SQLite migration..."
+            )
             configuration["sqlalchemy.url"] = "sqlite+aiosqlite:///compliance.db"
             connectable = async_engine_from_config(
                 configuration,
@@ -103,18 +109,23 @@ async def run_async_migrations() -> None:
         else:
             raise e
 
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
+
     def _run():
         asyncio.run(run_async_migrations())
+
     try:
         asyncio.get_running_loop()
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(_run)
             future.result()
     except RuntimeError:
         asyncio.run(run_async_migrations())
+
 
 if context.is_offline_mode():
     run_migrations_offline()

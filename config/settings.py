@@ -43,7 +43,8 @@ class Settings(BaseSettings):
         default=10, description="Replay revocation grace window in seconds"
     )
     AUTH_SESSION_TOUCH_INTERVAL_SECONDS: int = Field(
-        default=60, description="Throttled session activity heartbeat interval in seconds"
+        default=60,
+        description="Throttled session activity heartbeat interval in seconds",
     )
     AUTH_SESSION_IDLE_EXPIRE_DAYS: int = Field(
         default=30, description="Session idle inactivity timeout in days"
