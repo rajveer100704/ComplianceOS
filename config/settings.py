@@ -42,6 +42,15 @@ class Settings(BaseSettings):
     AUTH_REFRESH_REPLAY_GRACE_SECONDS: int = Field(
         default=10, description="Replay revocation grace window in seconds"
     )
+    AUTH_SESSION_TOUCH_INTERVAL_SECONDS: int = Field(
+        default=60, description="Throttled session activity heartbeat interval in seconds"
+    )
+    AUTH_SESSION_IDLE_EXPIRE_DAYS: int = Field(
+        default=30, description="Session idle inactivity timeout in days"
+    )
+    AUTH_SESSION_ABSOLUTE_EXPIRE_DAYS: int = Field(
+        default=90, description="Session absolute hard expiration timeout in days"
+    )
     AUTH_KEY_ID: str = Field(
         default="complianceos-key-v1", description="Active RSA key ID"
     )
