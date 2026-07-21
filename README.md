@@ -21,15 +21,17 @@
 
 ---
 
-## UI Workstation & Screenshots
+## Application Walkthrough
 
-| **Dashboard View** | **3-Pane Review Workstation** |
+| **Dashboard View (Demo Dataset Metrics)** | **3-Pane Review Workstation** |
 | :---: | :---: |
 | ![Dashboard](docs/images/dashboard.png) | ![Workstation](docs/images/workstation.png) |
 
-| **Snapshots & Diffs** | **Report Studio & Exporters** |
+| **Snapshots & Semantic Diffs** | **Report Studio & Exporters** |
 | :---: | :---: |
 | ![Snapshots](docs/images/snapshots.png) | ![Report Studio](docs/images/report_studio.png) |
+
+*\*Metrics displayed on the dashboard above represent synthetic demo benchmark results.*
 
 ---
 
@@ -74,7 +76,7 @@
 
 ```bash
 # Clone repository & setup virtual environment
-git clone https://github.com/rajveer100704/CompliaceOS.git
+git clone https://github.com/rajveer100704/ComplianceOS.git
 cd ComplianceOS
 python -m venv venv
 source venv/bin/activate  # On Windows: .\venv\Scripts\Activate.ps1

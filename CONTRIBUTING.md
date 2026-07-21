@@ -8,7 +8,7 @@ Thank you for your interest in contributing to ComplianceOS!
 
 1. **Clone Repository**:
    ```bash
-   git clone https://github.com/rajveer100704/CompliaceOS.git
+   git clone https://github.com/rajveer100704/ComplianceOS.git
    cd ComplianceOS
    ```
 
