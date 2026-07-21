@@ -15,16 +15,16 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 
 ---
 
-## 🔐 v1.1.0 — Authentication & Identity (Planned) 🚀
-- [ ] **OAuth2 Integration**: Google, GitHub, and Microsoft Entra ID authentication providers.
-- [ ] **Production JWT Security**: Signed RS256 JWT token verification, token refresh rotation, and session management.
-- [ ] **User Auth Flows**: Self-service user login, registration, password resets, and MFA support.
+## 🔐 v1.1.0 — Authentication & Session Identity 🚀
+- [ ] **Google OAuth2 Integration**: Primary OAuth2 authentication provider.
+- [ ] **Production RS256 JWT Security**: Signed RS256 JWT token verification and key rotation.
+- [ ] **Session & Token Management**: Refresh token rotation, secure cookie handling, and session invalidation.
 
 ---
 
 ## 🏢 v1.2.0 — Multi-Tenant SaaS Architecture 🏢
-- [ ] **Organization & Team Management**: Multi-tenant database schema isolation with organization-level RBAC.
-- [ ] **Team Invitations**: Workspace invitation workflows with role assignments (`Admin`, `Lead Reviewer`, `Reviewer`).
+- [ ] **Organization & Team Isolation**: Tenant-scoped database schemas and organization-level RBAC.
+- [ ] **Team Invitations**: Invitation workflows with role assignments (`Admin`, `Lead Reviewer`, `Reviewer`).
 - [ ] **Project Isolation**: Tenant-scoped compliance project namespaces and audit boundaries.
 
 ---
@@ -36,19 +36,25 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 
 ---
 
-## 📊 v1.4.0 — Production Observability 📈
+## 📈 v1.4.0 — Platform Reliability & Observability 📊
 - [ ] **Distributed Tracing**: OpenTelemetry instrumentation with Jaeger trace propagation.
 - [ ] **Metrics & Dashboards**: Grafana Cloud dashboard templates for P95 latency and retrieval recall.
-- [ ] **Error Tracking**: Production error reporting and exception capture via Sentry.
+- [ ] **Error Tracking & Alerting**: Production exception capture via Sentry and Prometheus alert manager.
 
 ---
 
-## ⚙️ v1.5.0 — Compliance Policy Engine & Workflow Automation ⚙️
-- [ ] **Policy Rule Engine**: Automated enforcement gates (e.g. require dual approval for high-risk claims, block publication of unsupported claims).
+## ⚙️ v1.5.0 — Compliance Policy & Workflow Engine ⚙️
+- [ ] **Configurable Approval Rules**: Automated enforcement gates (e.g. require dual approval for high-risk claims, block publication of unsupported claims).
+- [ ] **Automatic Risk Escalation**: Automatic escalation of unsupported or high-risk claims to lead reviewers.
 - [ ] **Workflow Event Automation**: Automated post-approval actions (compile PDF → upload S3 → create Jira ticket → send Slack alert).
 
 ---
 
-## 🚀 v2.0.0 — Enterprise Compliance SaaS Platform 🌟
+## 🌟 v2.0.0 — Enterprise Compliance SaaS Platform 🚀
 - [ ] **Real-Time WebSockets**: Live reviewer presence indicators, real-time comment streams, and collaborative editing.
-- [ ] **Specialized AI Agents**: Multi-agent orchestration for requirement extraction, evidence ranking, and compliance reasoning.
+- [ ] **Multi-Agent Reasoning Pipeline**: Specialized AI agent orchestration:
+  - 🔍 *Requirement Analysis Agent*: Extracts regulatory requirements from standard PDFs.
+  - 🎯 *Evidence Retrieval Agent*: Executes hybrid vector retrieval and reranking.
+  - ⚖️ *Verification Agent*: Evaluates claim evidence against regulatory criteria.
+  - ⚠️ *Risk Assessment Agent*: Computes casualty risk metrics and risk matrix scores.
+  - 📝 *Report Drafting Agent*: Synthesizes structured compliance reports.
