@@ -18,44 +18,32 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Add new columns to refresh_tokens table
-    op.add_column(
-        "refresh_tokens",
-        sa.Column("session_id", sa.String(length=36), nullable=True),
-    )
-    op.add_column(
-        "refresh_tokens",
-        sa.Column(
-            "rotation_count",
-            sa.Integer(),
-            nullable=False,
-            server_default="0",
-        ),
-    )
-    op.add_column(
-        "refresh_tokens",
-        sa.Column("proof_key_thumbprint", sa.String(length=255), nullable=True),
-    )
-
-    op.create_index(
-        op.f("ix_refresh_tokens_session_id"),
-        "refresh_tokens",
-        ["session_id"],
-        unique=False,
-    )
-    op.create_foreign_key(
-        "fk_refresh_tokens_session_id",
-        "refresh_tokens",
-        "sessions",
-        ["session_id"],
-        ["id"],
-        ondelete="CASCADE",
-    )
+    # Use batch_alter_table for SQLite compatibility when modifying constraints/columns
+    with op.batch_alter_table("refresh_tokens") as batch_op:
+        batch_op.add_column(sa.Column("session_id", sa.String(length=36), nullable=True))
+        batch_op.add_column(
+            sa.Column(
+                "rotation_count",
+                sa.Integer(),
+                nullable=False,
+                server_default="0",
+            )
+        )
+        batch_op.add_column(sa.Column("proof_key_thumbprint", sa.String(length=255), nullable=True))
+        batch_op.create_index("ix_refresh_tokens_session_id", ["session_id"], unique=False)
+        batch_op.create_foreign_key(
+            "fk_refresh_tokens_session_id",
+            "sessions",
+            ["session_id"],
+            ["id"],
+            ondelete="CASCADE",
+        )
 
 
 def downgrade() -> None:
-    op.drop_constraint("fk_refresh_tokens_session_id", "refresh_tokens", type_="foreignkey")
-    op.drop_index(op.f("ix_refresh_tokens_session_id"), table_name="refresh_tokens")
-    op.drop_column("refresh_tokens", "proof_key_thumbprint")
-    op.drop_column("refresh_tokens", "rotation_count")
-    op.drop_column("refresh_tokens", "session_id")
+    with op.batch_alter_table("refresh_tokens") as batch_op:
+        batch_op.drop_constraint("fk_refresh_tokens_session_id", type_="foreignkey")
+        batch_op.drop_index("ix_refresh_tokens_session_id")
+        batch_op.drop_column("proof_key_thumbprint")
+        batch_op.drop_column("rotation_count")
+        batch_op.drop_column("session_id")
