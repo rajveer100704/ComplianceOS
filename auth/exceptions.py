@@ -22,6 +22,12 @@ class TokenNotYetValidError(InvalidTokenError):
     pass
 
 
+class TokenReplayError(InvalidTokenError):
+    """Raised when a previously rotated/revoked refresh token is re-used (replay attack)."""
+
+    pass
+
+
 class InvalidIssuerError(InvalidTokenError):
     """Raised when JWT iss claim does not match expected issuer."""
 

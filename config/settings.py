@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=15, description="Access token TTL in minutes"
     )
+    AUTH_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
+        default=7, description="Refresh token TTL in days"
+    )
+    AUTH_REFRESH_REPLAY_GRACE_SECONDS: int = Field(
+        default=10, description="Replay revocation grace window in seconds"
+    )
     AUTH_KEY_ID: str = Field(
         default="complianceos-key-v1", description="Active RSA key ID"
     )

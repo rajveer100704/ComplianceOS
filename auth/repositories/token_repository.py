@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional, List, Any
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.repositories.base import ISessionRepository
@@ -22,14 +22,20 @@ class TokenRepository(ISessionRepository):
         token_family: str,
         token_hash: str,
         expires_at: datetime,
+        session_id: Optional[str] = None,
+        rotation_count: int = 0,
+        proof_key_thumbprint: Optional[str] = None,
         created_by_ip: Optional[str] = None,
         device_name: Optional[str] = None,
     ) -> RefreshToken:
         """Create a new refresh token entry."""
         token = RefreshToken(
             user_id=user_id,
+            session_id=session_id,
             token_family=token_family,
             token_hash=token_hash,
+            rotation_count=rotation_count,
+            proof_key_thumbprint=proof_key_thumbprint,
             expires_at=expires_at,
             created_by_ip=created_by_ip,
             device_name=device_name,
@@ -42,7 +48,7 @@ class TokenRepository(ISessionRepository):
     async def find_refresh_token_by_hash(
         self, token_hash: str
     ) -> Optional[RefreshToken]:
-        """Fetch refresh token by SHA-256 hash."""
+        """Fetch refresh token by HMAC-SHA256 hash."""
         stmt = select(RefreshToken).where(RefreshToken.token_hash == token_hash)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
@@ -83,6 +89,33 @@ class TokenRepository(ISessionRepository):
         await self.session.flush()
         return int(result.rowcount)
 
+    async def revoke_all_for_user(self, user_id: str) -> int:
+        """Revoke all active refresh tokens for a user across all families (Logout All)."""
+        now = datetime.now(timezone.utc)
+        stmt = (
+            update(RefreshToken)
+            .where(
+                RefreshToken.user_id == user_id,
+                RefreshToken.is_revoked.is_(False),
+            )
+            .values(
+                is_revoked=True,
+                revoked_at=now,
+                updated_at=now,
+            )
+        )
+        result: Any = await self.session.execute(stmt)
+        await self.session.flush()
+        return int(result.rowcount)
+
+    async def cleanup_expired_tokens(self) -> int:
+        """Delete expired refresh tokens from database."""
+        now = datetime.now(timezone.utc)
+        stmt = delete(RefreshToken).where(RefreshToken.expires_at < now)
+        result: Any = await self.session.execute(stmt)
+        await self.session.flush()
+        return int(result.rowcount)
+
     # --- Session Methods (ISessionRepository Implementation) ---
 
     async def create_session(self, session_entity: SessionModel) -> SessionModel:
@@ -113,7 +146,7 @@ class TokenRepository(ISessionRepository):
         return bool(result.rowcount > 0)
 
     async def revoke_session(self, session_id: str) -> bool:
-        """Revoke / soft-delete user session."""
+        """Revoke / soft-delete user session and associated refresh tokens."""
         now = datetime.now(timezone.utc)
         stmt = (
             update(SessionModel)
@@ -121,6 +154,17 @@ class TokenRepository(ISessionRepository):
             .values(is_deleted=True, deleted_at=now, updated_at=now)
         )
         result: Any = await self.session.execute(stmt)
+
+        # Also revoke active refresh tokens for this session
+        token_stmt = (
+            update(RefreshToken)
+            .where(
+                RefreshToken.session_id == session_id,
+                RefreshToken.is_revoked.is_(False),
+            )
+            .values(is_revoked=True, revoked_at=now, updated_at=now)
+        )
+        await self.session.execute(token_stmt)
         await self.session.flush()
         return bool(result.rowcount > 0)
 
