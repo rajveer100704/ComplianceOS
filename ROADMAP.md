@@ -43,16 +43,18 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 
 ---
 
-## ⚙️ v1.5.0 — Compliance Policy & Workflow Engine ⚙️
+## ⚙️ v1.5.0 — Policy Engine & Admin Operational Console ⚙️
 - [ ] **Configurable Approval Rules**: Automated enforcement gates (e.g. require dual approval for high-risk claims, block publication of unsupported claims).
 - [ ] **Automatic Risk Escalation**: Automatic escalation of unsupported or high-risk claims to lead reviewers.
 - [ ] **Workflow Event Automation**: Automated post-approval actions (compile PDF → upload S3 → create Jira ticket → send Slack alert).
+- [ ] **Admin Operational Console**: Dedicated dashboard for User CRUD, Organization Management, API Key provisioning, Audit Log viewing, Worker Queue monitoring, and Vector Collection management.
 
 ---
 
-## 🌟 v2.0.0 — Enterprise Compliance SaaS Platform 🚀
+## 🌟 v2.0.0 — AI-Native Enterprise SaaS & Knowledge Graph 🚀
+- [ ] **Compliance Knowledge Graph**: Graph-based entity modeling (`Requirement` -- supported by --> `Evidence` -- referenced in --> `Report` -- verified by --> `Reviewer`).
 - [ ] **Real-Time WebSockets**: Live reviewer presence indicators, real-time comment streams, and collaborative editing.
-- [ ] **Multi-Agent Reasoning Pipeline**: Specialized AI agent orchestration:
+- [ ] **Multi-Agent Reasoning Pipeline**: Centralized agent orchestration:
   - 🔍 *Requirement Analysis Agent*: Extracts regulatory requirements from standard PDFs.
   - 🎯 *Evidence Retrieval Agent*: Executes hybrid vector retrieval and reranking.
   - ⚖️ *Verification Agent*: Evaluates claim evidence against regulatory criteria.
