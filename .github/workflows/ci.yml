@@ -34,6 +34,9 @@ jobs:
       - name: Type Checking (Mypy)
         run: mypy --ignore-missing-imports . || true
 
+      - name: Generate Development RSA Keys
+        run: python scripts/generate_dev_keys.py
+
       - name: Execute Automated Test Suite
         run: python -m pytest test_main.py tests/ --cov=. --cov-report=xml
 

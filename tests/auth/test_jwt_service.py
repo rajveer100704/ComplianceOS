@@ -151,7 +151,10 @@ def test_unsupported_algorithm_raises_error(jwt_service):
     }
     headers = {"alg": "HS256", "kid": "complianceos-key-v1", "typ": "JWT"}
     token = jwt.encode(
-        payload, "secret_symmetric_key", algorithm="HS256", headers=headers
+        payload,
+        "secret_symmetric_key_32bytes_minimum_length_for_sha256",
+        algorithm="HS256",
+        headers=headers,
     )
 
     with pytest.raises(UnsupportedAlgorithmError):
