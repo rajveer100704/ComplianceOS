@@ -19,9 +19,13 @@ ENV/
 *.sqlite3
 compliance.db
 test.db
-storage/
-exports/
-scratch/
+storage/*
+!storage/__init__.py
+!storage/.gitkeep
+exports/*
+!exports/.gitkeep
+scratch/*
+!scratch/.gitkeep
 
 # Testing & Coverage
 .pytest_cache/
