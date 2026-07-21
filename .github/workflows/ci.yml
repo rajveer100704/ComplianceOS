@@ -35,7 +35,7 @@ jobs:
         run: mypy --ignore-missing-imports . || true
 
       - name: Execute Automated Test Suite
-        run: python -m pytest test_main.py --cov=. --cov-report=xml
+        run: python -m pytest test_main.py tests/ --cov=. --cov-report=xml
 
       - name: Upload Test Coverage Artifact
         uses: actions/upload-artifact@v4
