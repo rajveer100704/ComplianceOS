@@ -2,6 +2,8 @@
 
 The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` → `v2.0.0`), expanding from a core RAG & compliance review engine into a multi-tenant enterprise compliance platform.
 
+Each version is backed by a self-contained engineering implementation package in `roadmap/v*.*/` containing PRD, ADR, API, DATABASE, IMPLEMENTATION_GUIDE, IMPLEMENTATION_CHECKLIST, RISKS, DECISIONS, and TEST_PLAN contracts.
+
 ---
 
 ## 🎯 v1.0.0 — Initial Public Release (Completed) ✅
@@ -16,6 +18,7 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 ---
 
 ## 🔐 v1.1.0 — Authentication & Session Identity 🚀
+> 📦 **Specification Package**: [`roadmap/v1.1-auth/`](roadmap/v1.1-auth/)
 - [ ] **Google OAuth2 Integration**: Primary OAuth2 authentication provider.
 - [ ] **Production RS256 JWT Security**: Signed RS256 JWT token verification and key rotation.
 - [ ] **Session & Token Management**: Refresh token rotation, secure cookie handling, and session invalidation.
@@ -23,6 +26,7 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 ---
 
 ## 🏢 v1.2.0 — Multi-Tenant SaaS Architecture 🏢
+> 📦 **Specification Package**: [`roadmap/v1.2-multitenant/`](roadmap/v1.2-multitenant/)
 - [ ] **Organization & Team Isolation**: Tenant-scoped database schemas and organization-level RBAC.
 - [ ] **Team Invitations**: Invitation workflows with role assignments (`Admin`, `Lead Reviewer`, `Reviewer`).
 - [ ] **Project Isolation**: Tenant-scoped compliance project namespaces and audit boundaries.
@@ -30,6 +34,7 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 ---
 
 ## 🔌 v1.3.0 — Enterprise Integrations & Connectors 🔌
+> 📦 **Specification Package**: [`roadmap/v1.3-integrations/`](roadmap/v1.3-integrations/)
 - [ ] **Issue Tracker Sync**: Automatic creation and status synchronization with Jira and GitHub Issues.
 - [ ] **Messaging Notifications**: Webhook event dispatchers for Slack and Microsoft Teams alerts.
 - [ ] **Cloud Object Storage**: Direct presigned URL uploads to AWS S3 and Cloudflare R2.
@@ -37,6 +42,7 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 ---
 
 ## 📈 v1.4.0 — Platform Reliability & Observability 📊
+> 📦 **Specification Package**: [`roadmap/v1.4-observability/`](roadmap/v1.4-observability/)
 - [ ] **Distributed Tracing**: OpenTelemetry instrumentation with Jaeger trace propagation.
 - [ ] **Metrics & Dashboards**: Grafana Cloud dashboard templates for P95 latency and retrieval recall.
 - [ ] **Error Tracking & Alerting**: Production exception capture via Sentry and Prometheus alert manager.
@@ -44,6 +50,7 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 ---
 
 ## ⚙️ v1.5.0 — Policy Engine & Admin Operational Console ⚙️
+> 📦 **Specification Package**: [`roadmap/v1.5-policy-engine/`](roadmap/v1.5-policy-engine/)
 - [ ] **Configurable Approval Rules**: Automated enforcement gates (e.g. require dual approval for high-risk claims, block publication of unsupported claims).
 - [ ] **Automatic Risk Escalation**: Automatic escalation of unsupported or high-risk claims to lead reviewers.
 - [ ] **Workflow Event Automation**: Automated post-approval actions (compile PDF → upload S3 → create Jira ticket → send Slack alert).
@@ -52,6 +59,7 @@ The ComplianceOS development lifecycle follows Semantic Versioning (`v1.0.0` →
 ---
 
 ## 🌟 v2.0.0 — AI-Native Enterprise SaaS & Knowledge Graph 🚀
+> 📦 **Specification Package**: [`roadmap/v2.0-ai-platform/`](roadmap/v2.0-ai-platform/)
 - [ ] **Compliance Knowledge Graph**: Graph-based entity modeling (`Requirement` -- supported by --> `Evidence` -- referenced in --> `Report` -- verified by --> `Reviewer`).
 - [ ] **Real-Time WebSockets**: Live reviewer presence indicators, real-time comment streams, and collaborative editing.
 - [ ] **Multi-Agent Reasoning Pipeline**: Centralized agent orchestration:
