@@ -6,15 +6,23 @@ import logging
 
 logger = logging.getLogger("bgem3_provider")
 
+
 @register_embedding("bgem3")
 class BGEM3EmbeddingProvider(BaseEmbeddingProvider):
     """Provides dense representations using a SentenceTransformers BGE model."""
 
-    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5", device: str = "auto", warmup: bool = True):
+    def __init__(
+        self,
+        model_name: str = "BAAI/bge-small-en-v1.5",
+        device: str = "auto",
+        warmup: bool = True,
+    ):
         self.model_name = model_name
         self.device = device
 
-        self.model = ModelManager.load_embedding_model(model_name, device=device, warmup=warmup)
+        self.model = ModelManager.load_embedding_model(
+            model_name, device=device, warmup=warmup
+        )
         self.dimension = self.model.get_sentence_embedding_dimension()
 
     @property
@@ -32,5 +40,7 @@ class BGEM3EmbeddingProvider(BaseEmbeddingProvider):
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        vecs = self.model.encode(texts, batch_size=32, convert_to_numpy=True, normalize_embeddings=True)
+        vecs = self.model.encode(
+            texts, batch_size=32, convert_to_numpy=True, normalize_embeddings=True
+        )
         return [[float(v) for v in row] for row in vecs]

@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any
 from config.settings import settings
 
+
 class APIKeyAuthProvider:
     """API Key Authentication Provider."""
 
@@ -11,13 +12,13 @@ class APIKeyAuthProvider:
         """Validates API Key and returns user payload."""
         if not token_or_key:
             return None
-            
+
         clean_key = token_or_key.replace("Bearer ", "").replace("ApiKey ", "").strip()
         if clean_key == self.api_key:
             return {
                 "sub": "api_user_admin",
                 "role": "Admin",
                 "provider": "api_key",
-                "permissions": ["read", "write", "approve", "publish", "export"]
+                "permissions": ["read", "write", "approve", "publish", "export"],
             }
         return None

@@ -6,20 +6,19 @@ from review.events import ReviewEventPublisher
 
 logger = logging.getLogger("evidence_service")
 
+
 class EvidenceService:
     """Orchestrates evidence pinning, unpinning, and categorization roles."""
 
     @staticmethod
     async def pin_evidence(
-        claim_id: int,
-        chunk_id: str,
-        document_id: int,
-        user: str,
-        role: str = "PRIMARY"
+        claim_id: int, chunk_id: str, document_id: int, user: str, role: str = "PRIMARY"
     ) -> PinnedEvidenceModel:
         """Pins a specific chunk as evidence with a role (PRIMARY, SUPPORTING, CONTRADICTING)."""
         if role not in ["PRIMARY", "SUPPORTING", "CONTRADICTING"]:
-            raise ValueError(f"Invalid evidence role '{role}'. Must be PRIMARY, SUPPORTING, or CONTRADICTING.")
+            raise ValueError(
+                f"Invalid evidence role '{role}'. Must be PRIMARY, SUPPORTING, or CONTRADICTING."
+            )
 
         async with UnitOfWork() as uow:
             claim = await uow.claims.get(claim_id)
@@ -43,7 +42,7 @@ class EvidenceService:
                     chunk_id=chunk_id,
                     document_id=document_id,
                     role=role,
-                    pinned_by=user
+                    pinned_by=user,
                 )
                 uow.session.add(evidence)
 
@@ -52,22 +51,20 @@ class EvidenceService:
                 request_id=claim.request_id,
                 event_type="evidence",
                 user=user,
-                details=f"Pinned chunk '{chunk_id}' as {role} evidence for claim {claim_id}."
+                details=f"Pinned chunk '{chunk_id}' as {role} evidence for claim {claim_id}.",
             )
             uow.session.add(activity)
             await uow.commit()
 
             # Publish event
-            await ReviewEventPublisher.publish_evidence_pinned(claim_id, chunk_id, user, role)
+            await ReviewEventPublisher.publish_evidence_pinned(
+                claim_id, chunk_id, user, role
+            )
 
             return evidence
 
     @staticmethod
-    async def unpin_evidence(
-        claim_id: int,
-        chunk_id: str,
-        user: str
-    ) -> bool:
+    async def unpin_evidence(claim_id: int, chunk_id: str, user: str) -> bool:
         """Removes a pinned evidence reference from a claim."""
         async with UnitOfWork() as uow:
             claim = await uow.claims.get(claim_id)
@@ -86,7 +83,7 @@ class EvidenceService:
                 request_id=claim.request_id,
                 event_type="evidence",
                 user=user,
-                details=f"Unpinned chunk '{chunk_id}' from claim {claim_id}."
+                details=f"Unpinned chunk '{chunk_id}' from claim {claim_id}.",
             )
             uow.session.add(activity)
             await uow.commit()

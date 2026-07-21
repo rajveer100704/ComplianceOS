@@ -1,8 +1,17 @@
 from abc import ABC, abstractmethod
 
+
 class ParserCapabilities:
     """Represents the feature capabilities of a parser engine."""
-    def __init__(self, tables: bool = True, ocr: bool = True, layout: bool = True, images: bool = False, formulas: bool = False):
+
+    def __init__(
+        self,
+        tables: bool = True,
+        ocr: bool = True,
+        layout: bool = True,
+        images: bool = False,
+        formulas: bool = False,
+    ):
         self.tables = tables
         self.ocr = ocr
         self.layout = layout
@@ -15,12 +24,13 @@ class ParserCapabilities:
             "ocr": self.ocr,
             "layout": self.layout,
             "images": self.images,
-            "formulas": self.formulas
+            "formulas": self.formulas,
         }
+
 
 class BaseParser(ABC):
     """Abstract Base Class for all document parsing engines."""
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> ParserCapabilities:

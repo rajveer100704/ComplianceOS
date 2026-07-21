@@ -1,19 +1,25 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple
 from retrieval.models.chunk import Chunk
-from retrieval.capabilities import RetrieverCapabilities, EmbeddingCapabilities, VectorStoreCapabilities
+from retrieval.capabilities import (
+    RetrieverCapabilities,
+    EmbeddingCapabilities,
+    VectorStoreCapabilities,
+)
+
 
 class BaseChunker(ABC):
     """Abstract Base Class for all chunking engines."""
-    
+
     @abstractmethod
     def chunk(self, doc_id: int, text: str, doc_metadata: dict) -> List[Chunk]:
         """Splits document text into a list of Chunk objects."""
         pass
 
+
 class BaseEmbeddingProvider(ABC):
     """Abstract Base Class for all embedding models."""
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> EmbeddingCapabilities:
@@ -34,9 +40,10 @@ class BaseEmbeddingProvider(ABC):
         """Computes dense vector representations for multiple texts."""
         pass
 
+
 class BaseVectorStore(ABC):
     """Abstract Base Class for all vector database backends."""
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> VectorStoreCapabilities:
@@ -48,7 +55,9 @@ class BaseVectorStore(ABC):
         pass
 
     @abstractmethod
-    def search(self, query_vector: List[float], limit: int, filters: dict = None) -> List[Tuple[Chunk, float]]:
+    def search(
+        self, query_vector: List[float], limit: int, filters: dict = None
+    ) -> List[Tuple[Chunk, float]]:
         """Finds top-k nearest neighbor chunks based on distance."""
         pass
 
@@ -62,23 +71,29 @@ class BaseVectorStore(ABC):
         """Flushes all documents and vectors from the store."""
         pass
 
+
 class BaseRetriever(ABC):
     """Abstract Base Class for all document retrievers."""
-    
+
     @property
     @abstractmethod
     def capabilities(self) -> RetrieverCapabilities:
         pass
 
     @abstractmethod
-    def retrieve(self, query: str, limit: int, filters: dict = None) -> List[Tuple[Chunk, float]]:
+    def retrieve(
+        self, query: str, limit: int, filters: dict = None
+    ) -> List[Tuple[Chunk, float]]:
         """Retrieves matching document chunks for a query."""
         pass
 
+
 class BaseReranker(ABC):
     """Abstract Base Class for all reranking algorithms."""
-    
+
     @abstractmethod
-    def rerank(self, query: str, candidates: List[Tuple[Chunk, float]]) -> List[Tuple[Chunk, float]]:
+    def rerank(
+        self, query: str, candidates: List[Tuple[Chunk, float]]
+    ) -> List[Tuple[Chunk, float]]:
         """Reranks candidate results with a secondary model score."""
         pass

@@ -1,6 +1,7 @@
 from database.repositories.base import BaseRepository
 from database.models.audit import AuditLogModel
 
+
 class ReceiptRepository(BaseRepository[AuditLogModel]):
     """Repository mapping enterprise audit log activities."""
 

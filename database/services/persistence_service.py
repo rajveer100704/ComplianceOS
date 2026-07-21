@@ -12,8 +12,10 @@ from database.models.requirement import RequirementModel
 
 LOCKED_STATUSES = ("locked", "submitted", "archived")
 
+
 class LockedError(Exception):
     pass
+
 
 class PersistenceService:
     """Async service facade orchestrating transactional database operations across UOW repositories."""
@@ -30,11 +32,11 @@ class PersistenceService:
             req = RequestModel(project=project, regulator=regulator, owner=owner)
             await uow.requests.add(req)
             await uow.commit()
-            
+
             log_item = AuditLogModel(
-                request_id=req.id, 
-                stage="created", 
-                detail=f"Request created for project '{project}' under {regulator}"
+                request_id=req.id,
+                stage="created",
+                detail=f"Request created for project '{project}' under {regulator}",
             )
             await uow.receipts.add(log_item)
             await uow.commit()
@@ -54,8 +56,9 @@ class PersistenceService:
                     "regulator": r.regulator,
                     "status": r.status,
                     "owner": r.owner,
-                    "created_at": r.created_at.isoformat() + "Z"
-                } for r in requests
+                    "created_at": r.created_at.isoformat() + "Z",
+                }
+                for r in requests
             ]
 
     @staticmethod
@@ -64,24 +67,40 @@ class PersistenceService:
             req = await uow.requests.get(request_id)
             if not req:
                 return None
-            
+
             # Documents
-            stmt_doc = select(DocumentModel).where(DocumentModel.request_id == request_id).order_by(DocumentModel.id)
+            stmt_doc = (
+                select(DocumentModel)
+                .where(DocumentModel.request_id == request_id)
+                .order_by(DocumentModel.id)
+            )
             res_doc = await uow.session.execute(stmt_doc)
             documents = res_doc.scalars().all()
 
             # Runs
-            stmt_run = select(RunModel).where(RunModel.request_id == request_id).order_by(RunModel.id)
+            stmt_run = (
+                select(RunModel)
+                .where(RunModel.request_id == request_id)
+                .order_by(RunModel.id)
+            )
             res_run = await uow.session.execute(stmt_run)
             runs = res_run.scalars().all()
 
             # Claims
-            stmt_claim = select(ClaimModel).where(ClaimModel.request_id == request_id).order_by(ClaimModel.run_id, ClaimModel.id)
+            stmt_claim = (
+                select(ClaimModel)
+                .where(ClaimModel.request_id == request_id)
+                .order_by(ClaimModel.run_id, ClaimModel.id)
+            )
             res_claim = await uow.session.execute(stmt_claim)
             claims = res_claim.scalars().all()
 
             # Audit log
-            stmt_audit = select(AuditLogModel).where(AuditLogModel.request_id == request_id).order_by(AuditLogModel.id)
+            stmt_audit = (
+                select(AuditLogModel)
+                .where(AuditLogModel.request_id == request_id)
+                .order_by(AuditLogModel.id)
+            )
             res_audit = await uow.session.execute(stmt_audit)
             audit_logs = res_audit.scalars().all()
 
@@ -101,8 +120,9 @@ class PersistenceService:
                         "request_id": d.request_id,
                         "filename": d.filename,
                         "text": d.text,
-                        "source_type": d.source_type
-                    } for d in documents
+                        "source_type": d.source_type,
+                    }
+                    for d in documents
                 ],
                 "runs": [
                     {
@@ -111,8 +131,9 @@ class PersistenceService:
                         "version": rn.version,
                         "created_at": rn.created_at.isoformat() + "Z",
                         "summary": rn.summary,
-                        "receipt": json.loads(rn.receipt) if rn.receipt else None
-                    } for rn in runs
+                        "receipt": json.loads(rn.receipt) if rn.receipt else None,
+                    }
+                    for rn in runs
                 ],
                 "claims": [
                     {
@@ -129,8 +150,9 @@ class PersistenceService:
                         "reason": c.reason,
                         "reviewer_decision": c.reviewer_decision,
                         "comment": c.comment,
-                        "resolved": c.resolved
-                    } for c in claims
+                        "resolved": c.resolved,
+                    }
+                    for c in claims
                 ],
                 "audit_log": [
                     {
@@ -138,24 +160,33 @@ class PersistenceService:
                         "request_id": a.request_id,
                         "stage": a.stage,
                         "detail": a.detail,
-                        "created_at": a.created_at.isoformat() + "Z"
-                    } for a in audit_logs
-                ]
+                        "created_at": a.created_at.isoformat() + "Z",
+                    }
+                    for a in audit_logs
+                ],
             }
 
     @staticmethod
-    async def add_document(request_id: int, filename: str, text: str, source_type: str = "text") -> int:
+    async def add_document(
+        request_id: int, filename: str, text: str, source_type: str = "text"
+    ) -> int:
         from database.models.outbox import OutboxEventModel
+
         async with UnitOfWork() as uow:
             await PersistenceService._assert_not_locked(uow, request_id)
-            doc = DocumentModel(request_id=request_id, filename=filename, text=text, source_type=source_type)
+            doc = DocumentModel(
+                request_id=request_id,
+                filename=filename,
+                text=text,
+                source_type=source_type,
+            )
             await uow.documents.add(doc)
             await uow.commit()
 
             log_item = AuditLogModel(
                 request_id=request_id,
                 stage="document_uploaded",
-                detail=f"{filename} ({source_type}, {len(text)} chars)"
+                detail=f"{filename} ({source_type}, {len(text)} chars)",
             )
             await uow.receipts.add(log_item)
 
@@ -165,8 +196,8 @@ class PersistenceService:
                     "request_id": request_id,
                     "document_id": doc.id,
                     "filename": filename,
-                    "source_type": source_type
-                }
+                    "source_type": source_type,
+                },
             )
             uow.session.add(event)
 
@@ -179,7 +210,9 @@ class PersistenceService:
             for r in regulations:
                 req = await uow.requirements.get(r["id"])
                 if not req:
-                    req = RequirementModel(reg_id=r["id"], title=r["title"], text=r["text"])
+                    req = RequirementModel(
+                        reg_id=r["id"], title=r["title"], text=r["text"]
+                    )
                     await uow.requirements.add(req)
             await uow.commit()
 
@@ -187,7 +220,9 @@ class PersistenceService:
     async def create_run(request_id: int) -> Tuple[int, int]:
         async with UnitOfWork() as uow:
             await PersistenceService._assert_not_locked(uow, request_id)
-            stmt = select(func.max(RunModel.version)).where(RunModel.request_id == request_id)
+            stmt = select(func.max(RunModel.version)).where(
+                RunModel.request_id == request_id
+            )
             res = await uow.session.execute(stmt)
             max_v = res.scalar() or 0
             version = max_v + 1
@@ -199,30 +234,34 @@ class PersistenceService:
             log_item = AuditLogModel(
                 request_id=request_id,
                 stage="run_started",
-                detail=f"Run v{version} started"
+                detail=f"Run v{version} started",
             )
             await uow.receipts.add(log_item)
             await uow.commit()
             return rn.id, version
 
     @staticmethod
-    async def finalize_run(run_id: int, request_id: int, summary: str, receipt: dict) -> None:
+    async def finalize_run(
+        run_id: int, request_id: int, summary: str, receipt: dict
+    ) -> None:
         async with UnitOfWork() as uow:
             rn = await uow.runs.get(run_id)
             if rn:
                 rn.summary = summary
                 rn.receipt = json.dumps(receipt)
-                
+
                 log_item = AuditLogModel(
                     request_id=request_id,
                     stage="run_finalized",
-                    detail=f"Run {run_id} receipt recorded ({receipt.get('claim_count', 0)} claims)"
+                    detail=f"Run {run_id} receipt recorded ({receipt.get('claim_count', 0)} claims)",
                 )
                 await uow.receipts.add(log_item)
                 await uow.commit()
 
     @staticmethod
-    async def save_claim(request_id: int, run_id: int, document_id: int, c: dict) -> int:
+    async def save_claim(
+        request_id: int, run_id: int, document_id: int, c: dict
+    ) -> int:
         async with UnitOfWork() as uow:
             claim = ClaimModel(
                 request_id=request_id,
@@ -235,7 +274,7 @@ class PersistenceService:
                 citation_title=c["citation_title"],
                 snippet=c["snippet"],
                 reason=c["reason"],
-                reviewer_decision="pending"
+                reviewer_decision="pending",
             )
             await uow.claims.add(claim)
             await uow.commit()
@@ -248,11 +287,11 @@ class PersistenceService:
             if c:
                 await PersistenceService._assert_not_locked(uow, c.request_id)
                 c.reviewer_decision = decision
-                
+
                 log_item = AuditLogModel(
                     request_id=c.request_id,
                     stage="claim_reviewed",
-                    detail=f"Claim {claim_id} reviewed: {decision}"
+                    detail=f"Claim {claim_id} reviewed: {decision}",
                 )
                 await uow.receipts.add(log_item)
                 await uow.commit()
@@ -282,12 +321,12 @@ class PersistenceService:
             if req:
                 req.status = status
                 if status == "approved":
-                    req.approved_at = datetime.datetime.now(datetime.timezone.utc).isoformat() + "Z"
-                
+                    req.approved_at = (
+                        datetime.datetime.now(datetime.timezone.utc).isoformat() + "Z"
+                    )
+
                 log_item = AuditLogModel(
-                    request_id=request_id,
-                    stage="status_changed",
-                    detail=detail
+                    request_id=request_id, stage="status_changed", detail=detail
                 )
                 await uow.receipts.add(log_item)
                 await uow.commit()
@@ -295,11 +334,17 @@ class PersistenceService:
     @staticmethod
     async def graph_for_request(request_id: int) -> dict:
         async with UnitOfWork() as uow:
-            stmt = select(ClaimModel).where(ClaimModel.request_id == request_id).order_by(ClaimModel.run_id, ClaimModel.id)
+            stmt = (
+                select(ClaimModel)
+                .where(ClaimModel.request_id == request_id)
+                .order_by(ClaimModel.run_id, ClaimModel.id)
+            )
             res = await uow.session.execute(stmt)
             claims = res.scalars().all()
-            
-            reg_ids = sorted({c.citation for c in claims if c.citation and c.citation != "—"})
+
+            reg_ids = sorted(
+                {c.citation for c in claims if c.citation and c.citation != "—"}
+            )
             reqs = {}
             for rid_ in reg_ids:
                 req = await uow.requirements.get(rid_)
@@ -312,54 +357,112 @@ class PersistenceService:
                 nodes.append({"id": reg_id, "type": "requirement", "label": r.title})
             for c in claims:
                 claim_node = f"claim-{c.id}"
-                nodes.append({"id": claim_node, "type": "claim", "label": c.text[:60], "status": c.status})
+                nodes.append(
+                    {
+                        "id": claim_node,
+                        "type": "claim",
+                        "label": c.text[:60],
+                        "status": c.status,
+                    }
+                )
                 if c.citation and c.citation != "—":
-                    edges.append({
-                        "from": claim_node, "to": c.citation,
-                        "type": "SATISFIES" if c.status == "SUPPORTED" else "PARTIALLY_SATISFIES" if c.status == "PARTIAL" else "UNSUPPORTED_BY",
-                    })
-                edges.append({"from": claim_node, "to": claim_node, "type": "REVIEW_STATUS", "detail": c.reviewer_decision})
+                    edges.append(
+                        {
+                            "from": claim_node,
+                            "to": c.citation,
+                            "type": (
+                                "SATISFIES"
+                                if c.status == "SUPPORTED"
+                                else (
+                                    "PARTIALLY_SATISFIES"
+                                    if c.status == "PARTIAL"
+                                    else "UNSUPPORTED_BY"
+                                )
+                            ),
+                        }
+                    )
+                edges.append(
+                    {
+                        "from": claim_node,
+                        "to": claim_node,
+                        "type": "REVIEW_STATUS",
+                        "detail": c.reviewer_decision,
+                    }
+                )
             return {"nodes": nodes, "edges": edges}
 
     @staticmethod
     async def coverage_for_request(request_id: int) -> dict:
         async with UnitOfWork() as uow:
             # Get latest run
-            stmt_run = select(RunModel).where(RunModel.request_id == request_id).order_by(RunModel.version.desc()).limit(1)
+            stmt_run = (
+                select(RunModel)
+                .where(RunModel.request_id == request_id)
+                .order_by(RunModel.version.desc())
+                .limit(1)
+            )
             res_run = await uow.session.execute(stmt_run)
             latest_run = res_run.scalar()
             if not latest_run:
-                return {"version": None, "total_requirements": 0, "covered": 0, "missing": [], "rows": []}
+                return {
+                    "version": None,
+                    "total_requirements": 0,
+                    "covered": 0,
+                    "missing": [],
+                    "rows": [],
+                }
 
             # Get claims for latest run
-            stmt = select(ClaimModel).where(ClaimModel.request_id == request_id, ClaimModel.run_id == latest_run.id).order_by(ClaimModel.id)
+            stmt = (
+                select(ClaimModel)
+                .where(
+                    ClaimModel.request_id == request_id,
+                    ClaimModel.run_id == latest_run.id,
+                )
+                .order_by(ClaimModel.id)
+            )
             res = await uow.session.execute(stmt)
             claims = res.scalars().all()
-            
+
             # Get requirements
             stmt_req = select(RequirementModel)
             res_req = await uow.session.execute(stmt_req)
             all_reqs = res_req.scalars().all()
-            
+
             covered_ids = {c.citation for c in claims if c.status == "SUPPORTED"}
             rows = []
             for r in all_reqs:
                 matching = [c for c in claims if c.citation == r.reg_id]
-                status = "PASS" if r.reg_id in covered_ids else ("WARNING" if matching else "NO_CLAIM")
-                rows.append({"reg_id": r.reg_id, "title": r.title, "status": status, "claim_count": len(matching)})
-                
+                status = (
+                    "PASS"
+                    if r.reg_id in covered_ids
+                    else ("WARNING" if matching else "NO_CLAIM")
+                )
+                rows.append(
+                    {
+                        "reg_id": r.reg_id,
+                        "title": r.title,
+                        "status": status,
+                        "claim_count": len(matching),
+                    }
+                )
+
             return {
                 "version": latest_run.version,
                 "total_requirements": len(all_reqs),
                 "covered": len(covered_ids),
                 "missing": [r.reg_id for r in all_reqs if r.reg_id not in covered_ids],
-                "rows": rows
+                "rows": rows,
             }
 
     @staticmethod
     async def requirement_dependents(reg_id: str) -> list:
         async with UnitOfWork() as uow:
-            stmt = select(ClaimModel).where(ClaimModel.citation == reg_id).order_by(ClaimModel.id)
+            stmt = (
+                select(ClaimModel)
+                .where(ClaimModel.citation == reg_id)
+                .order_by(ClaimModel.id)
+            )
             res = await uow.session.execute(stmt)
             claims = res.scalars().all()
             return [
@@ -368,18 +471,23 @@ class PersistenceService:
                     "claim_id": c.id,
                     "text": c.text,
                     "status": c.status,
-                    "decision": c.reviewer_decision
-                } for c in claims
+                    "decision": c.reviewer_decision,
+                }
+                for c in claims
             ]
 
     @staticmethod
     async def diff_runs(request_id: int, from_version: int, to_version: int) -> dict:
         async with UnitOfWork() as uow:
-            stmt_from = select(RunModel).where(RunModel.request_id == request_id, RunModel.version == from_version)
+            stmt_from = select(RunModel).where(
+                RunModel.request_id == request_id, RunModel.version == from_version
+            )
             res_from = await uow.session.execute(stmt_from)
             r_from = res_from.scalar()
-            
-            stmt_to = select(RunModel).where(RunModel.request_id == request_id, RunModel.version == to_version)
+
+            stmt_to = select(RunModel).where(
+                RunModel.request_id == request_id, RunModel.version == to_version
+            )
             res_to = await uow.session.execute(stmt_to)
             r_to = res_to.scalar()
 
@@ -407,13 +515,15 @@ class PersistenceService:
                 else:
                     c_from = map_from[text]
                     if c_from.status != c_to.status or c_from.citation != c_to.citation:
-                        changed.append({
-                            "claim": text,
-                            "old_status": c_from.status,
-                            "new_status": c_to.status,
-                            "old_citation": c_from.citation,
-                            "new_citation": c_to.citation
-                        })
+                        changed.append(
+                            {
+                                "claim": text,
+                                "old_status": c_from.status,
+                                "new_status": c_to.status,
+                                "old_citation": c_from.citation,
+                                "new_citation": c_to.citation,
+                            }
+                        )
 
             for text, c_from in map_from.items():
                 if text not in map_to:

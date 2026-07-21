@@ -1,9 +1,11 @@
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
 
+
 @dataclass(frozen=True)
 class EvidenceBundle:
     """Encapsulates retrieved chunks, structural contexts, latency statistics, and score rankings."""
+
     query: str
     chunks: List[Any]  # list of Chunk objects
     scores: Dict[str, Dict[str, float]]  # chunk_id -> score components

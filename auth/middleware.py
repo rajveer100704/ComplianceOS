@@ -2,6 +2,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware enforcing standard security HTTP headers on all responses."""
 

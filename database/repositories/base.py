@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 T = TypeVar("T")
 
+
 class BaseRepository(Generic[T]):
     """Generic base repository mapping standard async database operations."""
 
@@ -21,7 +22,7 @@ class BaseRepository(Generic[T]):
         # Handle soft deletes check if model contains is_deleted field
         if hasattr(self.model_cls, "is_deleted"):
             stmt = stmt.where(self.model_cls.is_deleted == False)
-        
+
         stmt = stmt.offset(offset).limit(limit)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
@@ -35,8 +36,11 @@ class BaseRepository(Generic[T]):
         if hasattr(entity, "is_deleted"):
             setattr(entity, "is_deleted", True)
             import datetime
+
             if hasattr(entity, "deleted_at"):
-                setattr(entity, "deleted_at", datetime.datetime.now(datetime.timezone.utc))
+                setattr(
+                    entity, "deleted_at", datetime.datetime.now(datetime.timezone.utc)
+                )
         else:
             await self.session.delete(entity)
 

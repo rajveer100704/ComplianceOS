@@ -2,6 +2,7 @@ from typing import Dict, Any
 from database.models.outbox import OutboxEventModel
 from database.services.unit_of_work import UnitOfWork
 
+
 class EventPublisher:
     """Enqueues events in the outbox table for reliable background execution."""
 

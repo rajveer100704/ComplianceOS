@@ -1,5 +1,6 @@
 from retrieval.models.document_graph import DocumentGraph
 
+
 class IndexSynchronizer:
     """Synchronizes logical DocumentGraph states with physical vector stores."""
 

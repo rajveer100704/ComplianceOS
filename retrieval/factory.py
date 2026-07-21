@@ -1,6 +1,19 @@
 from typing import Optional
-from retrieval.base import BaseChunker, BaseEmbeddingProvider, BaseVectorStore, BaseRetriever, BaseReranker
-from retrieval.registry import CHUNKER_REGISTRY, EMBEDDING_REGISTRY, VECTOR_STORE_REGISTRY, RETRIEVER_REGISTRY, RERANKER_REGISTRY
+from retrieval.base import (
+    BaseChunker,
+    BaseEmbeddingProvider,
+    BaseVectorStore,
+    BaseRetriever,
+    BaseReranker,
+)
+from retrieval.registry import (
+    CHUNKER_REGISTRY,
+    EMBEDDING_REGISTRY,
+    VECTOR_STORE_REGISTRY,
+    RETRIEVER_REGISTRY,
+    RERANKER_REGISTRY,
+)
+
 
 # Pre-import concrete classes dynamically or statically to execute registration decorators
 def _import_registry_classes():
@@ -19,7 +32,9 @@ def _import_registry_classes():
     except ImportError:
         pass
 
+
 _import_registry_classes()
+
 
 class RetrievalFactory:
     """Instantiates concrete retrieval components using config mapping registries."""

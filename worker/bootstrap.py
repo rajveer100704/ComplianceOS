@@ -6,7 +6,10 @@ from database.health import DatabaseHealth
 
 logger = logging.getLogger("worker_bootstrap")
 
-async def bootstrap_worker(redis_url: str, allow_fallback: bool = True) -> Tuple[bool, str]:
+
+async def bootstrap_worker(
+    redis_url: str, allow_fallback: bool = True
+) -> Tuple[bool, str]:
     """Verifies that database connection, migration head, and Redis connection are healthy."""
     logger.info("Initializing worker bootstrap checks...")
 
@@ -24,13 +27,13 @@ async def bootstrap_worker(redis_url: str, allow_fallback: bool = True) -> Tuple
     if redis_url:
         try:
             from urllib.parse import urlparse
+
             url = urlparse(redis_url)
             host = url.hostname or "localhost"
             port = url.port or 6379
 
             reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port),
-                timeout=3.0
+                asyncio.open_connection(host, port), timeout=3.0
             )
             writer.close()
             await writer.wait_closed()

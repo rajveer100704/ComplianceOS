@@ -7,7 +7,7 @@ from database.models.report import (
     ReportSectionModel,
     ReportFindingModel,
     ReportCitationModel,
-    ReportActivityLogModel
+    ReportActivityLogModel,
 )
 from report.receipts.generation import ReportGenerationReceipt
 from report.receipts.approval import ReportApprovalReceipt
@@ -23,15 +23,16 @@ VALID_REPORT_TRANSITIONS = {
     "Approved": ["Published"],
     "Rejected": ["Draft", "Generated"],
     "Published": ["Archived"],
-    "Archived": []
+    "Archived": [],
 }
 
 # Role permissions
 ROLE_REPORT_PERMISSIONS = {
     "generate": ["Reviewer", "Lead Reviewer", "Admin"],
     "transition_any": ["Reviewer", "Lead Reviewer", "Admin"],
-    "transition_approval": ["Lead Reviewer", "Admin"]  # Approved, Published, Archived
+    "transition_approval": ["Lead Reviewer", "Admin"],  # Approved, Published, Archived
 }
+
 
 class ReportService:
     """Orchestrates compliance report lifecycle states, template bindings, and approvals."""
@@ -41,7 +42,9 @@ class ReportService:
         """Validates user authorization for reporting operations."""
         allowed = ROLE_REPORT_PERMISSIONS.get(action, [])
         if role not in allowed:
-            raise PermissionError(f"User role '{role}' is not authorized to perform action '{action}'")
+            raise PermissionError(
+                f"User role '{role}' is not authorized to perform action '{action}'"
+            )
 
     @staticmethod
     def calculate_risk(severity: int, likelihood: int) -> tuple[int, str]:
@@ -62,7 +65,7 @@ class ReportService:
         template_name: str,
         snapshot_version: int,
         creator: str,
-        role: str
+        role: str,
     ) -> ReportModel:
         """Generates a structured compliance report referencing a reviewed snapshot state."""
         ReportService.check_permission("generate", role)
@@ -71,10 +74,12 @@ class ReportService:
             # 1. Resolve snapshot payload
             snap = await uow.snapshots.get_by_version(request_id, snapshot_version)
             if not snap:
-                raise ValueError(f"Review snapshot version {snapshot_version} not found for request {request_id}")
-            
+                raise ValueError(
+                    f"Review snapshot version {snapshot_version} not found for request {request_id}"
+                )
+
             payload = snap.payload
-            
+
             # 2. Resolve template configuration
             template = await uow.templates.get_by_name(template_name)
             if not template:
@@ -98,8 +103,8 @@ class ReportService:
                 metadata_payload={
                     "template_version": "v1.0.0",
                     "report_generator_version": "v1.0.0",
-                    "generated_timestamp": datetime.now(timezone.utc).isoformat()
-                }
+                    "generated_timestamp": datetime.now(timezone.utc).isoformat(),
+                },
             )
             uow.session.add(report)
             await uow.session.flush()  # Populate report.id
@@ -110,9 +115,11 @@ class ReportService:
                 section = ReportSectionModel(
                     report_id=report.id,
                     title=s_conf["title"],
-                    content=s_conf.get("default_content", "Section content pending review."),
+                    content=s_conf.get(
+                        "default_content", "Section content pending review."
+                    ),
                     section_type=s_conf["type"],
-                    ordering=s_conf["order"]
+                    ordering=s_conf["order"],
                 )
                 uow.session.add(section)
 
@@ -121,12 +128,24 @@ class ReportService:
             finding_index = 1
             for c in claims:
                 # Only include reviewed claims
-                if c.get("reviewer_decision") not in ["Accept", "Reject", "Needs More Evidence"]:
+                if c.get("reviewer_decision") not in [
+                    "Accept",
+                    "Reject",
+                    "Needs More Evidence",
+                ]:
                     continue
 
                 decision = c["reviewer_decision"]
-                severity = 5 if decision == "Reject" else (3 if decision == "Needs More Evidence" else 1)
-                likelihood = 4 if decision == "Reject" else (2 if decision == "Needs More Evidence" else 1)
+                severity = (
+                    5
+                    if decision == "Reject"
+                    else (3 if decision == "Needs More Evidence" else 1)
+                )
+                likelihood = (
+                    4
+                    if decision == "Reject"
+                    else (2 if decision == "Needs More Evidence" else 1)
+                )
                 score, r_level = ReportService.calculate_risk(severity, likelihood)
 
                 finding = ReportFindingModel(
@@ -134,11 +153,15 @@ class ReportService:
                     title=f"Finding {finding_index}: {c['text'][:100]}",
                     recommendation=f"Address compliance status: {decision}.",
                     remediation=f"Remediation plan for regulator {payload['request']['regulator']}.",
-                    priority="High" if r_level in ["Critical", "High"] else ("Medium" if r_level == "Medium" else "Low"),
+                    priority=(
+                        "High"
+                        if r_level in ["Critical", "High"]
+                        else ("Medium" if r_level == "Medium" else "Low")
+                    ),
                     severity=severity,
                     likelihood=likelihood,
                     risk_score=score,
-                    risk_level=r_level
+                    risk_level=r_level,
                 )
                 uow.session.add(finding)
                 await uow.session.flush()  # Populate finding.id
@@ -148,8 +171,12 @@ class ReportService:
                 citation = ReportCitationModel(
                     finding_id=finding.id,
                     claim_id=c["id"],
-                    evidence_id=c["pinned_evidence"][0]["id"] if c.get("pinned_evidence") else None,
-                    comment_id=c["comments"][0]["id"] if c.get("comments") else None
+                    evidence_id=(
+                        c["pinned_evidence"][0]["id"]
+                        if c.get("pinned_evidence")
+                        else None
+                    ),
+                    comment_id=c["comments"][0]["id"] if c.get("comments") else None,
                 )
                 uow.session.add(citation)
 
@@ -158,23 +185,22 @@ class ReportService:
                 report_id=report.id,
                 event_type="ReportGenerated",
                 user=creator,
-                details=f"Draft report version {report.version} generated successfully."
+                details=f"Draft report version {report.version} generated successfully.",
             )
             uow.session.add(activity)
 
             await uow.commit()
 
             # Publish event
-            await ReportEventPublisher.publish_report_generated(report.id, request_id, report.version, creator)
+            await ReportEventPublisher.publish_report_generated(
+                report.id, request_id, report.version, creator
+            )
 
             return report
 
     @staticmethod
     async def transition_status(
-        report_id: int,
-        new_status: str,
-        user: str,
-        role: str
+        report_id: int, new_status: str, user: str, role: str
     ) -> ReportApprovalReceipt:
         """Transitions report status according to state machine constraints."""
         async with UnitOfWork() as uow:
@@ -186,7 +212,9 @@ class ReportService:
             allowed = VALID_REPORT_TRANSITIONS.get(old_status, [])
 
             if new_status not in allowed:
-                raise ValueError(f"Invalid transition: Cannot move report from '{old_status}' to '{new_status}'")
+                raise ValueError(
+                    f"Invalid transition: Cannot move report from '{old_status}' to '{new_status}'"
+                )
 
             # Check permissions
             if new_status in ["Approved", "Published", "Archived"]:
@@ -214,22 +242,28 @@ class ReportService:
                 report_id=report.id,
                 event_type=f"Report{new_status}",
                 user=user,
-                details=f"Report transitioned from '{old_status}' to '{new_status}'."
+                details=f"Report transitioned from '{old_status}' to '{new_status}'.",
             )
             uow.session.add(activity)
             await uow.commit()
 
             # Publish event
             if new_status == "Approved":
-                await ReportEventPublisher.publish_report_approved(report_id, user, now_str)
+                await ReportEventPublisher.publish_report_approved(
+                    report_id, user, now_str
+                )
             elif new_status == "Published":
-                await ReportEventPublisher.publish_report_published(report_id, user, now_str)
+                await ReportEventPublisher.publish_report_published(
+                    report_id, user, now_str
+                )
             elif new_status == "Archived":
-                await ReportEventPublisher.publish_report_archived(report_id, user, now_str)
+                await ReportEventPublisher.publish_report_archived(
+                    report_id, user, now_str
+                )
 
             return ReportApprovalReceipt(
                 report_id=report_id,
                 approved_by=user,
                 timestamp=now_str,
-                version=report.version
+                version=report.version,
             )

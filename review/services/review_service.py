@@ -17,7 +17,7 @@ VALID_TRANSITIONS = {
     "Changes Requested": ["In Review"],
     "Approved": ["Published"],
     "Rejected": ["Draft", "Assigned"],
-    "Published": []
+    "Published": [],
 }
 
 # Role Permission Matrix
@@ -25,8 +25,9 @@ VALID_TRANSITIONS = {
 ROLE_PERMISSIONS = {
     "assign": ["Reviewer", "Lead Reviewer", "Admin"],
     "transition_any": ["Reviewer", "Lead Reviewer", "Admin"],
-    "transition_decision": ["Lead Reviewer", "Admin"]  # Approved, Rejected, Published
+    "transition_decision": ["Lead Reviewer", "Admin"],  # Approved, Rejected, Published
 }
+
 
 class ReviewService:
     """Orchestrates review lifecycles, state machine transitions, and reviewer assignments."""
@@ -36,7 +37,9 @@ class ReviewService:
         """Validates if user role has authorization to execute specific review actions."""
         allowed_roles = ROLE_PERMISSIONS.get(action, [])
         if role not in allowed_roles:
-            raise PermissionError(f"User role '{role}' is not authorized to perform action '{action}'")
+            raise PermissionError(
+                f"User role '{role}' is not authorized to perform action '{action}'"
+            )
 
     @staticmethod
     async def assign_reviewer(
@@ -44,7 +47,7 @@ class ReviewService:
         reviewer: str,
         assigned_by: str,
         role: str,
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
     ) -> ReviewAssignmentModel:
         """Assigns a reviewer to a request, preserving full audit history."""
         ReviewService.check_permission("assign", role)
@@ -67,7 +70,7 @@ class ReviewService:
                 reviewer=reviewer,
                 assigned_by=assigned_by,
                 assigned_at=now_str,
-                reason=reason
+                reason=reason,
             )
             uow.session.add(new_assign)
 
@@ -81,7 +84,7 @@ class ReviewService:
                     request_id=request_id,
                     event_type="transition",
                     user=assigned_by,
-                    details=f"Status transitioned from {old_status} to Assigned due to reviewer assignment."
+                    details=f"Status transitioned from {old_status} to Assigned due to reviewer assignment.",
                 )
                 uow.session.add(activity_transition)
 
@@ -90,23 +93,22 @@ class ReviewService:
                 request_id=request_id,
                 event_type="assignment",
                 user=assigned_by,
-                details=f"Assigned reviewer '{reviewer}' to request."
+                details=f"Assigned reviewer '{reviewer}' to request.",
             )
             uow.session.add(activity)
 
             await uow.commit()
 
             # Publish event
-            await ReviewEventPublisher.publish_review_assigned(request_id, reviewer, assigned_by)
+            await ReviewEventPublisher.publish_review_assigned(
+                request_id, reviewer, assigned_by
+            )
 
             return new_assign
 
     @staticmethod
     async def transition_status(
-        request_id: int,
-        new_status: str,
-        user: str,
-        role: str
+        request_id: int, new_status: str, user: str, role: str
     ) -> ReviewTransitionReceipt:
         """Transitions request review lifecycle status according to formal state machine bounds."""
         async with UnitOfWork() as uow:
@@ -118,7 +120,9 @@ class ReviewService:
             allowed_next = VALID_TRANSITIONS.get(old_status, [])
 
             if new_status not in allowed_next:
-                raise ValueError(f"Invalid transition: Cannot move from '{old_status}' to '{new_status}'")
+                raise ValueError(
+                    f"Invalid transition: Cannot move from '{old_status}' to '{new_status}'"
+                )
 
             # Check role permissions for approving/rejecting/publishing decisions
             if new_status in ["Approved", "Rejected", "Published"]:
@@ -137,7 +141,7 @@ class ReviewService:
                 request_id=request_id,
                 event_type="transition",
                 user=user,
-                details=f"Status transitioned from '{old_status}' to '{new_status}'."
+                details=f"Status transitioned from '{old_status}' to '{new_status}'.",
             )
             uow.session.add(activity)
             await uow.commit()
@@ -151,23 +155,17 @@ class ReviewService:
                 old_status=old_status,
                 new_status=new_status,
                 transitioned_by=user,
-                timestamp=now_str
+                timestamp=now_str,
             )
 
     @staticmethod
     async def log_custom_activity(
-        request_id: int,
-        event_type: str,
-        user: str,
-        details: str
+        request_id: int, event_type: str, user: str, details: str
     ) -> None:
         """Appends an immutable timeline activity log entry."""
         async with UnitOfWork() as uow:
             activity = ReviewActivityLogModel(
-                request_id=request_id,
-                event_type=event_type,
-                user=user,
-                details=details
+                request_id=request_id, event_type=event_type, user=user, details=details
             )
             uow.session.add(activity)
             await uow.commit()

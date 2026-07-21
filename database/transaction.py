@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.session import async_session_factory
 
+
 @asynccontextmanager
 async def transaction_scope() -> AsyncGenerator[AsyncSession, None]:
     """Context manager executing block operations inside auto-committing/auto-rolling back transaction."""

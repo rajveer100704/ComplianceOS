@@ -1,5 +1,6 @@
 import time
 
+
 class RetrievalTracer:
     """Collects step-by-step latency timeline checks across retrieval pipelines."""
 
@@ -11,7 +12,9 @@ class RetrievalTracer:
 
     def end_span(self, name: str) -> None:
         if name in self._spans:
-            self._spans[name]["duration_ms"] = int((time.perf_counter() - self._spans[name]["start"]) * 1000)
+            self._spans[name]["duration_ms"] = int(
+                (time.perf_counter() - self._spans[name]["start"]) * 1000
+            )
 
     def get_traces(self) -> dict:
         return {name: span.get("duration_ms", 0) for name, span in self._spans.items()}

@@ -5,11 +5,13 @@ logger = logging.getLogger("model_manager")
 
 try:
     from sentence_transformers import SentenceTransformer, CrossEncoder
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
     SentenceTransformer = None
     CrossEncoder = None
+
 
 class ModelManager:
     """Central manager handling lazy loading, device targeting, and warmup of local AI models."""
@@ -31,7 +33,9 @@ class ModelManager:
         return requested_device
 
     @classmethod
-    def load_embedding_model(cls, model_name: str, device: str = "auto", warmup: bool = True):
+    def load_embedding_model(
+        cls, model_name: str, device: str = "auto", warmup: bool = True
+    ):
         """Loads and warms up the SentenceTransformer embedding model."""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             raise ImportError(
@@ -41,19 +45,25 @@ class ModelManager:
 
         if cls._embedding_model is None or cls._embedding_model_name != model_name:
             target_device = cls.get_device(device)
-            logger.info(f"Loading SentenceTransformer embedding model: {model_name} on {target_device}...")
+            logger.info(
+                f"Loading SentenceTransformer embedding model: {model_name} on {target_device}..."
+            )
             cls._embedding_model = SentenceTransformer(model_name, device=target_device)
             cls._embedding_model_name = model_name
 
             if warmup:
                 logger.info("Executing embedding model warmup...")
-                cls._embedding_model.encode(["warmup task prompt"], convert_to_numpy=True)
+                cls._embedding_model.encode(
+                    ["warmup task prompt"], convert_to_numpy=True
+                )
                 logger.info("Warmup complete.")
 
         return cls._embedding_model
 
     @classmethod
-    def load_reranker_model(cls, model_name: str, device: str = "auto", warmup: bool = True):
+    def load_reranker_model(
+        cls, model_name: str, device: str = "auto", warmup: bool = True
+    ):
         """Loads and warms up the CrossEncoder reranker model."""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
             raise ImportError(
@@ -63,7 +73,9 @@ class ModelManager:
 
         if cls._reranker_model is None or cls._reranker_model_name != model_name:
             target_device = cls.get_device(device)
-            logger.info(f"Loading CrossEncoder reranker model: {model_name} on {target_device}...")
+            logger.info(
+                f"Loading CrossEncoder reranker model: {model_name} on {target_device}..."
+            )
             cls._reranker_model = CrossEncoder(model_name, device=target_device)
             cls._reranker_model_name = model_name
 

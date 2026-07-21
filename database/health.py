@@ -1,6 +1,7 @@
 from sqlalchemy import text
 from database.session import async_session_factory
 
+
 class DatabaseHealth:
     """Verifies operational database status and connection pools."""
 
@@ -14,10 +15,7 @@ class DatabaseHealth:
                 return {
                     "status": "healthy",
                     "provider": dialect_name,
-                    "active_pool_size": 1  # SQLite dummy pool / postgres pool size
+                    "active_pool_size": 1,  # SQLite dummy pool / postgres pool size
                 }
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            return {"status": "unhealthy", "error": str(e)}

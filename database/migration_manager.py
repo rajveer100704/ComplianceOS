@@ -2,6 +2,7 @@ from pathlib import Path
 from alembic.config import Config
 from alembic import command
 
+
 class MigrationManager:
     """Helper class to inspect or apply Alembic migrations programmatically."""
 
@@ -10,7 +11,9 @@ class MigrationManager:
         ini_path = Path(__file__).parent.parent / "alembic.ini"
         config = Config(str(ini_path))
         # Setup migrations folder path options dynamically
-        config.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
+        config.set_main_option(
+            "script_location", str(Path(__file__).parent / "migrations")
+        )
         return config
 
     @classmethod

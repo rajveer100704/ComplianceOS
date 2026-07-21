@@ -12,7 +12,7 @@ from PIL import Image
 from parsers.base import BaseParser, ParserCapabilities
 
 # Gracefully locate tesseract executable on Windows if not on PATH
-if os.name == 'nt' and not shutil.which("tesseract"):
+if os.name == "nt" and not shutil.which("tesseract"):
     possible_paths = [
         r"C:\Program Files\Tesseract-OCR\tesseract.exe",
         r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
@@ -23,12 +23,15 @@ if os.name == 'nt' and not shutil.which("tesseract"):
             pytesseract.pytesseract.tesseract_cmd = p
             break
 
+
 class PyMuPDFParser(BaseParser):
     """PDF parsing engine powered by PyMuPDF layout extraction and Tesseract OCR fallback."""
 
     @property
     def capabilities(self) -> ParserCapabilities:
-        return ParserCapabilities(tables=True, ocr=True, layout=True, images=False, formulas=False)
+        return ParserCapabilities(
+            tables=True, ocr=True, layout=True, images=False, formulas=False
+        )
 
     @property
     def version(self) -> str:
@@ -41,7 +44,7 @@ class PyMuPDFParser(BaseParser):
             for t in tables:
                 bbox = t.bbox  # (x0, y0, x1, y1)
                 df = t.to_pandas()
-                
+
                 # Convert pandas DF to clean GitHub style Markdown table manually
                 cols = list(df.columns)
                 header = "| " + " | ".join(str(c) for c in cols) + " |"
@@ -62,24 +65,31 @@ class PyMuPDFParser(BaseParser):
             # Check if block overlaps table bounding box
             is_inside_table = False
             for bbox, _ in tables_md:
-                if b[0] >= bbox[0] - 2 and b[1] >= bbox[1] - 2 and b[2] <= bbox[2] + 2 and b[3] <= bbox[3] + 2:
+                if (
+                    b[0] >= bbox[0] - 2
+                    and b[1] >= bbox[1] - 2
+                    and b[2] <= bbox[2] + 2
+                    and b[3] <= bbox[3] + 2
+                ):
                     is_inside_table = True
                     break
             if not is_inside_table:
                 filtered_blocks.append(b)
-                
+
         # Sort blocks vertically, then horizontally with vertical tolerance (5px)
         filtered_blocks.sort(key=lambda b: (round(b[1] / 5) * 5, b[0]))
-        
+
         page_text_parts = []
         for b in filtered_blocks:
             txt = b[4].strip()
             if txt:
                 page_text_parts.append(txt)
-                
+
         return "\n\n".join(page_text_parts)
 
-    def _run_ocr_if_needed(self, page, page_text: str, page_num: int, warnings: list) -> tuple[str, bool]:
+    def _run_ocr_if_needed(
+        self, page, page_text: str, page_num: int, warnings: list
+    ) -> tuple[str, bool]:
         is_ocr = False
         if len(page_text.strip()) < 50:
             try:
@@ -98,52 +108,58 @@ class PyMuPDFParser(BaseParser):
         return page_text, is_ocr
 
     def _normalize_text(self, text: str) -> str:
-        normalized = unicodedata.normalize('NFKC', text)
+        normalized = unicodedata.normalize("NFKC", text)
         lines = normalized.splitlines()
         cleaned_lines = [l.rstrip() for l in lines]
         cleaned_text = "\n".join(cleaned_lines)
-        cleaned_text = re.sub(r'\n{3,}', '\n\n', cleaned_text)
-        cleaned_text = re.sub(r'[ \t]+', ' ', cleaned_text)
+        cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text)
+        cleaned_text = re.sub(r"[ \t]+", " ", cleaned_text)
         return cleaned_text
 
     def parse(self, data: bytes, doc_name: str) -> tuple[str, dict]:
         start_time = time.perf_counter()
         warnings = []
         pages_content = []
-        
+
         doc = fitz.open(stream=data, filetype="pdf")
         page_count = doc.page_count
-        
+
         table_count = 0
         ocr_page_count = 0
         text_page_count = 0
-        
+
         for page_num in range(page_count):
             page = doc[page_num]
-            
+
             tables_md = self._extract_tables(page, page_num + 1, warnings)
             table_count += len(tables_md)
-            
+
             page_text = self._extract_blocks(page, tables_md)
-            
-            page_text, is_ocr = self._run_ocr_if_needed(page, page_text, page_num + 1, warnings)
+
+            page_text, is_ocr = self._run_ocr_if_needed(
+                page, page_text, page_num + 1, warnings
+            )
             if is_ocr:
                 ocr_page_count += 1
             elif page_text.strip():
                 text_page_count += 1
-                
+
             if tables_md:
                 page_text += "\n\n" + "\n\n".join(t[1] for t in tables_md) + "\n"
-                
+
             cleaned_text = self._normalize_text(page_text)
             pages_content.append(cleaned_text)
-            
+
         doc.close()
-        
+
         full_text = "\n\n--- Page Break ---\n\n".join(pages_content)
         elapsed_ms = int((time.perf_counter() - start_time) * 1000)
-        pages_per_second = round(page_count / (elapsed_ms / 1000.0), 1) if elapsed_ms > 0 else page_count
-        
+        pages_per_second = (
+            round(page_count / (elapsed_ms / 1000.0), 1)
+            if elapsed_ms > 0
+            else page_count
+        )
+
         metadata = {
             "parser_engine": "pymupdf",
             "parser_version": self.version,
@@ -161,8 +177,10 @@ class PyMuPDFParser(BaseParser):
             "elapsed_ms": elapsed_ms,
             "pages_per_second": pages_per_second,
             "warnings": warnings,
-            "processed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-            "capabilities": self.capabilities.to_dict()
+            "processed_at": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "capabilities": self.capabilities.to_dict(),
         }
-        
+
         return full_text, metadata

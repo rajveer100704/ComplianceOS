@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from database.repositories.base import BaseRepository
 from database.models.report import ReportTemplateModel
 
+
 class TemplateRepository(BaseRepository[ReportTemplateModel]):
     """Repository mapping report template query operations."""
 
@@ -15,7 +16,7 @@ class TemplateRepository(BaseRepository[ReportTemplateModel]):
             select(ReportTemplateModel)
             .where(
                 ReportTemplateModel.name == name,
-                ReportTemplateModel.is_deleted == False
+                ReportTemplateModel.is_deleted == False,
             )
             .order_by(ReportTemplateModel.id.desc())
         )

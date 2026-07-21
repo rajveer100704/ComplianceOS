@@ -6,6 +6,7 @@ from retrieval.capabilities import RetrieverCapabilities
 from retrieval.models.chunk import Chunk
 from retrieval.registry import register_retriever
 
+
 @register_retriever("bm25")
 class BM25Retriever(BaseRetriever):
     """Executes local BM25 keyword matching over loaded document chunks."""
@@ -19,7 +20,9 @@ class BM25Retriever(BaseRetriever):
     def capabilities(self) -> RetrieverCapabilities:
         return RetrieverCapabilities(hybrid=False, metadata=True, filters=True)
 
-    def retrieve(self, query: str, limit: int, filters: dict = None) -> List[Tuple[Chunk, float]]:
+    def retrieve(
+        self, query: str, limit: int, filters: dict = None
+    ) -> List[Tuple[Chunk, float]]:
         # Access local memory chunks from local vector store
         if not hasattr(self.vector_store, "chunks") or not self.vector_store.chunks:
             return []
@@ -41,7 +44,7 @@ class BM25Retriever(BaseRetriever):
             return []
 
         def tokenize(text: str) -> List[str]:
-            return re.findall(r'\w+', text.lower())
+            return re.findall(r"\w+", text.lower())
 
         doc_tokens = [tokenize(c.text) for c in chunks]
         doc_lengths = [len(tokens) for tokens in doc_tokens]
@@ -74,7 +77,9 @@ class BM25Retriever(BaseRetriever):
                 if qt in tf_map:
                     tf = tf_map[qt]
                     numerator = tf * (self.k1 + 1.0)
-                    denominator = tf + self.k1 * (1.0 - self.b + self.b * (doc_len / avg_doc_len))
+                    denominator = tf + self.k1 * (
+                        1.0 - self.b + self.b * (doc_len / avg_doc_len)
+                    )
                     score += idf.get(qt, 0.0) * (numerator / denominator)
             scores.append((chunk, score))
 

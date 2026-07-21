@@ -12,18 +12,28 @@ logger = logging.getLogger("qdrant_vector_store")
 try:
     import qdrant_client
     from qdrant_client.http import models as qmodels
+
     QDRANT_CLIENT_AVAILABLE = True
 except ImportError:
     QDRANT_CLIENT_AVAILABLE = False
     qmodels = None
 
+
 @register_vector_store("qdrant")
 class QdrantVectorStore(BaseVectorStore):
     """Production Qdrant vector database engine supporting named vectors, schema checks, and fallback."""
 
-    def __init__(self, url: str = "http://localhost:6333", collection: str = "compliance_chunks", vector_name: str = "dense", timeout: float = 5.0):
+    def __init__(
+        self,
+        url: str = "http://localhost:6333",
+        collection: str = "compliance_chunks",
+        vector_name: str = "dense",
+        timeout: float = 5.0,
+    ):
         if not QDRANT_CLIENT_AVAILABLE:
-            raise ImportError("Qdrant dependencies (qdrant-client) are not installed in the current environment.")
+            raise ImportError(
+                "Qdrant dependencies (qdrant-client) are not installed in the current environment."
+            )
 
         self.url = url
         self.collection_name = collection
@@ -34,7 +44,9 @@ class QdrantVectorStore(BaseVectorStore):
             # Initialize connection to Qdrant server
             self.client = qdrant_client.QdrantClient(url=url, timeout=timeout)
             # Instanciate CollectionManager
-            self.collection_manager = CollectionManager(self.client, collection, vector_name)
+            self.collection_manager = CollectionManager(
+                self.client, collection, vector_name
+            )
         except Exception as e:
             logger.error(f"Failed to connect to Qdrant at {url}: {e}")
             raise ConnectionError(f"Could not connect to Qdrant server at {url}: {e}")
@@ -52,34 +64,33 @@ class QdrantVectorStore(BaseVectorStore):
         for chunk, embedding in zip(chunks, embeddings):
             # Compute a deterministic UUID based on chunk text hash or ID
             para_idx = chunk.metadata.get("paragraph_index", 0)
-            point_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{chunk.document_id}_{para_idx}"))
-            
+            point_id = str(
+                uuid.uuid5(uuid.NAMESPACE_DNS, f"{chunk.document_id}_{para_idx}")
+            )
+
             # Map Chunk properties to payload
             payload = {
                 "doc_id": chunk.document_id,
                 "index": para_idx,
                 "text": chunk.text,
-                "metadata": chunk.metadata
+                "metadata": chunk.metadata,
             }
-            
+
             # Use named vector format
             vector_payload = {self.vector_name: embedding}
-            
+
             points.append(
-                qmodels.PointStruct(
-                    id=point_id,
-                    vector=vector_payload,
-                    payload=payload
-                )
+                qmodels.PointStruct(id=point_id, vector=vector_payload, payload=payload)
             )
 
-        self.client.upsert(
-            collection_name=self.collection_name,
-            points=points
+        self.client.upsert(collection_name=self.collection_name, points=points)
+        logger.info(
+            f"Upserted {len(chunks)} points to Qdrant collection '{self.collection_name}'."
         )
-        logger.info(f"Upserted {len(chunks)} points to Qdrant collection '{self.collection_name}'.")
 
-    def search(self, query_vector: List[float], limit: int, filters: dict = None) -> List[Tuple[Chunk, float]]:
+    def search(
+        self, query_vector: List[float], limit: int, filters: dict = None
+    ) -> List[Tuple[Chunk, float]]:
         """Executes point vector queries on Qdrant, supporting filter conditions."""
         # Convert dictionary filters to Qdrant Filter models if present
         query_filter = None
@@ -87,10 +98,7 @@ class QdrantVectorStore(BaseVectorStore):
             conditions = []
             for key, val in filters.items():
                 conditions.append(
-                    qmodels.FieldCondition(
-                        key=key,
-                        match=qmodels.MatchValue(value=val)
-                    )
+                    qmodels.FieldCondition(key=key, match=qmodels.MatchValue(value=val))
                 )
             if conditions:
                 query_filter = qmodels.Filter(must=conditions)
@@ -100,17 +108,19 @@ class QdrantVectorStore(BaseVectorStore):
             collection_name=self.collection_name,
             query_vector=(self.vector_name, query_vector),
             limit=limit,
-            query_filter=query_filter
+            query_filter=query_filter,
         )
 
         results = []
         for hit in search_result:
             payload = hit.payload
             chunk = Chunk(
-                chunk_id=payload.get("chunk_id", f"{payload['doc_id']}_{payload['index']}"),
+                chunk_id=payload.get(
+                    "chunk_id", f"{payload['doc_id']}_{payload['index']}"
+                ),
                 document_id=payload["doc_id"],
                 text=payload["text"],
-                metadata=payload["metadata"]
+                metadata=payload["metadata"],
             )
             # Qdrant scores can be cosine similarity (between -1.0 and 1.0 or 0.0 and 1.0)
             results.append((chunk, float(hit.score)))
@@ -125,14 +135,15 @@ class QdrantVectorStore(BaseVectorStore):
                 filter=qmodels.Filter(
                     must=[
                         qmodels.FieldCondition(
-                            key="doc_id",
-                            match=qmodels.MatchValue(value=doc_id)
+                            key="doc_id", match=qmodels.MatchValue(value=doc_id)
                         )
                     ]
                 )
-            )
+            ),
         )
-        logger.info(f"Deleted points for doc_id {doc_id} from Qdrant collection '{self.collection_name}'.")
+        logger.info(
+            f"Deleted points for doc_id {doc_id} from Qdrant collection '{self.collection_name}'."
+        )
 
     def clear(self) -> None:
         """Flushes the collection."""

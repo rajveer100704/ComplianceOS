@@ -1,7 +1,13 @@
 from retrieval.config.schema import (
-    ALLOWED_CHUNKERS, ALLOWED_EMBEDDINGS, ALLOWED_STORES,
-    ALLOWED_RETRIEVERS, ALLOWED_RERANKERS, ALLOWED_STRATEGIES, ALLOWED_POLICIES
+    ALLOWED_CHUNKERS,
+    ALLOWED_EMBEDDINGS,
+    ALLOWED_STORES,
+    ALLOWED_RETRIEVERS,
+    ALLOWED_RERANKERS,
+    ALLOWED_STRATEGIES,
+    ALLOWED_POLICIES,
 )
+
 
 class ConfigValidator:
     """Validator enforcing configurations align with the allowed schemas."""

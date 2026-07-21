@@ -2,6 +2,7 @@ import yaml
 from pathlib import Path
 from retrieval.config.validator import ConfigValidator
 
+
 class ConfigLoader:
     """Loads configuration yaml file and executes schema validations."""
 
@@ -15,7 +16,7 @@ class ConfigLoader:
                     config = yaml.safe_load(f) or {}
             except Exception:
                 pass
-        
+
         # Enforce validation checks on load
         ConfigValidator.validate(config)
         return config

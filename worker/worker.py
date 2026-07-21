@@ -8,6 +8,7 @@ from worker.state import TaskStateManager
 
 logger = logging.getLogger("background_worker")
 
+
 class BackgroundWorker:
     """Daemon runner process executing background jobs from QueueBackend."""
 
@@ -23,7 +24,9 @@ class BackgroundWorker:
         loop = asyncio.get_running_loop()
         for sig in (signal.SIGINT, signal.SIGTERM):
             try:
-                loop.add_signal_handler(sig, lambda: asyncio.create_task(self.shutdown()))
+                loop.add_signal_handler(
+                    sig, lambda: asyncio.create_task(self.shutdown())
+                )
             except NotImplementedError:
                 # Windows fallback
                 pass
@@ -32,7 +35,9 @@ class BackgroundWorker:
         logger.info("Graceful shutdown initiated. Draining active jobs...")
         self.running = False
         if self.active_tasks:
-            logger.info(f"Waiting for {len(self.active_tasks)} active tasks to finish...")
+            logger.info(
+                f"Waiting for {len(self.active_tasks)} active tasks to finish..."
+            )
             await asyncio.gather(*self.active_tasks, return_exceptions=True)
         logger.info("BackgroundWorker daemon shut down cleanly.")
 

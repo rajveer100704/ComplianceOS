@@ -6,6 +6,7 @@ from typing import Dict, Any
 
 logger = logging.getLogger("worker_heartbeat")
 
+
 class WorkerHeartbeat:
     """Manages worker status heartbeat registration in Redis."""
 
@@ -41,7 +42,7 @@ class WorkerHeartbeat:
                     "worker_id": self.worker_id,
                     "uptime_sec": round(uptime, 1),
                     "timestamp": time.time(),
-                    "status": "ALIVE"
+                    "status": "ALIVE",
                 }
 
                 if hasattr(self.backend, "pool") and self.backend.pool:
@@ -49,7 +50,7 @@ class WorkerHeartbeat:
                     await pool.setex(
                         f"worker:heartbeat:{self.worker_id}",
                         self.interval_sec * 2,
-                        json.dumps(info)
+                        json.dumps(info),
                     )
                 else:
                     logger.debug(f"Heartbeat: {info}")

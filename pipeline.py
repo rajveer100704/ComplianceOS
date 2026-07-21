@@ -11,6 +11,7 @@ No LLM call is required for this prototype — verify_claims delegates to
 score_claim() (TF-IDF retrieval + threshold scoring) in main.py's engine.
 Nodes are the seam for swapping in a real LLM per stage later.
 """
+
 from typing import TypedDict, List, Dict, Any
 
 from langgraph.graph import StateGraph, START, END
@@ -21,15 +22,17 @@ import db
 class PipelineState(TypedDict):
     request_id: int
     run_id: int
-    documents: List[Dict[str, Any]]   # [{id, filename, text}]
-    claims: List[Dict[str, Any]]      # raw split claim strings, per doc
-    results: List[Dict[str, Any]]     # verified ClaimResult dicts
+    documents: List[Dict[str, Any]]  # [{id, filename, text}]
+    claims: List[Dict[str, Any]]  # raw split claim strings, per doc
+    results: List[Dict[str, Any]]  # verified ClaimResult dicts
     draft_summary: str
 
 
 def parse_documents(state: PipelineState) -> dict:
     rid = state["request_id"]
-    db.log_audit(rid, "parse_documents", f"{len(state['documents'])} document(s) received")
+    db.log_audit(
+        rid, "parse_documents", f"{len(state['documents'])} document(s) received"
+    )
     return {}
 
 
@@ -64,9 +67,14 @@ def draft_summary(state: PipelineState, corpus_size: int) -> dict:
     score = round(supported / total * 100, 1)
     summary = (
         f"Compliance score {score}%. {supported}/{total} claims supported by cited regulation. "
-        + (f"{len(unsupported)} claim(s) need evidence or rewrite before submission." if unsupported else "All claims traceable to a regulation.")
+        + (
+            f"{len(unsupported)} claim(s) need evidence or rewrite before submission."
+            if unsupported
+            else "All claims traceable to a regulation."
+        )
     )
     from retrieval.config.loader import ConfigLoader
+
     config = ConfigLoader.load()
     ret_conf = config.get("retrieval", {})
     retrieval_method = ret_conf.get("retriever", {}).get("engine", "hybrid")
@@ -103,18 +111,26 @@ def build_graph(split_fn, score_fn, corpus_size: int):
     return graph.compile()
 
 
-def run_pipeline(request_id: int, documents: List[Dict[str, Any]], split_fn, score_fn, corpus_size: int = 0) -> dict:
+def run_pipeline(
+    request_id: int,
+    documents: List[Dict[str, Any]],
+    split_fn,
+    score_fn,
+    corpus_size: int = 0,
+) -> dict:
     run_id, version = db.create_run(request_id)
     app = build_graph(split_fn, score_fn, corpus_size)
     db.set_status(request_id, "running", f"Pipeline v{version} started")
-    final_state = app.invoke({
-        "request_id": request_id,
-        "run_id": run_id,
-        "documents": documents,
-        "claims": [],
-        "results": [],
-        "draft_summary": "",
-    })
+    final_state = app.invoke(
+        {
+            "request_id": request_id,
+            "run_id": run_id,
+            "documents": documents,
+            "claims": [],
+            "results": [],
+            "draft_summary": "",
+        }
+    )
     final_state["run_id"] = run_id
     final_state["version"] = version
     return final_state

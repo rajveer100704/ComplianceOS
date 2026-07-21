@@ -10,26 +10,30 @@ from database.session import engine, async_session_factory
 from database.services.persistence_service import PersistenceService
 from database.services.unit_of_work import UnitOfWork
 
+
 class Container:
     """Dependency Injection container assembling service abstractions from config."""
-    
+
     _config = None
     _retrieval_service = None
     _indexing_service = None
     _lifecycle_manager = None
     _persistence_service = None
     _queue_backend = None
-    
+
     @classmethod
     def initialize(cls):
         import logging
+
         logger = logging.getLogger("container")
 
         cls._config = ConfigLoader.load()
         ret_conf = cls._config.get("retrieval", {})
 
         # 1. Resolve chunker
-        chunker = RetrievalFactory.get_chunker(ret_conf.get("chunker", {}).get("engine", "section"))
+        chunker = RetrievalFactory.get_chunker(
+            ret_conf.get("chunker", {}).get("engine", "section")
+        )
 
         # 2. Resolve embedding
         emb_conf = ret_conf.get("embedding", {})
@@ -41,12 +45,14 @@ class Container:
                 emb_engine,
                 model_name=emb_conf.get("model_name", "BAAI/bge-small-en-v1.5"),
                 device=emb_conf.get("device", "auto"),
-                warmup=emb_conf.get("warmup", True)
+                warmup=emb_conf.get("warmup", True),
             )
         except Exception as e:
             if not allow_emb_fallback:
                 raise
-            logger.warning(f"Failed to load embedding engine '{emb_engine}': {e}. Falling back to TF-IDF.")
+            logger.warning(
+                f"Failed to load embedding engine '{emb_engine}': {e}. Falling back to TF-IDF."
+            )
             embedding = RetrievalFactory.get_embedding("tfidf", dimension=512)
 
         # 3. Resolve cache
@@ -54,6 +60,7 @@ class Container:
         cache_conf = ret_conf.get("cache", {})
         if cache_conf.get("enabled", True):
             from retrieval.cache.embedding_cache import EmbeddingCache
+
             cache = EmbeddingCache()
             # Prune stale cache entries
             model_name = getattr(embedding, "model_name", "tfidf")
@@ -73,7 +80,7 @@ class Container:
                     url=qdrant_conf.get("url", "http://localhost:6333"),
                     collection=qdrant_conf.get("collection", "compliance_chunks"),
                     vector_name=qdrant_conf.get("vector_name", "dense"),
-                    timeout=qdrant_conf.get("timeout", 5.0)
+                    timeout=qdrant_conf.get("timeout", 5.0),
                 )
                 dim = embedding.capabilities.dimensions
                 store.collection_manager.verify_or_create_collection(dimension=dim)
@@ -82,14 +89,16 @@ class Container:
         except Exception as e:
             if not allow_store_fallback:
                 raise
-            logger.warning(f"Failed to load vector store engine '{store_engine}': {e}. Falling back to memory LocalVectorStore.")
+            logger.warning(
+                f"Failed to load vector store engine '{store_engine}': {e}. Falling back to memory LocalVectorStore."
+            )
             store = RetrievalFactory.get_vector_store("local")
 
         # 5. Resolve planner
         planner = QueryPlanner(
             engine=ret_conf.get("retriever", {}).get("engine", "hybrid"),
             strategy=ret_conf.get("retriever", {}).get("strategy", "parallel"),
-            policy=ret_conf.get("retriever", {}).get("policy", "balanced")
+            policy=ret_conf.get("retriever", {}).get("policy", "balanced"),
         )
 
         # 6. Resolve reranker
@@ -101,19 +110,27 @@ class Container:
             try:
                 reranker = RetrievalFactory.get_reranker(
                     rr_engine,
-                    model_name=rr_conf.get("model_name", "cross-encoder/ms-marco-MiniLM-L-6-v2"),
+                    model_name=rr_conf.get(
+                        "model_name", "cross-encoder/ms-marco-MiniLM-L-6-v2"
+                    ),
                     device=rr_conf.get("device", "auto"),
-                    warmup=rr_conf.get("warmup", True)
+                    warmup=rr_conf.get("warmup", True),
                 )
             except Exception as e:
                 if not allow_rr_fallback:
                     raise
-                logger.warning(f"Failed to load reranker engine '{rr_engine}': {e}. Falling back to CosineReranker.")
-                reranker = RetrievalFactory.get_reranker("cosine", embedding_provider=embedding)
+                logger.warning(
+                    f"Failed to load reranker engine '{rr_engine}': {e}. Falling back to CosineReranker."
+                )
+                reranker = RetrievalFactory.get_reranker(
+                    "cosine", embedding_provider=embedding
+                )
 
         # Dependency Injection wiring
         cls._indexing_service = IndexingService(chunker, embedding, store, cache=cache)
-        cls._retrieval_service = RetrievalService(embedding, store, planner, reranker, cache=cache)
+        cls._retrieval_service = RetrievalService(
+            embedding, store, planner, reranker, cache=cache
+        )
         cls._lifecycle_manager = LifecycleManager(store)
         cls._persistence_service = PersistenceService()
 
@@ -127,6 +144,7 @@ class Container:
         if engine_type == "arq":
             import socket
             from urllib.parse import urlparse
+
             try:
                 url = urlparse(redis_url)
                 host = url.hostname or "localhost"
@@ -134,14 +152,17 @@ class Container:
                 with socket.create_connection((host, port), timeout=1.0):
                     pass
                 from worker.backends.arq import ARQBackend
+
                 cls._queue_backend = ARQBackend(redis_url)
             except Exception:
                 if not allow_fallback:
                     raise
                 from worker.backends.local import LocalQueueBackend
+
                 cls._queue_backend = LocalQueueBackend()
         else:
             from worker.backends.local import LocalQueueBackend
+
             cls._queue_backend = LocalQueueBackend()
 
     @classmethod

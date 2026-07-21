@@ -1,5 +1,6 @@
 import re
 
+
 class QueryClassifier:
     """Heuristically classifies queries into easy, medium, or hard difficulty classes."""
 
@@ -15,12 +16,12 @@ class QueryClassifier:
         word_count = len(words)
 
         has_quotes = '"' in query_stripped or "'" in query_stripped
-        
+
         boolean_pattern = r"\b(AND|OR|NOT)\b"
         has_boolean = bool(re.search(boolean_pattern, query_stripped, re.IGNORECASE))
-        
+
         punctuation_count = sum(1 for char in query_stripped if char in "?.,:;-()")
-        
+
         sec_pattern = r"\b(section|sec|part|chapter|clause|article|§)\b"
         has_sec_ref = bool(re.search(sec_pattern, query_stripped, re.IGNORECASE))
 

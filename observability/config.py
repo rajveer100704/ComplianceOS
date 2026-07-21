@@ -3,6 +3,7 @@ import json
 import logging
 from typing import Dict, Any
 
+
 class JSONLogFormatter(logging.Formatter):
     """Formatter emitting structured JSON log records for production aggregators."""
 
@@ -13,7 +14,7 @@ class JSONLogFormatter(logging.Formatter):
             "logger": record.name,
             "message": record.getMessage(),
         }
-        
+
         # Attach request_id if present in record
         if hasattr(record, "request_id"):
             log_data["request_id"] = getattr(record, "request_id")
@@ -29,11 +30,12 @@ class JSONLogFormatter(logging.Formatter):
 
         return json.dumps(log_data)
 
+
 def setup_logging(log_level: str = "INFO"):
     """Configures structured JSON logging for the application root logger."""
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level.upper())
-    
+
     # Clear existing handlers
     for handler in root_logger.handlers[:]:
         root_logger.removeHandler(handler)

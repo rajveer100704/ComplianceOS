@@ -9,6 +9,7 @@ from database.models.outbox import OutboxEventModel
 
 logger = logging.getLogger("outbox_dispatcher")
 
+
 class OutboxDispatcher:
     """Dispatches transaction outbox events to background worker tasks."""
 
@@ -43,7 +44,11 @@ class OutboxDispatcher:
     async def dispatch_events(self):
         """Finds unprocessed outbox events, enqueues worker tasks, and marks events processed."""
         async with UnitOfWork() as uow:
-            stmt = select(OutboxEventModel).where(OutboxEventModel.processed == False).order_by(OutboxEventModel.id)
+            stmt = (
+                select(OutboxEventModel)
+                .where(OutboxEventModel.processed == False)
+                .order_by(OutboxEventModel.id)
+            )
             res = await uow.session.execute(stmt)
             events = res.scalars().all()
 
@@ -57,13 +62,19 @@ class OutboxDispatcher:
 
                         if source_type == "pdf":
                             import uuid
+
                             unique_id = str(uuid.uuid4())
                             task_id = f"task-{unique_id}"
 
                             from worker.state import TaskStateManager
-                            await TaskStateManager.create_task(task_id, "parse_and_index_document_task")
 
-                            temp_dir = Path(__file__).parent.parent / "storage" / "uploads"
+                            await TaskStateManager.create_task(
+                                task_id, "parse_and_index_document_task"
+                            )
+
+                            temp_dir = (
+                                Path(__file__).parent.parent / "storage" / "uploads"
+                            )
                             temp_path = temp_dir / f"{payload['filename']}"
 
                             await self.queue_backend.enqueue(
@@ -72,7 +83,7 @@ class OutboxDispatcher:
                                 task_id=task_id,
                                 request_id=payload["request_id"],
                                 doc_id=payload["document_id"],
-                                file_path=str(temp_path)
+                                file_path=str(temp_path),
                             )
 
                     event.processed = True

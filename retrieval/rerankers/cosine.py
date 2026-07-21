@@ -4,18 +4,22 @@ from retrieval.base import BaseReranker
 from retrieval.models.chunk import Chunk
 from retrieval.registry import register_reranker
 
+
 @register_reranker("cosine")
 class CosineReranker(BaseReranker):
     """Reranks candidates using cosine similarities from standard text vectors."""
 
-    def __init__(self, embedding_provider = None, **kwargs):
+    def __init__(self, embedding_provider=None, **kwargs):
         if embedding_provider is None:
             from retrieval.embeddings.tfidf import TFIDFEmbeddingProvider
+
             self.embedding_provider = TFIDFEmbeddingProvider()
         else:
             self.embedding_provider = embedding_provider
 
-    def rerank(self, query: str, candidates: List[Tuple[Chunk, float]]) -> List[Tuple[Chunk, float]]:
+    def rerank(
+        self, query: str, candidates: List[Tuple[Chunk, float]]
+    ) -> List[Tuple[Chunk, float]]:
         if not candidates:
             return []
         q_vec = np.array(self.embedding_provider.embed_query(query))

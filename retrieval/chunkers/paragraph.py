@@ -3,6 +3,7 @@ from retrieval.base import BaseChunker
 from retrieval.models.chunk import Chunk
 from retrieval.registry import register_chunker
 
+
 @register_chunker("paragraph")
 class ParagraphChunker(BaseChunker):
     """Splits raw text into paragraph blocks based on double newlines."""
@@ -16,5 +17,7 @@ class ParagraphChunker(BaseChunker):
                 cid = f"doc_{doc_id}_p_{i}"
                 meta = doc_metadata.copy()
                 meta.update({"page": 1, "paragraph_index": i})
-                chunks.append(Chunk(chunk_id=cid, document_id=doc_id, text=p_text, metadata=meta))
+                chunks.append(
+                    Chunk(chunk_id=cid, document_id=doc_id, text=p_text, metadata=meta)
+                )
         return chunks

@@ -17,6 +17,7 @@ from report.repositories.template import TemplateRepository
 from report.repositories.citation import CitationRepository
 from report.repositories.activity_log import ReportActivityLogRepository
 
+
 class UnitOfWork:
     """Manages transaction scopes and instantiates repositories bound to a single async session."""
 
@@ -38,7 +39,7 @@ class UnitOfWork:
         self.snapshots = SnapshotRepository(self.session)
         self.assignments = AssignmentRepository(self.session)
         self.activity_logs = ActivityLogRepository(self.session)
-        
+
         # Report subsystem
         self.reports = ReportRepository(self.session)
         self.templates = TemplateRepository(self.session)

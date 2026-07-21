@@ -1,6 +1,7 @@
 from database.repositories.base import BaseRepository
 from database.models.document import DocumentModel
 
+
 class DocumentRepository(BaseRepository[DocumentModel]):
     """Repository mapping uploaded document source files lookups."""
 

@@ -7,11 +7,13 @@ try:
     import qdrant_client
     from qdrant_client.http import models as qmodels
     from qdrant_client.http.exceptions import UnexpectedResponse
+
     QDRANT_CLIENT_AVAILABLE = True
 except ImportError:
     QDRANT_CLIENT_AVAILABLE = False
     qdrant_client = None
     qmodels = None
+
 
 class CollectionManager:
     """Manages creation, schema validation, named vectors, and migrations of Qdrant collections."""
@@ -29,13 +31,15 @@ class CollectionManager:
         distance_map = {
             "Cosine": qmodels.Distance.COSINE,
             "Euclid": qmodels.Distance.EUCLID,
-            "Dot": qmodels.Distance.DOT
+            "Dot": qmodels.Distance.DOT,
         }
         distance = distance_map.get(distance_str, qmodels.Distance.COSINE)
 
         try:
             collection_info = self.client.get_collection(self.collection_name)
-            logger.info(f"Collection '{self.collection_name}' already exists. Validating schema...")
+            logger.info(
+                f"Collection '{self.collection_name}' already exists. Validating schema..."
+            )
 
             vectors_config = collection_info.config.params.vectors
             is_valid = False
@@ -56,7 +60,9 @@ class CollectionManager:
                     is_valid = True
 
             if is_valid:
-                logger.info(f"Collection '{self.collection_name}' schema validated (dimension={dimension}).")
+                logger.info(
+                    f"Collection '{self.collection_name}' schema validated (dimension={dimension})."
+                )
             else:
                 logger.warning(
                     f"Collection '{self.collection_name}' schema mismatch! "
@@ -66,7 +72,9 @@ class CollectionManager:
                 self.recreate_collection(dimension, distance)
 
         except (UnexpectedResponse, Exception):
-            logger.info(f"Collection '{self.collection_name}' does not exist. Creating new collection...")
+            logger.info(
+                f"Collection '{self.collection_name}' does not exist. Creating new collection..."
+            )
             self.recreate_collection(dimension, distance)
 
     def recreate_collection(self, dimension: int, distance):
@@ -80,12 +88,13 @@ class CollectionManager:
             collection_name=self.collection_name,
             vectors_config={
                 self.vector_name: qmodels.VectorParams(
-                    size=dimension,
-                    distance=distance
+                    size=dimension, distance=distance
                 )
-            }
+            },
         )
-        logger.info(f"Collection '{self.collection_name}' created successfully with named vector '{self.vector_name}' (dimension={dimension}).")
+        logger.info(
+            f"Collection '{self.collection_name}' created successfully with named vector '{self.vector_name}' (dimension={dimension})."
+        )
 
     def get_health_status(self) -> dict:
         """Retrieves collection statistics and health metrics."""
@@ -95,10 +104,7 @@ class CollectionManager:
                 "status": "healthy",
                 "points_count": info.points_count,
                 "status_str": str(info.status),
-                "vectors_count": info.vectors_count
+                "vectors_count": info.vectors_count,
             }
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            return {"status": "unhealthy", "error": str(e)}

@@ -1,8 +1,9 @@
 import time
 
+
 class RetrievalTimingMiddleware:
     """Interceptor tracking latency parameters of query flows."""
-    
+
     def __init__(self):
         self._start = None
 

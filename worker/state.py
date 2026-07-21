@@ -8,6 +8,7 @@ from database.models.task import TaskModel
 
 logger = logging.getLogger("worker_state")
 
+
 class TaskStateManager:
     """Manages persistent task state lifecycle tracking across Database and Queue backends."""
 
@@ -20,7 +21,7 @@ class TaskStateManager:
                 name=name,
                 status="QUEUED",
                 retries=0,
-                max_retries=max_retries
+                max_retries=max_retries,
             )
             await uow.tasks.add(task)
             await uow.commit()
@@ -32,7 +33,7 @@ class TaskStateManager:
         status: str,
         result: Optional[Any] = None,
         error: Optional[str] = None,
-        increment_retries: bool = False
+        increment_retries: bool = False,
     ) -> None:
         """Updates task state, results, errors, and retries count."""
         async with UnitOfWork() as uow:
@@ -76,5 +77,5 @@ class TaskStateManager:
                 "error": task.error,
                 "result": res_data,
                 "created_at": task.created_at.isoformat() + "Z",
-                "updated_at": task.updated_at.isoformat() + "Z"
+                "updated_at": task.updated_at.isoformat() + "Z",
             }

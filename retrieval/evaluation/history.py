@@ -5,6 +5,7 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+
 class BenchmarkHistoryManager:
     """Manages historical benchmark reports and metadata for trend analysis and regression testing."""
 
@@ -22,13 +23,20 @@ class BenchmarkHistoryManager:
                 stderr=subprocess.PIPE,
                 text=True,
                 check=True,
-                cwd=str(self.workspace_root)
+                cwd=str(self.workspace_root),
             )
             return res.stdout.strip()
         except Exception:
             return "unknown-commit"
 
-    def save_run(self, report: dict, embedding_model: str, reranker: str, profile: str, dataset_version: str) -> str:
+    def save_run(
+        self,
+        report: dict,
+        embedding_model: str,
+        reranker: str,
+        profile: str,
+        dataset_version: str,
+    ) -> str:
         """Saves a benchmark run to historical storage alongside detailed system metadata."""
         timestamp = time.strftime("%Y-%m-%d_%H%M%S")
         filename = f"{timestamp}.json"
@@ -41,9 +49,9 @@ class BenchmarkHistoryManager:
                 "reranker": reranker,
                 "profile": profile,
                 "dataset_version": dataset_version,
-                "git_commit": self.get_git_commit()
+                "git_commit": self.get_git_commit(),
             },
-            "report": report
+            "report": report,
         }
 
         with open(filepath, "w", encoding="utf-8") as f:
@@ -56,7 +64,7 @@ class BenchmarkHistoryManager:
         files = sorted(self.history_dir.glob("*.json"))
         if not files:
             return None
-        
+
         # Load the latest file
         try:
             with open(files[-1], "r", encoding="utf-8") as f:

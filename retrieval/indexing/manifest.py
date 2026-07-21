@@ -2,18 +2,26 @@ import json
 from pathlib import Path
 from datetime import datetime, timezone
 
+
 class IndexManifest:
     """Manages index versioning details and metadata stats for reproducibility."""
 
     @staticmethod
-    def save_manifest(index_dir: Path, version: str, embedding_engine: str, dimension: int, chunk_count: int, doc_count: int) -> None:
+    def save_manifest(
+        index_dir: Path,
+        version: str,
+        embedding_engine: str,
+        dimension: int,
+        chunk_count: int,
+        doc_count: int,
+    ) -> None:
         manifest = {
             "index_version": version,
             "embedding": embedding_engine,
             "dimension": dimension,
             "chunks": chunk_count,
             "documents": doc_count,
-            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
         index_dir.mkdir(parents=True, exist_ok=True)
         manifest_path = index_dir / "manifest.json"

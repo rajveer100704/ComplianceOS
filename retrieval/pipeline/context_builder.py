@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from retrieval.models.chunk import Chunk
 
+
 class ContextBuilder:
     """Combines extracted chunks with neighboring siblings or parent section nodes."""
 

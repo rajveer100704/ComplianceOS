@@ -5,20 +5,39 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List
 from pathlib import Path
 from database.services.unit_of_work import UnitOfWork
-from database.models.report import ReportModel, ReportFindingModel, ReportSectionModel, ReportCitationModel
+from database.models.report import (
+    ReportModel,
+    ReportFindingModel,
+    ReportSectionModel,
+    ReportCitationModel,
+)
 from report.receipts.export import ReportExportReceipt
 from report.events import ReportEventPublisher
 
 logger = logging.getLogger("export_service")
 
+
 class BaseExporter:
     """Interface for pluggable report format compilation."""
-    def compile(self, report: ReportModel, sections: List[ReportSectionModel], findings: List[ReportFindingModel]) -> str:
+
+    def compile(
+        self,
+        report: ReportModel,
+        sections: List[ReportSectionModel],
+        findings: List[ReportFindingModel],
+    ) -> str:
         raise NotImplementedError
+
 
 class JSONExporter(BaseExporter):
     """Compiles compliance report payload to standard JSON string."""
-    def compile(self, report: ReportModel, sections: List[ReportSectionModel], findings: List[ReportFindingModel]) -> str:
+
+    def compile(
+        self,
+        report: ReportModel,
+        sections: List[ReportSectionModel],
+        findings: List[ReportFindingModel],
+    ) -> str:
         payload = {
             "report_id": report.id,
             "request_id": report.request_id,
@@ -30,8 +49,9 @@ class JSONExporter(BaseExporter):
                     "title": s.title,
                     "content": s.content,
                     "type": s.section_type,
-                    "order": s.ordering
-                } for s in sections
+                    "order": s.ordering,
+                }
+                for s in sections
             ],
             "findings": [
                 {
@@ -40,20 +60,28 @@ class JSONExporter(BaseExporter):
                     "remediation": f.remediation,
                     "priority": f.priority,
                     "risk_score": f.risk_score,
-                    "risk_level": f.risk_level
-                } for f in findings
-            ]
+                    "risk_level": f.risk_level,
+                }
+                for f in findings
+            ],
         }
         return json.dumps(payload, indent=2)
 
+
 class MarkdownExporter(BaseExporter):
     """Compiles compliance report to structured clean Markdown document."""
-    def compile(self, report: ReportModel, sections: List[ReportSectionModel], findings: List[ReportFindingModel]) -> str:
+
+    def compile(
+        self,
+        report: ReportModel,
+        sections: List[ReportSectionModel],
+        findings: List[ReportFindingModel],
+    ) -> str:
         lines = [
             f"# Compliance Report - Version {report.version}",
             f"**Status:** {report.status} | **Creator:** {report.created_by}",
             f"**Report ID:** {report.id} | **Request ID:** {report.request_id}",
-            "---"
+            "---",
         ]
 
         # Append sections in sorted order
@@ -73,9 +101,16 @@ class MarkdownExporter(BaseExporter):
 
         return "\n".join(lines)
 
+
 class HTMLExporter(BaseExporter):
     """Compiles compliance report to beautifully styled HTML document markup."""
-    def compile(self, report: ReportModel, sections: List[ReportSectionModel], findings: List[ReportFindingModel]) -> str:
+
+    def compile(
+        self,
+        report: ReportModel,
+        sections: List[ReportSectionModel],
+        findings: List[ReportFindingModel],
+    ) -> str:
         sections_html = ""
         for s in sections:
             sections_html += f"""
@@ -127,17 +162,20 @@ class HTMLExporter(BaseExporter):
 </html>
 """
 
+
 class ExportService:
     """Compiles and writes compliance reports using pluggable exporters."""
-    
+
     EXPORTERS = {
         "json": JSONExporter(),
         "markdown": MarkdownExporter(),
-        "html": HTMLExporter()
+        "html": HTMLExporter(),
     }
 
     @staticmethod
-    async def export_report(report_id: int, format_str: str, exporter_user: str) -> ReportExportReceipt:
+    async def export_report(
+        report_id: int, format_str: str, exporter_user: str
+    ) -> ReportExportReceipt:
         """Runs the validation checks, compiles the document content, and writes to storage."""
         format_key = format_str.lower()
         if format_key not in ExportService.EXPORTERS:
@@ -151,36 +189,44 @@ class ExportService:
 
             # 2. Security Check: must be Approved or Published
             if report.status not in ["Approved", "Published"]:
-                raise ValueError(f"Report must be Approved or Published to be exported (current: '{report.status}').")
+                raise ValueError(
+                    f"Report must be Approved or Published to be exported (current: '{report.status}')."
+                )
 
             # 3. Fetch associated Sections (preserving template section ordering)
             from sqlalchemy import select
+
             stmt_sections = (
                 select(ReportSectionModel)
-                .where(ReportSectionModel.report_id == report_id, ReportSectionModel.is_deleted == False)
+                .where(
+                    ReportSectionModel.report_id == report_id,
+                    ReportSectionModel.is_deleted == False,
+                )
                 .order_by(ReportSectionModel.ordering.asc())
             )
             res_sections = await uow.session.execute(stmt_sections)
             sections = list(res_sections.scalars().all())
 
             # 4. Fetch Findings
-            stmt_findings = (
-                select(ReportFindingModel)
-                .where(ReportFindingModel.report_id == report_id, ReportFindingModel.is_deleted == False)
+            stmt_findings = select(ReportFindingModel).where(
+                ReportFindingModel.report_id == report_id,
+                ReportFindingModel.is_deleted == False,
             )
             res_findings = await uow.session.execute(stmt_findings)
             findings = list(res_findings.scalars().all())
 
             # 5. Citation Check: Every finding must have at least one citation
             for f in findings:
-                stmt_citations = (
-                    select(ReportCitationModel)
-                    .where(ReportCitationModel.finding_id == f.id, ReportCitationModel.is_deleted == False)
+                stmt_citations = select(ReportCitationModel).where(
+                    ReportCitationModel.finding_id == f.id,
+                    ReportCitationModel.is_deleted == False,
                 )
                 res_citations = await uow.session.execute(stmt_citations)
                 citations = list(res_citations.scalars().all())
                 if not citations:
-                    raise ValueError(f"Export failed: Finding '{f.title}' (ID {f.id}) has no citations to evidence.")
+                    raise ValueError(
+                        f"Export failed: Finding '{f.title}' (ID {f.id}) has no citations to evidence."
+                    )
 
             # 6. Run Exporter Compiler
             exporter = ExportService.EXPORTERS[format_key]
@@ -190,7 +236,7 @@ class ExportService:
             workspace_root = Path(__file__).parent.parent.parent
             export_dir = workspace_root / "storage" / "exports"
             os.makedirs(export_dir, exist_ok=True)
-            
+
             now_str = datetime.now(timezone.utc).isoformat()
             file_name = f"report_{report_id}_{int(datetime.now(timezone.utc).timestamp())}.{format_key}"
             file_path = export_dir / file_name
@@ -200,22 +246,25 @@ class ExportService:
 
             # 8. Record timeline activity
             from database.models.report import ReportActivityLogModel
+
             activity = ReportActivityLogModel(
                 report_id=report_id,
                 event_type="ReportExported",
                 user=exporter_user,
-                details=f"Report compiled and exported to {format_key.upper()} format."
+                details=f"Report compiled and exported to {format_key.upper()} format.",
             )
             uow.session.add(activity)
             await uow.commit()
 
             # 9. Publish event
-            await ReportEventPublisher.publish_report_exported(report_id, format_key, exporter_user, now_str)
+            await ReportEventPublisher.publish_report_exported(
+                report_id, format_key, exporter_user, now_str
+            )
 
             return ReportExportReceipt(
                 report_id=report_id,
                 format=format_key,
                 exported_by=exporter_user,
                 timestamp=now_str,
-                file_path=str(file_path.absolute())
+                file_path=str(file_path.absolute()),
             )

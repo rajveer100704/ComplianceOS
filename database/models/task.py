@@ -3,8 +3,10 @@ from sqlalchemy import String, Integer, Text
 from sqlalchemy.orm import Mapped, mapped_column
 from database.models.base import Base, AuditMixin
 
+
 class TaskModel(Base, AuditMixin):
     """Database model for persistent tracking of background worker tasks."""
+
     __tablename__ = "tasks"
 
     id: Mapped[str] = mapped_column(String(255), primary_key=True)

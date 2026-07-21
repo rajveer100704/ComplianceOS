@@ -1,6 +1,6 @@
 class RetrievalStats:
     """Accumulates system-wide search statistics and latencies."""
-    
+
     _queries_count = 0
     _cache_hits = 0
     _total_latency_ms = 0
@@ -14,12 +14,18 @@ class RetrievalStats:
 
     @classmethod
     def get_stats(cls) -> dict:
-        avg_latency = cls._total_latency_ms / cls._queries_count if cls._queries_count > 0 else 0.0
+        avg_latency = (
+            cls._total_latency_ms / cls._queries_count
+            if cls._queries_count > 0
+            else 0.0
+        )
         return {
             "queries": cls._queries_count,
             "cache_hits": cls._cache_hits,
-            "cache_rate": cls._cache_hits / cls._queries_count if cls._queries_count > 0 else 0.0,
-            "average_latency_ms": avg_latency
+            "cache_rate": (
+                cls._cache_hits / cls._queries_count if cls._queries_count > 0 else 0.0
+            ),
+            "average_latency_ms": avg_latency,
         }
 
     @classmethod

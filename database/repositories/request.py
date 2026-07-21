@@ -1,6 +1,7 @@
 from database.repositories.base import BaseRepository
 from database.models.request import RequestModel
 
+
 class RequestRepository(BaseRepository[RequestModel]):
     """Repository mapping request-specific database lookups."""
 

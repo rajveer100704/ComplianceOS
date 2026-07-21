@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, Any
 
+
 class QueueBackend(ABC):
     """Abstract interface defining the requirements for background processing queue backends."""
 

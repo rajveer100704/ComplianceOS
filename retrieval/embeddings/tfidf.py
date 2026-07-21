@@ -5,6 +5,7 @@ from retrieval.base import BaseEmbeddingProvider
 from retrieval.capabilities import EmbeddingCapabilities
 from retrieval.registry import register_embedding
 
+
 @register_embedding("tfidf")
 class TFIDFEmbeddingProvider(BaseEmbeddingProvider):
     """Provides local dense-like representations mapping standard TF-IDF vocabularies."""
@@ -12,7 +13,7 @@ class TFIDFEmbeddingProvider(BaseEmbeddingProvider):
     def __init__(self, dimension: int = 512, **kwargs):
         self.dimension = dimension
         self.vectorizer = TfidfVectorizer(max_features=dimension, stop_words="english")
-        
+
         # Fit on regulations corpus on init
         regs_path = Path(__file__).parent.parent.parent / "regulations.json"
         if regs_path.exists():
@@ -22,9 +23,19 @@ class TFIDFEmbeddingProvider(BaseEmbeddingProvider):
                 texts = [r["text"] for r in regs]
                 self.vectorizer.fit(texts)
             except Exception:
-                self.vectorizer.fit(["Compliance check safety system FAA rules", "NRC reactor containment regulations"])
+                self.vectorizer.fit(
+                    [
+                        "Compliance check safety system FAA rules",
+                        "NRC reactor containment regulations",
+                    ]
+                )
         else:
-            self.vectorizer.fit(["Compliance check safety system FAA rules", "NRC reactor containment regulations"])
+            self.vectorizer.fit(
+                [
+                    "Compliance check safety system FAA rules",
+                    "NRC reactor containment regulations",
+                ]
+            )
 
     @property
     def capabilities(self) -> EmbeddingCapabilities:

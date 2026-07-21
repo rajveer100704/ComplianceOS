@@ -1,6 +1,7 @@
 from typing import List, Tuple
 from retrieval.models.chunk import Chunk
 
+
 class CandidatePipeline:
     """Manages candidate formatting, deduplication, and pipeline filtering operations."""
 

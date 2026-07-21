@@ -10,6 +10,7 @@ No external LLM key required — retrieval + overlap scoring is fully local,
 so this runs standalone. Swap `score_claim()` for an LLM call later without
 touching the API contract.
 """
+
 import json
 import re
 import uuid
@@ -46,16 +47,17 @@ db.seed_requirements(REGULATIONS)
 
 # Initialize retrieval container and index standard regulations
 from retrieval.container import Container
+
 Container.initialize()
 idx_service = Container.get_indexing_service()
 
 # Seed regulations into the indexing service
 for i, reg in enumerate(REGULATIONS):
     idx_service.index_document(
-        doc_id=-100 - i, 
-        filename="regulations.json", 
+        doc_id=-100 - i,
+        filename="regulations.json",
         raw_text=reg["text"],
-        custom_metadata={"id": reg["id"], "title": reg["title"]}
+        custom_metadata={"id": reg["id"], "title": reg["title"]},
     )
 
 app = FastAPI(title="Compliance Evidence Checker")
@@ -68,7 +70,7 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 # Operational Metrics Counters
@@ -76,13 +78,15 @@ _METRICS = {
     "requests_total": 0,
     "review_decisions_total": 0,
     "reports_generated_total": 0,
-    "report_exports_total": 0
+    "report_exports_total": 0,
 }
+
 
 @app.middleware("http")
 async def count_requests_middleware(request: Request, call_next):
     _METRICS["requests_total"] += 1
     return await call_next(request)
+
 
 # Standardized Error Handlers
 @app.exception_handler(HTTPException)
@@ -94,10 +98,11 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             "code": f"HTTP_{exc.status_code}",
             "message": exc.detail,
             "request_id": request_id,
-            "details": {}
+            "details": {},
         },
-        headers={"X-Request-ID": request_id}
+        headers={"X-Request-ID": request_id},
     )
+
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
@@ -108,16 +113,18 @@ async def generic_exception_handler(request: Request, exc: Exception):
             "code": "INTERNAL_SERVER_ERROR",
             "message": "An unexpected server error occurred.",
             "request_id": request_id,
-            "details": {"error_type": type(exc).__name__, "error": str(exc)}
+            "details": {"error_type": type(exc).__name__, "error": str(exc)},
         },
-        headers={"X-Request-ID": request_id}
+        headers={"X-Request-ID": request_id},
     )
+
 
 # Operational & Diagnostics Endpoints
 @app.get("/healthz")
 async def liveness_probe():
     """Liveness probe: Returns HTTP 200 if process is healthy."""
     return {"status": "ok", "environment": settings.ENVIRONMENT}
+
 
 @app.get("/readyz")
 async def readiness_probe():
@@ -128,10 +135,11 @@ async def readiness_probe():
             "database": "connected",
             "qdrant": "ready",
             "worker_queue": "ready",
-            "embeddings": "loaded"
-        }
+            "embeddings": "loaded",
+        },
     }
     return readiness
+
 
 @app.get("/metrics")
 async def metrics_endpoint():
@@ -150,14 +158,13 @@ async def metrics_endpoint():
     return PlainTextResponse(content=metrics_text, media_type="text/plain")
 
 
-
 class ClaimRequest(BaseModel):
     claims: List[str]
 
 
 class ClaimResult(BaseModel):
     claim: str
-    status: str          # SUPPORTED | PARTIAL | UNSUPPORTED
+    status: str  # SUPPORTED | PARTIAL | UNSUPPORTED
     confidence: float
     citation: str
     citation_title: str
@@ -170,11 +177,13 @@ _last_run_receipts = []
 
 def score_claim(claim: str) -> ClaimResult:
     ret_service = Container.get_retrieval_service()
-    bundle = ret_service.retrieve(claim, limit=1, filters={"filename": "regulations.json"})
-    
+    bundle = ret_service.retrieve(
+        claim, limit=1, filters={"filename": "regulations.json"}
+    )
+
     _last_run_receipts.append(bundle.receipt)
     best_chunk = bundle.chunks[0] if bundle.chunks else None
-    
+
     if best_chunk:
         score_info = bundle.scores.get(best_chunk.chunk_id, {})
         best_score = score_info.get("rerank", score_info.get("dense", 0.0))
@@ -191,11 +200,20 @@ def score_claim(claim: str) -> ClaimResult:
     partial_thresh = ret_service.planner.get_plan(claim)["thresholds"]["partial"]
 
     if best_score >= support_thresh:
-        status, reason = "SUPPORTED", "Claim terms strongly overlap with cited regulation."
+        status, reason = (
+            "SUPPORTED",
+            "Claim terms strongly overlap with cited regulation.",
+        )
     elif best_score >= partial_thresh:
-        status, reason = "PARTIAL", "Some overlap found, but not enough specific terms match — needs engineer review."
+        status, reason = (
+            "PARTIAL",
+            "Some overlap found, but not enough specific terms match — needs engineer review.",
+        )
     else:
-        status, reason = "UNSUPPORTED", "No regulation in the corpus sufficiently supports this claim."
+        status, reason = (
+            "UNSUPPORTED",
+            "No regulation in the corpus sufficiently supports this claim.",
+        )
 
     if status == "UNSUPPORTED":
         citation = "—"
@@ -205,7 +223,11 @@ def score_claim(claim: str) -> ClaimResult:
     return ClaimResult(
         claim=claim,
         status=status,
-        confidence=round(min(best_score / support_thresh, 1.0) * 100, 1) if support_thresh > 0 else 0.0,
+        confidence=(
+            round(min(best_score / support_thresh, 1.0) * 100, 1)
+            if support_thresh > 0
+            else 0.0
+        ),
         citation=citation,
         citation_title=citation_title,
         snippet=snippet,
@@ -234,6 +256,7 @@ def list_regulations():
 # ---------------------------------------------------------------------------
 # Request-centric workflow (Request -> Documents -> Pipeline -> Review)
 # ---------------------------------------------------------------------------
+
 
 class NewRequest(BaseModel):
     project: str
@@ -283,7 +306,9 @@ def run_request(request_id: int):
     if not data:
         raise HTTPException(404, "Request not found")
     if not data["documents"]:
-        raise HTTPException(400, "Upload at least one document before running the pipeline")
+        raise HTTPException(
+            400, "Upload at least one document before running the pipeline"
+        )
 
     # Reset vector store to ensure query isolation
     Container.get_lifecycle_manager().reset_index()
@@ -292,18 +317,16 @@ def run_request(request_id: int):
     idx_service = Container.get_indexing_service()
     for i, reg in enumerate(REGULATIONS):
         idx_service.index_document(
-            doc_id=-100 - i, 
-            filename="regulations.json", 
+            doc_id=-100 - i,
+            filename="regulations.json",
             raw_text=reg["text"],
-            custom_metadata={"id": reg["id"], "title": reg["title"]}
+            custom_metadata={"id": reg["id"], "title": reg["title"]},
         )
 
     # Index request documents
     for doc in data["documents"]:
         idx_service.index_document(
-            doc_id=doc["id"],
-            filename=doc["filename"],
-            raw_text=doc["text"]
+            doc_id=doc["id"], filename=doc["filename"], raw_text=doc["text"]
         )
 
     # Clear last receipts
@@ -311,7 +334,11 @@ def run_request(request_id: int):
     _last_run_receipts = []
 
     final_state = pipeline.run_pipeline(
-        request_id, data["documents"], split_claims, score_claim, corpus_size=len(REGULATIONS)
+        request_id,
+        data["documents"],
+        split_claims,
+        score_claim,
+        corpus_size=len(REGULATIONS),
     )
 
     # Save the accumulated retrieval receipts to file
@@ -320,15 +347,23 @@ def run_request(request_id: int):
     receipt_path = receipt_dir / "retrieval.receipt.json"
     try:
         with open(receipt_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "request_id": request_id,
-                "timestamp": db._now(),
-                "receipts": _last_run_receipts
-            }, f, indent=2)
+            json.dump(
+                {
+                    "request_id": request_id,
+                    "timestamp": db._now(),
+                    "receipts": _last_run_receipts,
+                },
+                f,
+                indent=2,
+            )
     except Exception:
         pass
 
-    return {"summary": final_state["draft_summary"], "results": final_state["results"], "version": final_state["version"]}
+    return {
+        "summary": final_state["draft_summary"],
+        "results": final_state["results"],
+        "version": final_state["version"],
+    }
 
 
 @app.post("/api/claims/{claim_id}/review")
@@ -347,7 +382,9 @@ MAX_PDF_BYTES = 20 * 1024 * 1024  # 20MB
 async def upload_pdf(request_id: int, sync: bool = False, file: UploadFile = File(...)):
     if not db.get_request(request_id):
         raise HTTPException(404, "Request not found")
-    if file.content_type != "application/pdf" and not file.filename.lower().endswith(".pdf"):
+    if file.content_type != "application/pdf" and not file.filename.lower().endswith(
+        ".pdf"
+    ):
         raise HTTPException(400, "Only application/pdf files are accepted")
 
     data = await file.read()
@@ -357,6 +394,7 @@ async def upload_pdf(request_id: int, sync: bool = False, file: UploadFile = Fil
         raise HTTPException(400, "File is not a valid PDF (bad magic bytes)")
 
     import os
+
     is_testing = os.getenv("PYTEST_CURRENT_TEST") is not None
 
     if sync or is_testing:
@@ -366,10 +404,15 @@ async def upload_pdf(request_id: int, sync: bool = False, file: UploadFile = Fil
             text, metadata = parser.parse(data, file.filename)
             page_count = metadata["pages"]
         except Exception as e:
-            raise HTTPException(422, f"Could not parse PDF — file may be corrupt or encrypted: {str(e)}")
+            raise HTTPException(
+                422, f"Could not parse PDF — file may be corrupt or encrypted: {str(e)}"
+            )
 
         if not text.strip():
-            raise HTTPException(422, "No extractable text found (scanned/image-only PDF not supported yet)")
+            raise HTTPException(
+                422,
+                "No extractable text found (scanned/image-only PDF not supported yet)",
+            )
 
         safe_name = Path(file.filename).name
         doc_id = db.add_document(request_id, safe_name, text, source_type="pdf")
@@ -382,20 +425,36 @@ async def upload_pdf(request_id: int, sync: bool = False, file: UploadFile = Fil
             "layout": metadata["layout"],
             "duration_ms": metadata["elapsed_ms"],
             "warnings": metadata["warnings"],
-            "capabilities": metadata["capabilities"]
+            "capabilities": metadata["capabilities"],
         }
 
-        meta_dir = Path(__file__).parent / "storage" / "requests" / f"REQ-{request_id}" / "documents"
+        meta_dir = (
+            Path(__file__).parent
+            / "storage"
+            / "requests"
+            / f"REQ-{request_id}"
+            / "documents"
+        )
         meta_dir.mkdir(parents=True, exist_ok=True)
         try:
-            with open(meta_dir / f"{safe_name}.metadata.json", "w", encoding="utf-8") as f:
+            with open(
+                meta_dir / f"{safe_name}.metadata.json", "w", encoding="utf-8"
+            ) as f:
                 json.dump(metadata, f, indent=2)
-            with open(meta_dir / f"{safe_name}.receipt.json", "w", encoding="utf-8") as f:
+            with open(
+                meta_dir / f"{safe_name}.receipt.json", "w", encoding="utf-8"
+            ) as f:
                 json.dump(receipt, f, indent=2)
         except Exception:
             pass
 
-        return {"id": doc_id, "pages": page_count, "chars_extracted": len(text), "parser_metadata": metadata, "parser_receipt": receipt}
+        return {
+            "id": doc_id,
+            "pages": page_count,
+            "chars_extracted": len(text),
+            "parser_metadata": metadata,
+            "parser_receipt": receipt,
+        }
     else:
         # Run asynchronously in background worker
         safe_name = Path(file.filename).name
@@ -413,6 +472,7 @@ async def upload_pdf(request_id: int, sync: bool = False, file: UploadFile = Fil
 
         # Track task in database
         from worker.state import TaskStateManager
+
         await TaskStateManager.create_task(task_id, "parse_and_index_document_task")
 
         # Enqueue task
@@ -423,17 +483,14 @@ async def upload_pdf(request_id: int, sync: bool = False, file: UploadFile = Fil
             task_id=task_id,
             request_id=request_id,
             doc_id=doc_id,
-            file_path=str(temp_path)
+            file_path=str(temp_path),
         )
 
-        return {
-            "task_id": task_id,
-            "document_id": doc_id,
-            "status": "QUEUED"
-        }
+        return {"task_id": task_id, "document_id": doc_id, "status": "QUEUED"}
 
 
 # --- Knowledge graph / coverage / diff (Priority 1, database-architect + ai-agent-development) ---
+
 
 @app.get("/api/requests/{request_id}/graph")
 def get_graph(request_id: int):
@@ -462,6 +519,7 @@ def get_diff(request_id: int, from_version: int, to_version: int):
 
 
 # --- Dashboard, Review Queue, Reports (Phase A/C enterprise UX) ---
+
 
 class CommentBody(BaseModel):
     comment: str
@@ -500,6 +558,7 @@ def get_report(request_id: int):
 # --- Submission Workspace (Sprint 1) ---
 # draft -> running -> needs_review -> approved -> locked -> submitted -> archived
 # Locked/submitted/archived requests reject document/run/review/comment mutations (423).
+
 
 @app.post("/api/requests/{request_id}/approve")
 def approve_request(request_id: int):
@@ -549,12 +608,14 @@ def archive_request(request_id: int):
 @app.exception_handler(db.LockedError)
 def locked_error_handler(request, exc: db.LockedError):
     from fastapi.responses import JSONResponse
+
     return JSONResponse(status_code=423, content={"detail": str(exc)})
 
 
 @app.get("/api/tasks/{task_id}")
 async def get_task_status(task_id: str):
     from worker.state import TaskStateManager
+
     task = await TaskStateManager.get_task(task_id)
     if not task:
         raise HTTPException(404, "Task not found")
@@ -565,6 +626,7 @@ async def get_task_status(task_id: str):
 async def cancel_task(task_id: str):
     from retrieval.container import Container
     from worker.state import TaskStateManager
+
     task = await TaskStateManager.get_task(task_id)
     if not task:
         raise HTTPException(404, "Task not found")
@@ -579,6 +641,7 @@ async def cancel_task(task_id: str):
 @app.get("/api/worker/status")
 async def get_worker_status():
     from retrieval.container import Container
+
     backend = Container.get_queue_backend()
     if hasattr(backend, "pool") and backend.pool:
         pool = backend.pool
@@ -588,32 +651,30 @@ async def get_worker_status():
             val = await pool.get(k)
             if val:
                 workers.append(json.loads(val))
-        return {
-            "engine": "arq",
-            "active_workers": len(workers),
-            "workers": workers
-        }
+        return {"engine": "arq", "active_workers": len(workers), "workers": workers}
     else:
         return {
             "engine": "local",
             "active_workers": 1,
             "queue_depth": backend.queue.qsize() if hasattr(backend, "queue") else 0,
-            "jobs_count": len(backend.jobs) if hasattr(backend, "jobs") else 0
+            "jobs_count": len(backend.jobs) if hasattr(backend, "jobs") else 0,
         }
 
 
 # --- Sprint 11 Review & Collaboration Endpoints ---
 
+
 @app.post("/api/requests/{request_id}/assign")
 async def assign_reviewer(request_id: int, payload: dict):
     from review.services.review_service import ReviewService
+
     try:
         assignment = await ReviewService.assign_reviewer(
             request_id=request_id,
             reviewer=payload["reviewer"],
             assigned_by=payload["assigned_by"],
             role=payload.get("role", "Reviewer"),
-            reason=payload.get("reason")
+            reason=payload.get("reason"),
         )
         return {
             "ok": True,
@@ -621,8 +682,8 @@ async def assign_reviewer(request_id: int, payload: dict):
                 "id": assignment.id,
                 "reviewer": assignment.reviewer,
                 "assigned_by": assignment.assigned_by,
-                "assigned_at": assignment.assigned_at
-            }
+                "assigned_at": assignment.assigned_at,
+            },
         }
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -633,12 +694,13 @@ async def assign_reviewer(request_id: int, payload: dict):
 @app.post("/api/requests/{request_id}/transition")
 async def transition_status(request_id: int, payload: dict):
     from review.services.review_service import ReviewService
+
     try:
         receipt = await ReviewService.transition_status(
             request_id=request_id,
             new_status=payload["new_status"],
             user=payload["user"],
-            role=payload.get("role", "Reviewer")
+            role=payload.get("role", "Reviewer"),
         )
         return {
             "ok": True,
@@ -647,8 +709,8 @@ async def transition_status(request_id: int, payload: dict):
                 "old_status": receipt.old_status,
                 "new_status": receipt.new_status,
                 "transitioned_by": receipt.transitioned_by,
-                "timestamp": receipt.timestamp
-            }
+                "timestamp": receipt.timestamp,
+            },
         }
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -659,12 +721,13 @@ async def transition_status(request_id: int, payload: dict):
 @app.post("/api/claims/{claim_id}/comments")
 async def add_claim_comment(claim_id: int, payload: dict):
     from review.services.comment_service import CommentService
+
     try:
         comment = await CommentService.add_comment(
             claim_id=claim_id,
             user=payload["user"],
             text=payload["text"],
-            parent_id=payload.get("parent_id")
+            parent_id=payload.get("parent_id"),
         )
         return {
             "ok": True,
@@ -673,8 +736,8 @@ async def add_claim_comment(claim_id: int, payload: dict):
                 "user": comment.user,
                 "text": comment.text,
                 "parent_id": comment.parent_id,
-                "created_at": comment.created_at.isoformat()
-            }
+                "created_at": comment.created_at.isoformat(),
+            },
         }
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -683,6 +746,7 @@ async def add_claim_comment(claim_id: int, payload: dict):
 @app.get("/api/claims/{claim_id}/comments")
 async def get_claim_comments(claim_id: int):
     from review.services.comment_service import CommentService
+
     try:
         tree = await CommentService.get_comments_tree(claim_id)
         return tree
@@ -693,13 +757,14 @@ async def get_claim_comments(claim_id: int):
 @app.post("/api/claims/{claim_id}/evidence/pin")
 async def pin_evidence(claim_id: int, payload: dict):
     from review.services.evidence_service import EvidenceService
+
     try:
         evidence = await EvidenceService.pin_evidence(
             claim_id=claim_id,
             chunk_id=payload["chunk_id"],
             document_id=payload["document_id"],
             user=payload["user"],
-            role=payload.get("role", "PRIMARY")
+            role=payload.get("role", "PRIMARY"),
         )
         return {
             "ok": True,
@@ -709,8 +774,8 @@ async def pin_evidence(claim_id: int, payload: dict):
                 "chunk_id": evidence.chunk_id,
                 "document_id": evidence.document_id,
                 "role": evidence.role,
-                "pinned_by": evidence.pinned_by
-            }
+                "pinned_by": evidence.pinned_by,
+            },
         }
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -719,6 +784,7 @@ async def pin_evidence(claim_id: int, payload: dict):
 @app.delete("/api/claims/{claim_id}/evidence/unpin/{chunk_id}")
 async def unpin_evidence(claim_id: int, chunk_id: str, user: str):
     from review.services.evidence_service import EvidenceService
+
     try:
         success = await EvidenceService.unpin_evidence(claim_id, chunk_id, user)
         return {"ok": success}
@@ -729,6 +795,7 @@ async def unpin_evidence(claim_id: int, chunk_id: str, user: str):
 @app.get("/api/claims/{claim_id}/evidence")
 async def get_claim_evidence(claim_id: int):
     from review.services.evidence_service import EvidenceService
+
     try:
         evs = await EvidenceService.get_claim_evidences(claim_id)
         return [
@@ -738,8 +805,9 @@ async def get_claim_evidence(claim_id: int):
                 "chunk_id": ev.chunk_id,
                 "document_id": ev.document_id,
                 "role": ev.role,
-                "pinned_by": ev.pinned_by
-            } for ev in evs
+                "pinned_by": ev.pinned_by,
+            }
+            for ev in evs
         ]
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -748,10 +816,10 @@ async def get_claim_evidence(claim_id: int):
 @app.post("/api/requests/{request_id}/snapshots")
 async def create_snapshot_async(request_id: int, payload: dict):
     from review.services.snapshot_service import SnapshotService
+
     try:
         job_id = await SnapshotService.create_snapshot_async(
-            request_id=request_id,
-            creator=payload["creator"]
+            request_id=request_id, creator=payload["creator"]
         )
         return {"ok": True, "job_id": job_id}
     except ValueError as e:
@@ -761,6 +829,7 @@ async def create_snapshot_async(request_id: int, payload: dict):
 @app.get("/api/requests/{request_id}/snapshots")
 async def get_snapshots(request_id: int):
     from database.services.unit_of_work import UnitOfWork
+
     async with UnitOfWork() as uow:
         snapshots = await uow.snapshots.get_all_for_request(request_id)
         return [
@@ -770,16 +839,20 @@ async def get_snapshots(request_id: int):
                 "version": s.version,
                 "creator": s.creator,
                 "request_status": s.request_status,
-                "created_at": s.created_at.isoformat()
-            } for s in snapshots
+                "created_at": s.created_at.isoformat(),
+            }
+            for s in snapshots
         ]
 
 
 @app.get("/api/requests/{request_id}/snapshots/compare")
 async def compare_snapshots(request_id: int, version_from: int, version_to: int):
     from review.services.snapshot_service import SnapshotService
+
     try:
-        diff = await SnapshotService.compare_snapshots(request_id, version_from, version_to)
+        diff = await SnapshotService.compare_snapshots(
+            request_id, version_from, version_to
+        )
         return diff
     except ValueError as e:
         raise HTTPException(400, str(e))
@@ -788,6 +861,7 @@ async def compare_snapshots(request_id: int, version_from: int, version_to: int)
 @app.get("/api/requests/{request_id}/timeline")
 async def get_timeline(request_id: int):
     from database.services.unit_of_work import UnitOfWork
+
     async with UnitOfWork() as uow:
         logs = await uow.activity_logs.get_timeline(request_id)
         return [
@@ -797,22 +871,25 @@ async def get_timeline(request_id: int):
                 "event_type": l.event_type,
                 "user": l.user,
                 "details": l.details,
-                "created_at": l.created_at.isoformat()
-            } for l in logs
+                "created_at": l.created_at.isoformat(),
+            }
+            for l in logs
         ]
 
 
 # REPORT SUBSYSTEM ENDPOINTS
 
+
 @app.post("/api/reports/templates")
 async def create_template(payload: dict):
     from database.services.unit_of_work import UnitOfWork
     from database.models.report import ReportTemplateModel
+
     async with UnitOfWork() as uow:
         template = ReportTemplateModel(
             name=payload["name"],
             sections_config=payload["sections_config"],
-            branding_config=payload.get("branding_config", {})
+            branding_config=payload.get("branding_config", {}),
         )
         uow.session.add(template)
         await uow.commit()
@@ -822,19 +899,20 @@ async def create_template(payload: dict):
 @app.post("/api/requests/{request_id}/reports")
 async def generate_report_endpoint(request_id: int, payload: dict):
     from report.services.report_service import ReportService
+
     try:
         report = await ReportService.generate_report(
             request_id=request_id,
             template_name=payload["template_name"],
             snapshot_version=payload["snapshot_version"],
             creator=payload["creator"],
-            role=payload.get("role", "Reviewer")
+            role=payload.get("role", "Reviewer"),
         )
         return {
             "ok": True,
             "report_id": report.id,
             "version": report.version,
-            "status": report.status
+            "status": report.status,
         }
     except Exception as e:
         raise HTTPException(400, str(e))
@@ -843,12 +921,13 @@ async def generate_report_endpoint(request_id: int, payload: dict):
 @app.post("/api/reports/{report_id}/transition")
 async def transition_report_endpoint(report_id: int, payload: dict):
     from report.services.report_service import ReportService
+
     try:
         receipt = await ReportService.transition_status(
             report_id=report_id,
             new_status=payload["new_status"],
             user=payload["user"],
-            role=payload.get("role", "Reviewer")
+            role=payload.get("role", "Reviewer"),
         )
         return {"ok": True, "receipt": receipt}
     except Exception as e:
@@ -860,6 +939,7 @@ async def export_report_endpoint(report_id: int, payload: dict):
     try:
         from worker.state import TaskStateManager
         import uuid
+
         backend = Container.get_queue_backend()
         job_id = f"export-{report_id}-{uuid.uuid4().hex[:8]}"
         await TaskStateManager.create_task(job_id, "export_report_task")
@@ -869,7 +949,7 @@ async def export_report_endpoint(report_id: int, payload: dict):
             task_id=job_id,
             report_id=report_id,
             format_str=payload["format"],
-            exporter_user=payload["exporter_user"]
+            exporter_user=payload["exporter_user"],
         )
         return {"ok": True, "job_id": job_id}
     except Exception as e:
@@ -879,6 +959,7 @@ async def export_report_endpoint(report_id: int, payload: dict):
 @app.get("/api/reports/{report_id}/timeline")
 async def get_report_timeline(report_id: int):
     from database.services.unit_of_work import UnitOfWork
+
     async with UnitOfWork() as uow:
         logs = await uow.report_activity_logs.get_timeline(report_id)
         return [
@@ -888,14 +969,16 @@ async def get_report_timeline(report_id: int):
                 "event_type": l.event_type,
                 "user": l.user,
                 "details": l.details,
-                "created_at": l.created_at.isoformat()
-            } for l in logs
+                "created_at": l.created_at.isoformat(),
+            }
+            for l in logs
         ]
 
 
 @app.get("/api/reports/compare")
 async def compare_reports_endpoint(report_id_a: int, report_id_b: int):
     from report.services.comparison_service import ComparisonService
+
     try:
         diff = await ComparisonService.compare_reports(report_id_a, report_id_b)
         return diff
@@ -908,5 +991,5 @@ app.mount("/", StaticFiles(directory=Path(__file__).parent, html=True), name="fr
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

@@ -3,6 +3,7 @@ from sqlalchemy.future import select
 from database.repositories.base import BaseRepository
 from database.models.report import ReportActivityLogModel
 
+
 class ReportActivityLogRepository(BaseRepository[ReportActivityLogModel]):
     """Repository mapping report activity logs and audit timeline operations."""
 
@@ -13,7 +14,10 @@ class ReportActivityLogRepository(BaseRepository[ReportActivityLogModel]):
         """Fetches all timeline logs for a report ordered by creation date."""
         stmt = (
             select(ReportActivityLogModel)
-            .where(ReportActivityLogModel.report_id == report_id, ReportActivityLogModel.is_deleted == False)
+            .where(
+                ReportActivityLogModel.report_id == report_id,
+                ReportActivityLogModel.is_deleted == False,
+            )
             .order_by(ReportActivityLogModel.created_at.asc())
         )
         res = await self.session.execute(stmt)

@@ -6,5 +6,5 @@ from parsers.docling_parser import DoclingParser
 PARSER_REGISTRY = {
     "pymupdf": PyMuPDFParser,
     "marker": MarkerParser,
-    "docling": DoclingParser
+    "docling": DoclingParser,
 }

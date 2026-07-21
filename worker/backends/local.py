@@ -5,6 +5,7 @@ from worker.backends.base import QueueBackend
 
 logger = logging.getLogger("local_queue_backend")
 
+
 class LocalQueueBackend(QueueBackend):
     """In-memory thread-safe fallback task runner using asyncio.Queue."""
 
@@ -29,24 +30,30 @@ class LocalQueueBackend(QueueBackend):
         while True:
             try:
                 job_id, task_name, args, kwargs = await self.queue.get()
-                if job_id not in self.jobs or self.jobs[job_id]["status"] == "CANCELLED":
+                if (
+                    job_id not in self.jobs
+                    or self.jobs[job_id]["status"] == "CANCELLED"
+                ):
                     self.queue.task_done()
                     continue
-                
+
                 self.jobs[job_id]["status"] = "RUNNING"
-                
+
                 # Resolve task function
                 func = self._registry.get(task_name)
                 if not func:
                     # Fallback dynamic import from worker.tasks
                     try:
                         import worker.tasks as t
+
                         func = getattr(t, task_name, None)
                     except Exception:
                         pass
 
                 if not func:
-                    logger.error(f"Task {task_name} not found in registry or worker.tasks")
+                    logger.error(
+                        f"Task {task_name} not found in registry or worker.tasks"
+                    )
                     self.jobs[job_id]["status"] = "FAILED"
                     self.jobs[job_id]["error"] = f"Task {task_name} not found"
                     self.queue.task_done()
@@ -77,7 +84,7 @@ class LocalQueueBackend(QueueBackend):
             "task_name": task_name,
             "status": "QUEUED",
             "result": None,
-            "error": None
+            "error": None,
         }
         await self.queue.put((job_id, task_name, args, kwargs))
         return job_id

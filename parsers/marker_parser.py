@@ -1,5 +1,6 @@
 from parsers.base import BaseParser, ParserCapabilities
 
+
 class MarkerParser(BaseParser):
     """Placeholder for deep-learning Marker PDF parser engine."""
 
@@ -8,11 +9,15 @@ class MarkerParser(BaseParser):
             # Check availability of marker conversion module on init
             import marker  # type: ignore
         except ImportError:
-            raise ImportError("Marker parsing engine is not installed in the current environment.")
+            raise ImportError(
+                "Marker parsing engine is not installed in the current environment."
+            )
 
     @property
     def capabilities(self) -> ParserCapabilities:
-        return ParserCapabilities(tables=True, ocr=True, layout=True, images=True, formulas=True)
+        return ParserCapabilities(
+            tables=True, ocr=True, layout=True, images=True, formulas=True
+        )
 
     @property
     def version(self) -> str:
@@ -27,5 +32,5 @@ class MarkerParser(BaseParser):
             "ocr_used": False,
             "tables_found": 0,
             "layout": "marker_layout",
-            "capabilities": self.capabilities.to_dict()
+            "capabilities": self.capabilities.to_dict(),
         }

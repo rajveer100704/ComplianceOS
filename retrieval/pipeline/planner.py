@@ -18,5 +18,5 @@ class QueryPlanner:
             "engine": self.engine,
             "strategy": self.strategy,
             "policy": self.policy,
-            "thresholds": thresholds
+            "thresholds": thresholds,
         }

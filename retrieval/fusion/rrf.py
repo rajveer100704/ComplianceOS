@@ -1,13 +1,19 @@
 from typing import List, Tuple
 from retrieval.models.chunk import Chunk
 
+
 class ReciprocalRankFusion:
     """Merges candidate rankings using standard reciprocal rank equations."""
 
     def __init__(self, k: int = 60):
         self.k = k
 
-    def fuse(self, dense_results: List[Tuple[Chunk, float]], bm25_results: List[Tuple[Chunk, float]], limit: int) -> List[Tuple[Chunk, float]]:
+    def fuse(
+        self,
+        dense_results: List[Tuple[Chunk, float]],
+        bm25_results: List[Tuple[Chunk, float]],
+        limit: int,
+    ) -> List[Tuple[Chunk, float]]:
         rrf_scores = {}
 
         # Process dense rankings

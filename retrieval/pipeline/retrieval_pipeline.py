@@ -2,6 +2,7 @@ from typing import List, Tuple
 from retrieval.models.chunk import Chunk
 from retrieval.models.retrieval_state import RetrievalState
 
+
 class RetrievalPipeline:
     """DAG organizing CandidateGeneration, RRF Fusion, and Reranking pipeline nodes."""
 
@@ -11,7 +12,14 @@ class RetrievalPipeline:
         self.rrf = rrf
         self.reranker = reranker
 
-    def run(self, state: RetrievalState, planner_plan: dict, limit: int, filters: dict = None, profile_params: dict = None) -> List[Tuple[Chunk, float]]:
+    def run(
+        self,
+        state: RetrievalState,
+        planner_plan: dict,
+        limit: int,
+        filters: dict = None,
+        profile_params: dict = None,
+    ) -> List[Tuple[Chunk, float]]:
         # Retrieve candidate limits
         params = profile_params or {}
         dense_top_k = params.get("dense_top_k", 20)
@@ -22,11 +30,15 @@ class RetrievalPipeline:
         # Candidate Generation
         dense_candidates = []
         if self.dense_retriever:
-            dense_candidates = self.dense_retriever.retrieve(state.query, limit=dense_top_k, filters=filters)
+            dense_candidates = self.dense_retriever.retrieve(
+                state.query, limit=dense_top_k, filters=filters
+            )
 
         bm25_candidates = []
         if self.bm25_retriever:
-            bm25_candidates = self.bm25_retriever.retrieve(state.query, limit=lexical_top_k, filters=filters)
+            bm25_candidates = self.bm25_retriever.retrieve(
+                state.query, limit=lexical_top_k, filters=filters
+            )
 
         # Map candidate raw scores for explainability
         for chunk, score in dense_candidates:

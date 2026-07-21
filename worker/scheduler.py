@@ -7,10 +7,13 @@ from worker.state import TaskStateManager
 
 logger = logging.getLogger("worker_scheduler")
 
+
 class TaskScheduler:
     """Orchestrates periodic sweeps for stuck tasks (visibility timeout recovery)."""
 
-    def __init__(self, queue_backend, visibility_timeout_sec: int = 300, interval_sec: int = 60):
+    def __init__(
+        self, queue_backend, visibility_timeout_sec: int = 300, interval_sec: int = 60
+    ):
         self.queue_backend = queue_backend
         self.visibility_timeout_sec = visibility_timeout_sec
         self.interval_sec = interval_sec
@@ -41,19 +44,24 @@ class TaskScheduler:
 
     async def recover_stuck_tasks(self):
         """Finds running/claimed tasks older than the visibility timeout and re-queues them."""
-        cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=self.visibility_timeout_sec)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(
+            seconds=self.visibility_timeout_sec
+        )
 
         async with UnitOfWork() as uow:
             from sqlalchemy import select
+
             stmt = select(TaskModel).where(
                 TaskModel.status.in_(["RUNNING", "CLAIMED"]),
-                TaskModel.updated_at < cutoff_time
+                TaskModel.updated_at < cutoff_time,
             )
             res = await uow.session.execute(stmt)
             stuck_tasks = res.scalars().all()
 
             for task in stuck_tasks:
-                logger.warning(f"Task {task.id} ({task.name}) has timed out. Reclaiming...")
+                logger.warning(
+                    f"Task {task.id} ({task.name}) has timed out. Reclaiming..."
+                )
 
                 if task.retries >= task.max_retries:
                     task.status = "DEAD_LETTER"
@@ -64,6 +72,8 @@ class TaskScheduler:
                     task.retries += 1
                     task.updated_at = datetime.now(timezone.utc)
                     await self.queue_backend.enqueue(task.id, task.name)
-                    logger.info(f"Task {task.id} re-enqueued for retry attempt {task.retries}.")
+                    logger.info(
+                        f"Task {task.id} re-enqueued for retry attempt {task.retries}."
+                    )
 
             await uow.commit()

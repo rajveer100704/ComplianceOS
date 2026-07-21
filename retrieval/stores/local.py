@@ -5,6 +5,7 @@ from retrieval.capabilities import VectorStoreCapabilities
 from retrieval.models.chunk import Chunk
 from retrieval.registry import register_vector_store
 
+
 @register_vector_store("local")
 class LocalVectorStore(BaseVectorStore):
     """Memory-resident dictionary indexing chunks and computing cosine distance metrics."""
@@ -19,7 +20,14 @@ class LocalVectorStore(BaseVectorStore):
 
     def upsert(self, chunks: List[Chunk], embeddings: List[List[float]]) -> None:
         for c, emb in zip(chunks, embeddings):
-            existing_idx = next((i for i, existing in enumerate(self.chunks) if existing.chunk_id == c.chunk_id), None)
+            existing_idx = next(
+                (
+                    i
+                    for i, existing in enumerate(self.chunks)
+                    if existing.chunk_id == c.chunk_id
+                ),
+                None,
+            )
             if existing_idx is not None:
                 self.chunks[existing_idx] = c
                 self.embeddings[existing_idx] = emb
@@ -27,7 +35,9 @@ class LocalVectorStore(BaseVectorStore):
                 self.chunks.append(c)
                 self.embeddings.append(emb)
 
-    def search(self, query_vector: List[float], limit: int, filters: dict = None) -> List[Tuple[Chunk, float]]:
+    def search(
+        self, query_vector: List[float], limit: int, filters: dict = None
+    ) -> List[Tuple[Chunk, float]]:
         if not self.embeddings:
             return []
         q_vec = np.array(query_vector)
@@ -58,7 +68,9 @@ class LocalVectorStore(BaseVectorStore):
         return results[:limit]
 
     def delete(self, doc_id: int) -> None:
-        indices_to_keep = [i for i, c in enumerate(self.chunks) if c.document_id != doc_id]
+        indices_to_keep = [
+            i for i, c in enumerate(self.chunks) if c.document_id != doc_id
+        ]
         self.chunks = [self.chunks[i] for i in indices_to_keep]
         self.embeddings = [self.embeddings[i] for i in indices_to_keep]
 

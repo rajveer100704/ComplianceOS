@@ -6,6 +6,7 @@ from retrieval.config.loader import ConfigLoader
 
 logger = logging.getLogger("database_bootstrap")
 
+
 async def bootstrap_database() -> None:
     """Verifies connection health and enables required PostgreSQL extensions like pgvector."""
     config = ConfigLoader.load()
@@ -16,7 +17,7 @@ async def bootstrap_database() -> None:
         async with async_session_factory() as session:
             conn = await session.connection()
             dialect_name = conn.dialect.name
-            
+
             if dialect_name == "postgresql":
                 # Ensure pgvector extension is enabled
                 await session.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))

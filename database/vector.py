@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple, Dict, Any
 from retrieval.models.chunk import Chunk
 
+
 class VectorBackend(ABC):
     """Abstract interface defining required database vector storage functions."""
 
@@ -10,7 +11,9 @@ class VectorBackend(ABC):
         pass
 
     @abstractmethod
-    async def search(self, query_vector: List[float], limit: int, filters: Dict[str, Any] = None) -> List[Tuple[Chunk, float]]:
+    async def search(
+        self, query_vector: List[float], limit: int, filters: Dict[str, Any] = None
+    ) -> List[Tuple[Chunk, float]]:
         pass
 
     @abstractmethod
@@ -21,6 +24,7 @@ class VectorBackend(ABC):
     async def clear(self) -> None:
         pass
 
+
 class MemoryVectorBackend(VectorBackend):
     """Local dictionary-based vector store fallback for SQLite runs."""
 
@@ -30,7 +34,14 @@ class MemoryVectorBackend(VectorBackend):
 
     async def upsert(self, chunks: List[Chunk], embeddings: List[List[float]]) -> None:
         for c, emb in zip(chunks, embeddings):
-            existing_idx = next((i for i, existing in enumerate(self.chunks) if existing.chunk_id == c.chunk_id), None)
+            existing_idx = next(
+                (
+                    i
+                    for i, existing in enumerate(self.chunks)
+                    if existing.chunk_id == c.chunk_id
+                ),
+                None,
+            )
             if existing_idx is not None:
                 self.chunks[existing_idx] = c
                 self.embeddings[existing_idx] = emb
@@ -38,8 +49,11 @@ class MemoryVectorBackend(VectorBackend):
                 self.chunks.append(c)
                 self.embeddings.append(emb)
 
-    async def search(self, query_vector: List[float], limit: int, filters: Dict[str, Any] = None) -> List[Tuple[Chunk, float]]:
+    async def search(
+        self, query_vector: List[float], limit: int, filters: Dict[str, Any] = None
+    ) -> List[Tuple[Chunk, float]]:
         import numpy as np
+
         if not self.embeddings:
             return []
         q_vec = np.array(query_vector)
@@ -70,13 +84,16 @@ class MemoryVectorBackend(VectorBackend):
         return results[:limit]
 
     async def delete(self, doc_id: int) -> None:
-        indices_to_keep = [i for i, c in enumerate(self.chunks) if c.document_id != doc_id]
+        indices_to_keep = [
+            i for i, c in enumerate(self.chunks) if c.document_id != doc_id
+        ]
         self.chunks = [self.chunks[i] for i in indices_to_keep]
         self.embeddings = [self.embeddings[i] for i in indices_to_keep]
 
     async def clear(self) -> None:
         self.chunks.clear()
         self.embeddings.clear()
+
 
 class PGVectorBackend(VectorBackend):
     """PostgreSQL pgvector storage backend using native vector type mapping."""
@@ -88,7 +105,9 @@ class PGVectorBackend(VectorBackend):
         # Placeholder mapping database upserts natively using SQL
         pass
 
-    async def search(self, query_vector: List[float], limit: int, filters: Dict[str, Any] = None) -> List[Tuple[Chunk, float]]:
+    async def search(
+        self, query_vector: List[float], limit: int, filters: Dict[str, Any] = None
+    ) -> List[Tuple[Chunk, float]]:
         # Returns empty list or compiles pgvector cosine distance `<->` searches
         return []
 

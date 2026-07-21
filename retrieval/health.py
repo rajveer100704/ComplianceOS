@@ -11,14 +11,11 @@ class RetrievalHealthCheck:
             details["embedding"] = {
                 "status": "online",
                 "version": embedding.version,
-                "dimensions": embedding.capabilities.dimensions
+                "dimensions": embedding.capabilities.dimensions,
             }
         except Exception as e:
             status = "unhealthy"
-            details["embedding"] = {
-                "status": "offline",
-                "error": str(e)
-            }
+            details["embedding"] = {"status": "offline", "error": str(e)}
 
         try:
             # Check store
@@ -28,35 +25,24 @@ class RetrievalHealthCheck:
                     "status": col_health["status"],
                     "engine": "qdrant",
                     "collection": store.collection_name,
-                    "info": col_health
+                    "info": col_health,
                 }
                 if col_health["status"] != "healthy":
                     status = "unhealthy"
             else:
-                details["store"] = {
-                    "status": "online",
-                    "engine": "local"
-                }
+                details["store"] = {"status": "online", "engine": "local"}
         except Exception as e:
             status = "unhealthy"
-            details["store"] = {
-                "status": "offline",
-                "error": str(e)
-            }
+            details["store"] = {"status": "offline", "error": str(e)}
 
         try:
             details["reranker"] = {
                 "status": "online" if reranker else "disabled",
-                "model_name": getattr(reranker, "model_name", "unknown") if reranker else None
+                "model_name": (
+                    getattr(reranker, "model_name", "unknown") if reranker else None
+                ),
             }
         except Exception as e:
-            details["reranker"] = {
-                "status": "error",
-                "error": str(e)
-            }
+            details["reranker"] = {"status": "error", "error": str(e)}
 
-        return {
-            "status": status,
-            "details": details
-        }
-
+        return {"status": status, "details": details}

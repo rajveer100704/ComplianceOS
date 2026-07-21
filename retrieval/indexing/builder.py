@@ -10,10 +10,16 @@ from retrieval.base import BaseEmbeddingProvider, BaseVectorStore
 
 logger = logging.getLogger("index_builder")
 
+
 class IndexBuilder:
     """Performs batched caching, incremental updates, and document deletions in vector stores."""
 
-    def __init__(self, embedding_provider: BaseEmbeddingProvider, vector_store: BaseVectorStore, cache = None):
+    def __init__(
+        self,
+        embedding_provider: BaseEmbeddingProvider,
+        vector_store: BaseVectorStore,
+        cache=None,
+    ):
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store
         self.cache = cache
@@ -47,20 +53,26 @@ class IndexBuilder:
 
         # 2. Run batched model inference for any cache misses
         if uncached_texts:
-            logger.info(f"Computing embeddings for {len(uncached_texts)} chunks (cache misses)...")
+            logger.info(
+                f"Computing embeddings for {len(uncached_texts)} chunks (cache misses)..."
+            )
             embed_start = time.perf_counter()
             new_embeddings = self.embedding_provider.embed_documents(uncached_texts)
             embed_duration = time.perf_counter() - embed_start
-            
+
             # Print observability statistics
-            logger.info(f"Embedding batch inference completed in {embed_duration:.4f}s.")
-            
+            logger.info(
+                f"Embedding batch inference completed in {embed_duration:.4f}s."
+            )
+
             # Store in cache and populate full list
             for idx, local_idx in enumerate(uncached_indices):
                 vec = new_embeddings[idx]
                 embeddings[local_idx] = vec
                 if self.cache:
-                    self.cache.set(chunk.text, model_name, model_version, dimension, vec)
+                    self.cache.set(
+                        chunk.text, model_name, model_version, dimension, vec
+                    )
 
         # 3. Upsert to vector store
         logger.info(f"Upserting {len(chunks)} points to vector store...")
@@ -70,7 +82,7 @@ class IndexBuilder:
 
         duration = time.perf_counter() - start_time
         hit_rate = 1.0 - (len(uncached_texts) / len(chunks)) if chunks else 0.0
-        
+
         logger.info(
             f"Indexing complete in {duration:.4f}s. "
             f"Cache hits: {len(chunks) - len(uncached_texts)}/{len(chunks)} ({hit_rate*100:.1f}%). "
@@ -84,4 +96,3 @@ class IndexBuilder:
     def delete_document(self, doc_id: int) -> None:
         """Deletes all vector store records matching document ID."""
         self.vector_store.delete(doc_id)
-
