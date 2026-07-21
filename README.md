@@ -18,6 +18,19 @@
 - 📜 **Compliance Report Studio**: Automated PDF/HTML/Markdown report compilation with risk matrices, version lineage, and semantic snapshot diffs.
 - 🛡️ **Production Hardened**: Pluggable auth (API Key / JWT), request tracing (`X-Request-ID`), liveness/readiness probes (`/healthz`, `/readyz`), and Prometheus metrics (`/metrics`).
 
+
+---
+
+## UI Workstation & Screenshots
+
+| **Dashboard View** | **3-Pane Review Workstation** |
+| :---: | :---: |
+| ![Dashboard](docs/images/dashboard.png) | ![Workstation](docs/images/workstation.png) |
+
+| **Snapshots & Diffs** | **Report Studio & Exporters** |
+| :---: | :---: |
+| ![Snapshots](docs/images/snapshots.png) | ![Report Studio](docs/images/report_studio.png) |
+
 ---
 
 ## High-Level System Architecture
