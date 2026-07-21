@@ -1,5 +1,6 @@
+import uuid
 from datetime import datetime, timezone
-from sqlalchemy import MetaData, DateTime, Boolean
+from sqlalchemy import MetaData, DateTime, Boolean, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 naming_convention = {
@@ -11,6 +12,11 @@ naming_convention = {
 }
 
 
+def generate_uuid() -> str:
+    """Centralized UUID string generator for primary keys."""
+    return str(uuid.uuid4())
+
+
 class Base(DeclarativeBase):
     """Declarative Base containing naming conventions and common column properties."""
 
@@ -18,7 +24,7 @@ class Base(DeclarativeBase):
 
 
 class AuditMixin:
-    """Mixin class for entity audit timestamps and soft deletes."""
+    """Mixin class for entity audit timestamps, actors, and soft deletes."""
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -31,6 +37,8 @@ class AuditMixin:
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+    created_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    updated_by: Mapped[str | None] = mapped_column(String(36), nullable=True)
     is_deleted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

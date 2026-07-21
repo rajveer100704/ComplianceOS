@@ -8,7 +8,7 @@ try:
     from pgvector.sqlalchemy import Vector
 except ImportError:
 
-    class Vector(TypeDecorator):
+    class Vector(TypeDecorator):  # type: ignore[no-redef]
         """Fallback type decorator to map vector arrays as JSON strings on SQLite."""
 
         impl = TEXT
