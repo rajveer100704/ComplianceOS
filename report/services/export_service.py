@@ -2,7 +2,7 @@ import os
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import List
 from pathlib import Path
 from database.services.unit_of_work import UnitOfWork
 from database.models.report import (

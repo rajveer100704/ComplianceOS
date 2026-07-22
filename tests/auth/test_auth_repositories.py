@@ -3,7 +3,6 @@ from datetime import datetime, timezone, timedelta
 
 from auth.repositories.user_repository import UserRepository
 from auth.repositories.token_repository import TokenRepository
-from database.models.enums import UserStatus
 from database.models.session_model import SessionModel
 
 

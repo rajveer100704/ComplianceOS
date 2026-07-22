@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List
 from database.services.unit_of_work import UnitOfWork
 from database.models.review import PinnedEvidenceModel, ReviewActivityLogModel
 from review.events import ReviewEventPublisher

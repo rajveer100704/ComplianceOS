@@ -1,5 +1,4 @@
 import pytest
-import pytest_asyncio
 from unittest.mock import AsyncMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -7,7 +6,6 @@ from config.settings import settings
 from auth.router import router as auth_router
 from auth.dependencies import get_db_session
 from auth.repositories.user_repository import UserRepository
-from database.models.enums import UserRole, UserStatus
 
 # Create a clean test FastAPI app to test auth_router without importing heavy ML dependencies
 app = FastAPI()
@@ -90,6 +88,7 @@ async def test_google_callback_and_me_flow(db_session):
         assert me_resp.status_code == 200
         profile = me_resp.json()
         from auth.enums import has_permission
+
         assert profile["email"].endswith("@complianceos.io")
         assert profile["role"].lower() in ("owner", "reviewer")
         assert has_permission(profile["permissions"], "claims:read") is True

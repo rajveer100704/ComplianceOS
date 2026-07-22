@@ -1,6 +1,3 @@
-from typing import List, Dict, Tuple, Any
-
-
 class EvidenceSelector:
     """Selects top compliance evidence candidates matching thresholds to determine verdicts."""
 

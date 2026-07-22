@@ -1,8 +1,7 @@
 import json
 import time
-import os
 from pathlib import Path
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 from retrieval.services.retrieval_service import RetrievalService
 from retrieval.evaluation.metrics import RetrievalMetrics
 

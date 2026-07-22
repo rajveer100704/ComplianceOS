@@ -21,10 +21,9 @@ class TenantMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next) -> Response:
-        org_id: Optional[str] = (
-            request.headers.get("X-Organization-Id")
-            or request.cookies.get("org_id")
-        )
+        org_id: Optional[str] = request.headers.get(
+            "X-Organization-Id"
+        ) or request.cookies.get("org_id")
 
         if org_id:
             request.state.organization_id = org_id.strip()

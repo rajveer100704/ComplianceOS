@@ -1,16 +1,12 @@
-import time
 import uuid
 import logging
-from typing import Dict, Any, List, Tuple
+from typing import List
 
 from retrieval.base import (
     BaseEmbeddingProvider,
     BaseVectorStore,
-    BaseRetriever,
     BaseReranker,
 )
-from retrieval.contracts.query import RetrievalQuery
-from retrieval.contracts.response import RetrievalResponse
 from retrieval.models.retrieval_session import RetrievalSession
 from retrieval.models.retrieval_state import RetrievalState
 from retrieval.models.evidence_bundle import EvidenceBundle

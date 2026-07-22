@@ -1,11 +1,11 @@
 import asyncio
 import logging
-from typing import List, Tuple, Dict, Any, Optional
+from typing import Tuple
 from datetime import datetime, timezone
 from sqlalchemy import func
 from concurrent.futures import ThreadPoolExecutor
 
-from database.services.persistence_service import PersistenceService, LockedError
+from database.services.persistence_service import PersistenceService
 from database.migration_manager import MigrationManager
 from database.bootstrap import bootstrap_database
 
@@ -170,7 +170,6 @@ def approve_request(request_id: int) -> None:
     async def _approve():
         from sqlalchemy import select
         from database.services.unit_of_work import UnitOfWork
-        from database.models.request import RequestModel
         from database.models.run import RunModel
         from database.models.claim import ClaimModel
         from database.models.audit import AuditLogModel

@@ -1,6 +1,5 @@
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Set, Union
+from typing import Optional, Union
 from fastapi import Request, Header, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
@@ -23,8 +22,6 @@ from auth.exceptions import (
 )
 from auth.services.jwt_service import JWTService
 from auth.repositories.user_repository import UserRepository
-from auth.repositories.token_repository import TokenRepository
-from auth.utils import hash_refresh_token
 
 # Swagger UI OAuth2 Scheme for Authorize Button
 oauth2_scheme = OAuth2PasswordBearer(
@@ -86,10 +83,9 @@ async def _resolve_organization(
     org_repo = OrganizationRepository(db)
 
     # Determine desired org_id from header or cookie
-    desired_org_id: Optional[str] = (
-        request.headers.get("X-Organization-Id")
-        or request.cookies.get("org_id")
-    )
+    desired_org_id: Optional[str] = request.headers.get(
+        "X-Organization-Id"
+    ) or request.cookies.get("org_id")
 
     if desired_org_id:
         membership = await membership_repo.find_by_org_and_user(desired_org_id, user.id)

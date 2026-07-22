@@ -10,7 +10,6 @@ from database.models.invitation import Invitation
 from database.models.enums import MembershipRole, InvitationStatus
 from database.repositories.base import BaseRepository
 
-
 # Invitation token validity window
 _INVITATION_TTL_HOURS = 72
 

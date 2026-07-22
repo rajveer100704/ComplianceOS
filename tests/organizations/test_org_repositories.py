@@ -1,11 +1,10 @@
 """Integration tests for organization repositories using in-memory SQLite."""
+
 import pytest
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 
 from database.models.user import User
 from database.models.organization import Organization
-from database.models.membership import OrganizationMembership
-from database.models.invitation import Invitation
 from database.models.enums import MembershipRole, InvitationStatus, OrganizationPlan
 from database.repositories.organization_repository import OrganizationRepository
 from database.repositories.membership_repository import OrganizationMembershipRepository
@@ -14,10 +13,10 @@ from database.repositories.invitation_repository import (
     generate_invitation_token,
 )
 
-
 # ──────────────────────────────────────────────────────────────
 # Helpers
 # ──────────────────────────────────────────────────────────────
+
 
 async def _make_user(db_session, email: str = "alice@example.com") -> User:
     user = User(email=email, full_name="Alice", status="active", is_active=True)
@@ -27,7 +26,9 @@ async def _make_user(db_session, email: str = "alice@example.com") -> User:
 
 
 async def _make_org(db_session, slug: str = "acme-corp") -> Organization:
-    org = Organization(name="Acme Corp", slug=slug, plan=OrganizationPlan.FREE, is_active=True)
+    org = Organization(
+        name="Acme Corp", slug=slug, plan=OrganizationPlan.FREE, is_active=True
+    )
     db_session.add(org)
     await db_session.flush()
     return org
@@ -125,7 +126,7 @@ async def test_membership_create_and_find(db_session):
     org = await _make_org(db_session)
 
     repo = OrganizationMembershipRepository(db_session)
-    mem = await repo.create(
+    await repo.create(
         organization_id=org.id,
         user_id=user.id,
         role=MembershipRole.OWNER,
@@ -146,8 +147,18 @@ async def test_membership_list_members(db_session):
     user_b = await _make_user(db_session, email="b@example.com")
 
     repo = OrganizationMembershipRepository(db_session)
-    await repo.create(organization_id=org.id, user_id=user_a.id, role=MembershipRole.OWNER, joined_at=datetime.now(timezone.utc))
-    await repo.create(organization_id=org.id, user_id=user_b.id, role=MembershipRole.REVIEWER, joined_at=datetime.now(timezone.utc))
+    await repo.create(
+        organization_id=org.id,
+        user_id=user_a.id,
+        role=MembershipRole.OWNER,
+        joined_at=datetime.now(timezone.utc),
+    )
+    await repo.create(
+        organization_id=org.id,
+        user_id=user_b.id,
+        role=MembershipRole.REVIEWER,
+        joined_at=datetime.now(timezone.utc),
+    )
     await db_session.flush()
 
     members = await repo.list_members(org.id)
@@ -162,7 +173,12 @@ async def test_membership_is_member(db_session):
     other_user = await _make_user(db_session, email="other@example.com")
 
     repo = OrganizationMembershipRepository(db_session)
-    await repo.create(organization_id=org.id, user_id=user.id, role=MembershipRole.REVIEWER, joined_at=datetime.now(timezone.utc))
+    await repo.create(
+        organization_id=org.id,
+        user_id=user.id,
+        role=MembershipRole.REVIEWER,
+        joined_at=datetime.now(timezone.utc),
+    )
     await db_session.flush()
 
     assert await repo.is_member(org.id, user.id) is True
@@ -182,7 +198,7 @@ async def test_invitation_create_and_find_by_token_hash(db_session):
 
     raw_token, token_hash = generate_invitation_token()
     repo = InvitationRepository(db_session)
-    inv = await repo.create(
+    await repo.create(
         organization_id=org.id,
         email="invitee@example.com",
         role=MembershipRole.REVIEWER,

@@ -24,8 +24,6 @@ import uuid
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import sqlite
-
 
 # revision identifiers
 revision: str = "a3f1c2d4e5b6"
@@ -57,13 +55,17 @@ def upgrade() -> None:
             sa.Column("name", sa.String(255), nullable=False),
             sa.Column("slug", sa.String(255), nullable=False),
             sa.Column("plan", sa.String(50), nullable=False, server_default="free"),
-            sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.true()),
+            sa.Column(
+                "is_active", sa.Boolean(), nullable=False, server_default=sa.true()
+            ),
             # AuditMixin columns
             sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
             sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
             sa.Column("created_by", sa.String(36), nullable=True),
             sa.Column("updated_by", sa.String(36), nullable=True),
-            sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()),
+            sa.Column(
+                "is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()
+            ),
             sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         )
         op.create_index("ix_organizations_slug", "organizations", ["slug"], unique=True)
@@ -100,7 +102,9 @@ def upgrade() -> None:
             sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
             sa.Column("created_by", sa.String(36), nullable=True),
             sa.Column("updated_by", sa.String(36), nullable=True),
-            sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()),
+            sa.Column(
+                "is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()
+            ),
             sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
             sa.UniqueConstraint(
                 "organization_id", "user_id", name="uq_org_memberships_org_user"
@@ -144,7 +148,9 @@ def upgrade() -> None:
             sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
             sa.Column("created_by_audit", sa.String(36), nullable=True),
             sa.Column("updated_by", sa.String(36), nullable=True),
-            sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()),
+            sa.Column(
+                "is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()
+            ),
             sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         )
         op.create_index("ix_teams_organization_id", "teams", ["organization_id"])
@@ -167,7 +173,9 @@ def upgrade() -> None:
             sa.Column("role", sa.String(50), nullable=False, server_default="reviewer"),
             sa.Column("token_hash", sa.String(64), unique=True, nullable=False),
             sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
-            sa.Column("status", sa.String(20), nullable=False, server_default="pending"),
+            sa.Column(
+                "status", sa.String(20), nullable=False, server_default="pending"
+            ),
             sa.Column(
                 "invited_by",
                 sa.String(36),
@@ -180,10 +188,14 @@ def upgrade() -> None:
             sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
             sa.Column("created_by", sa.String(36), nullable=True),
             sa.Column("updated_by", sa.String(36), nullable=True),
-            sa.Column("is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()),
+            sa.Column(
+                "is_deleted", sa.Boolean(), nullable=False, server_default=sa.false()
+            ),
             sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         )
-        op.create_index("ix_invitations_organization_id", "invitations", ["organization_id"])
+        op.create_index(
+            "ix_invitations_organization_id", "invitations", ["organization_id"]
+        )
         op.create_index("ix_invitations_email", "invitations", ["email"])
         op.create_index("ix_invitations_status", "invitations", ["status"])
 
@@ -203,7 +215,9 @@ def upgrade() -> None:
     }
 
     users_result = connection.execute(
-        sa.text("SELECT id, email, full_name, role FROM users WHERE is_deleted = 0 OR is_deleted = false")
+        sa.text(
+            "SELECT id, email, full_name, role FROM users WHERE is_deleted = 0 OR is_deleted = false"
+        )
     )
     users = users_result.fetchall()
 
@@ -221,32 +235,33 @@ def upgrade() -> None:
         slug = f"{slug_base}-org"
 
         connection.execute(
-            sa.text(
-                """
+            sa.text("""
                 INSERT INTO organizations
                     (id, name, slug, plan, is_active,
                      created_at, updated_at, is_deleted)
                 VALUES
                     (:id, :name, :slug, 'free', 1,
                      :now, :now, 0)
-                """
-            ),
-            {"id": org_id, "name": f"{full_name}'s Organization", "slug": slug, "now": now},
+                """),
+            {
+                "id": org_id,
+                "name": f"{full_name}'s Organization",
+                "slug": slug,
+                "now": now,
+            },
         )
 
         # Create owner membership
         membership_id = _uuid()
         connection.execute(
-            sa.text(
-                """
+            sa.text("""
                 INSERT INTO organization_memberships
                     (id, organization_id, user_id, role, joined_at,
                      created_at, updated_at, is_deleted)
                 VALUES
                     (:id, :org_id, :user_id, :role, :now,
                      :now, :now, 0)
-                """
-            ),
+                """),
             {
                 "id": membership_id,
                 "org_id": org_id,
@@ -290,13 +305,13 @@ def downgrade() -> None:
                 server_default="Reviewer",
             )
         )
-        batch_op.add_column(
-            sa.Column("organization_id", sa.String(36), nullable=True)
-        )
+        batch_op.add_column(sa.Column("organization_id", sa.String(36), nullable=True))
 
     # Recreate index definitions dropped during upgrade
     op.create_index("ix_users_role", "users", ["role"], unique=False)
-    op.create_index("ix_users_organization_id", "users", ["organization_id"], unique=False)
+    op.create_index(
+        "ix_users_organization_id", "users", ["organization_id"], unique=False
+    )
 
     # Drop v1.2 tables in reverse dependency order
     op.drop_table("invitations")

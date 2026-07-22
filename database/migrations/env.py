@@ -10,31 +10,6 @@ from database.engine import get_database_url
 
 # import Base and models for metadata resolution
 from database.models.base import Base
-from database.models.request import RequestModel
-from database.models.document import DocumentModel
-from database.models.run import RunModel
-from database.models.claim import ClaimModel
-from database.models.audit import AuditLogModel
-from database.models.requirement import RequirementModel
-from database.models.outbox import OutboxEventModel
-from database.models.chunk import ChunkModel
-from database.models.task import TaskModel
-from database.models.review import (
-    ReviewAssignmentModel,
-    ReviewActivityLogModel,
-    CommentMentionModel,
-    ClaimCommentModel,
-    PinnedEvidenceModel,
-    ReviewSnapshotModel,
-)
-from database.models.report import (
-    ReportTemplateModel,
-    ReportModel,
-    ReportSectionModel,
-    ReportFindingModel,
-    ReportCitationModel,
-    ReportActivityLogModel,
-)
 
 # this is the Alembic Config object
 config = context.config

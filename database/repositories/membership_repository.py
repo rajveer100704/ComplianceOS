@@ -63,7 +63,10 @@ class OrganizationMembershipRepository(BaseRepository[OrganizationMembership]):
         return list(result.scalars().all())
 
     async def update_role(
-        self, membership_id: str, new_role: MembershipRole, updated_by: Optional[str] = None
+        self,
+        membership_id: str,
+        new_role: MembershipRole,
+        updated_by: Optional[str] = None,
     ) -> Optional[OrganizationMembership]:
         """Updates the role of an existing membership."""
         await self.session.execute(

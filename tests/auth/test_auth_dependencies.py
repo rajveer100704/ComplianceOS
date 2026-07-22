@@ -54,10 +54,18 @@ async def sample_users(db_session):
     db_session.add(org)
     await db_session.flush()
 
-    mem_rev = OrganizationMembership(organization_id=org.id, user_id=reviewer.id, role=MembershipRole.REVIEWER)
-    mem_adm = OrganizationMembership(organization_id=org.id, user_id=admin.id, role=MembershipRole.ADMIN)
-    mem_own = OrganizationMembership(organization_id=org.id, user_id=owner.id, role=MembershipRole.OWNER)
-    mem_sus = OrganizationMembership(organization_id=org.id, user_id=suspended.id, role=MembershipRole.REVIEWER)
+    mem_rev = OrganizationMembership(
+        organization_id=org.id, user_id=reviewer.id, role=MembershipRole.REVIEWER
+    )
+    mem_adm = OrganizationMembership(
+        organization_id=org.id, user_id=admin.id, role=MembershipRole.ADMIN
+    )
+    mem_own = OrganizationMembership(
+        organization_id=org.id, user_id=owner.id, role=MembershipRole.OWNER
+    )
+    mem_sus = OrganizationMembership(
+        organization_id=org.id, user_id=suspended.id, role=MembershipRole.REVIEWER
+    )
 
     db_session.add_all([mem_rev, mem_adm, mem_own, mem_sus])
     await db_session.flush()
@@ -256,9 +264,15 @@ async def test_require_permission_multiple_permissions(sample_users):
 @pytest.mark.asyncio
 async def test_require_role_guard_success_denied_and_owner(sample_users):
     """Test require_role dependency guard enforcing membership roles and allowing Owner implicitly."""
-    reviewer_ctx = SecurityContext(user=sample_users["reviewer"], membership=sample_users["mem_rev"])
-    admin_ctx = SecurityContext(user=sample_users["admin"], membership=sample_users["mem_adm"])
-    owner_ctx = SecurityContext(user=sample_users["owner"], membership=sample_users["mem_own"])
+    reviewer_ctx = SecurityContext(
+        user=sample_users["reviewer"], membership=sample_users["mem_rev"]
+    )
+    admin_ctx = SecurityContext(
+        user=sample_users["admin"], membership=sample_users["mem_adm"]
+    )
+    owner_ctx = SecurityContext(
+        user=sample_users["owner"], membership=sample_users["mem_own"]
+    )
 
     admin_checker = require_role(MembershipRole.ADMIN)
 

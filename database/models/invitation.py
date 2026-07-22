@@ -34,7 +34,9 @@ class Invitation(Base, AuditMixin):
         nullable=False,
     )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     status: Mapped[InvitationStatus] = mapped_column(
         SQLEnum(
             InvitationStatus,
@@ -56,6 +58,4 @@ class Invitation(Base, AuditMixin):
 
     # Relationships
     organization: Mapped["Organization"] = relationship("Organization")
-    inviter: Mapped["User | None"] = relationship(
-        "User", foreign_keys=[invited_by]
-    )
+    inviter: Mapped["User | None"] = relationship("User", foreign_keys=[invited_by])

@@ -16,7 +16,9 @@ class OrganizationMembership(Base, AuditMixin):
 
     __tablename__ = "organization_memberships"
     __table_args__ = (
-        UniqueConstraint("organization_id", "user_id", name="uq_org_memberships_org_user"),
+        UniqueConstraint(
+            "organization_id", "user_id", name="uq_org_memberships_org_user"
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
@@ -57,6 +59,4 @@ class OrganizationMembership(Base, AuditMixin):
     user: Mapped["User"] = relationship(
         "User", foreign_keys=[user_id], back_populates="memberships"
     )
-    inviter: Mapped["User | None"] = relationship(
-        "User", foreign_keys=[invited_by]
-    )
+    inviter: Mapped["User | None"] = relationship("User", foreign_keys=[invited_by])

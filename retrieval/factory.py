@@ -1,4 +1,3 @@
-from typing import Optional
 from retrieval.base import (
     BaseChunker,
     BaseEmbeddingProvider,

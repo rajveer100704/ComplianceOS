@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Dict, Any
 
 from database.services.unit_of_work import UnitOfWork
-from database.models.document import DocumentModel
 from parsers.factory import ParserFactory
 from retrieval.container import Container
 from worker.state import TaskStateManager

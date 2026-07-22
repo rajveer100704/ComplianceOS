@@ -3,7 +3,6 @@ import asyncio
 from datetime import datetime, timezone, timedelta
 from database.services.unit_of_work import UnitOfWork
 from database.models.task import TaskModel
-from worker.state import TaskStateManager
 
 logger = logging.getLogger("worker_scheduler")
 

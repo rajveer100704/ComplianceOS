@@ -2,11 +2,8 @@ from typing import List
 from retrieval.models.chunk import Chunk
 from retrieval.base import BaseEmbeddingProvider, BaseVectorStore
 
-from typing import List
 import time
 import logging
-from retrieval.models.chunk import Chunk
-from retrieval.base import BaseEmbeddingProvider, BaseVectorStore
 
 logger = logging.getLogger("index_builder")
 

@@ -13,10 +13,9 @@ Usage:
 """
 
 import re
-import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 
 # Project root relative to this script
 PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent

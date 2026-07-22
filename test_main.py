@@ -1218,7 +1218,6 @@ async def test_snapshot_creation_and_semantic_diff():
     from database.services.persistence_service import PersistenceService
     from review.services.snapshot_service import SnapshotService
     from review.services.review_service import ReviewService
-    from database.services.unit_of_work import UnitOfWork
 
     rid = await PersistenceService.create_request(
         project="Snapshot Test", regulator="FAA", owner="Alice"
@@ -1294,8 +1293,6 @@ async def test_report_generation_and_state_machine():
     """Verifies report generation, template section ordering, risk scoring, and state machine transitions."""
     from database.services.persistence_service import PersistenceService
     from review.services.snapshot_service import SnapshotService
-    from review.services.review_service import ReviewService
-    from review.services.evidence_service import EvidenceService
     from report.services.report_service import ReportService
     from database.services.unit_of_work import UnitOfWork
 

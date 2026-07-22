@@ -1,5 +1,4 @@
 import logging
-from typing import Dict, Any
 from database.events import EventPublisher
 
 logger = logging.getLogger("review_events")

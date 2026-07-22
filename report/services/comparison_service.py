@@ -1,8 +1,8 @@
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 from sqlalchemy import select
 from database.services.unit_of_work import UnitOfWork
-from database.models.report import ReportModel, ReportFindingModel, ReportSectionModel
+from database.models.report import ReportFindingModel, ReportSectionModel
 
 logger = logging.getLogger("comparison_service")
 

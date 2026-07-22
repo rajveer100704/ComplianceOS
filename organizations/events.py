@@ -4,7 +4,6 @@ Follows the pattern: <domain>.<action>
 These strings are stored in the outbox and consumed by the worker dispatcher.
 """
 
-
 ORG_CREATED = "organization.created"
 ORG_DELETED = "organization.deleted"
 

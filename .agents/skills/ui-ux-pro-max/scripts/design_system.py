@@ -780,10 +780,10 @@ def format_markdown(design_system: dict) -> str:
     if typography.get("google_fonts_url"):
         lines.append(f"- **Google Fonts:** {typography.get('google_fonts_url', '')}")
     if typography.get("css_import"):
-        lines.append(f"- **CSS Import:**")
-        lines.append(f"```css")
+        lines.append("- **CSS Import:**")
+        lines.append("```css")
         lines.append(f"{typography.get('css_import', '')}")
-        lines.append(f"```")
+        lines.append("```")
     lines.append("")
 
     # Key Effects section
@@ -1116,7 +1116,7 @@ def format_master_md(design_system: dict) -> str:
     lines.append("")
     lines.append("/* Secondary Button */")
     lines.append(".btn-secondary {")
-    lines.append(f"  background: transparent;")
+    lines.append("  background: transparent;")
     lines.append(f"  color: {colors.get('primary', '#2563EB')};")
     lines.append(f"  border: 2px solid {colors.get('primary', '#2563EB')};")
     lines.append("  padding: 12px 24px;")

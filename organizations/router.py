@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies import get_db_session, get_security_context
@@ -88,7 +88,9 @@ async def list_my_organizations(
                 ),
                 membership=MembershipResponse(
                     membership_id=mem.id,
-                    role=mem.role.value if hasattr(mem.role, "value") else str(mem.role),
+                    role=(
+                        mem.role.value if hasattr(mem.role, "value") else str(mem.role)
+                    ),
                     joined_at=mem.joined_at.isoformat() if mem.joined_at else None,
                 ),
             )
@@ -127,9 +129,17 @@ async def invite_member(
         invitation_id=invitation.id,
         organization_id=invitation.organization_id,
         email=invitation.email,
-        role=invitation.role.value if hasattr(invitation.role, "value") else str(invitation.role),
+        role=(
+            invitation.role.value
+            if hasattr(invitation.role, "value")
+            else str(invitation.role)
+        ),
         expires_at=invitation.expires_at.isoformat(),
-        status=invitation.status.value if hasattr(invitation.status, "value") else str(invitation.status),
+        status=(
+            invitation.status.value
+            if hasattr(invitation.status, "value")
+            else str(invitation.status)
+        ),
         debug_token=debug_token,
     )
 

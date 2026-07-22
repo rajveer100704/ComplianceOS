@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
-from typing import List, Optional, Set, Any, TYPE_CHECKING
+from typing import List, Optional, Set, TYPE_CHECKING
 from database.models.user import User
 from database.models.session_model import SessionModel
 from auth.enums import Permission

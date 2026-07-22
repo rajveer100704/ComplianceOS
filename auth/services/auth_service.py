@@ -1,19 +1,16 @@
 import logging
 import secrets
-from typing import Dict, Any, Tuple, Optional, List
+from typing import Dict, Any, Tuple, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from config.settings import settings
 from auth.providers.google import GoogleOAuthProvider
 from auth.services.jwt_service import JWTService
 from auth.services.token_service import TokenService
 from auth.services.session_service import SessionService
 from auth.repositories.user_repository import UserRepository
 from auth.dependencies import SecurityContext
-from auth.enums import ROLE_PERMISSIONS_MAP
-from auth.schemas import UserProfileResponse, SessionInfoDTO, TokenResponse
-from auth.exceptions import AuthError, InvalidTokenError, InsufficientPrivilegesError
-from database.models.enums import UserRole, UserStatus
+from auth.schemas import UserProfileResponse, SessionInfoDTO
+from auth.exceptions import AuthError
 from database.events import EventPublisher
 
 logger = logging.getLogger("complianceos.auth.auth_service")
@@ -84,6 +81,7 @@ class AuthService:
             )
             # Create personal organization & owner membership for new user
             from organizations.service import OrganizationService
+
             org_svc = OrganizationService(self.session)
             await org_svc.create_organization(
                 name=f"{full_name}'s Organization",
@@ -101,7 +99,10 @@ class AuthService:
         )
 
         # 5. Issue Token Pair
-        from database.repositories.membership_repository import OrganizationMembershipRepository
+        from database.repositories.membership_repository import (
+            OrganizationMembershipRepository,
+        )
+
         mem_repo = OrganizationMembershipRepository(self.session)
         memberships = await mem_repo.list_members_for_user(user.id)
         active_mem = memberships[0] if memberships else None

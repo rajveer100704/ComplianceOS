@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Tuple
+from typing import List, Tuple
 from retrieval.models.chunk import Chunk
 from retrieval.capabilities import (
     RetrieverCapabilities,

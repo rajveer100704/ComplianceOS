@@ -1,6 +1,6 @@
 import json
 import datetime
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Tuple, Optional
 from sqlalchemy import select, func
 from database.services.unit_of_work import UnitOfWork
 from database.models.request import RequestModel

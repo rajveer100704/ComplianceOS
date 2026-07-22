@@ -1,6 +1,6 @@
 import time
 from contextlib import contextmanager
-from typing import Generator, Dict, Any
+from typing import Generator, Dict
 
 
 @contextmanager

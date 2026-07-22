@@ -24,7 +24,7 @@ import argparse
 import sys
 import io
 from core import CSV_CONFIG, AVAILABLE_STACKS, MAX_RESULTS, search, search_stack
-from design_system import generate_design_system, persist_design_system, safe_slug
+from design_system import generate_design_system, safe_slug
 
 # Force UTF-8 for stdout/stderr to handle emojis on Windows (cp1252 default)
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
@@ -40,10 +40,10 @@ def format_output(result):
 
     output = []
     if result.get("stack"):
-        output.append(f"## UI Pro Max Stack Guidelines")
+        output.append("## UI Pro Max Stack Guidelines")
         output.append(f"**Stack:** {result['stack']} | **Query:** {result['query']}")
     else:
-        output.append(f"## UI Pro Max Search Results")
+        output.append("## UI Pro Max Search Results")
         output.append(f"**Domain:** {result['domain']} | **Query:** {result['query']}")
     output.append(
         f"**Source:** {result['file']} | **Found:** {result['count']} results\n"
@@ -179,7 +179,7 @@ if __name__ == "__main__":
                 f"📖 Usage: When building a page, check design-system/{project_slug}/pages/[page].md first."
             )
             print(
-                f"   If exists, its rules override MASTER.md. Otherwise, use MASTER.md."
+                "   If exists, its rules override MASTER.md. Otherwise, use MASTER.md."
             )
             print("=" * 60)
     # Stack search

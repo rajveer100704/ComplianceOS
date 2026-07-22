@@ -17,7 +17,9 @@ class Organization(Base, AuditMixin):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    slug: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    slug: Mapped[str] = mapped_column(
+        String(255), unique=True, nullable=False, index=True
+    )
     plan: Mapped[OrganizationPlan] = mapped_column(
         SQLEnum(
             OrganizationPlan,

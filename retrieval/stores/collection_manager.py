@@ -1,5 +1,4 @@
 import logging
-from typing import Any
 
 logger = logging.getLogger("qdrant_collection_manager")
 

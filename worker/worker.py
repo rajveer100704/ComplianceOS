@@ -1,10 +1,6 @@
 import asyncio
 import logging
 import signal
-from typing import Dict, Any
-
-from worker.bootstrap import bootstrap_worker
-from worker.state import TaskStateManager
 
 logger = logging.getLogger("background_worker")
 

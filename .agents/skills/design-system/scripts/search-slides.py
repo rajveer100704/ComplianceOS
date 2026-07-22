@@ -4,7 +4,6 @@
 Slide Search CLI - Search slide design databases for strategies, layouts, copy, and charts
 """
 
-import sys
 import json
 import argparse
 from slide_search_core import (
@@ -12,10 +11,6 @@ from slide_search_core import (
     search_all,
     AVAILABLE_DOMAINS,
     search_with_context,
-    get_layout_for_goal,
-    get_typography_for_slide,
-    get_color_for_emotion,
-    get_background_config,
 )
 
 
@@ -69,7 +64,7 @@ def format_result(result, domain):
 def format_context(context):
     """Format contextual recommendations for display."""
     output = []
-    output.append(f"\n=== CONTEXTUAL RECOMMENDATIONS ===")
+    output.append("\n=== CONTEXTUAL RECOMMENDATIONS ===")
     output.append(f"Inferred Goal: {context.get('inferred_goal', 'N/A')}")
     output.append(
         f"Position: Slide {context.get('slide_position')} of {context.get('total_slides')}"
@@ -82,27 +77,27 @@ def format_context(context):
 
     if context.get("typography"):
         typo = context["typography"]
-        output.append(f"\n📝 Typography:")
+        output.append("\n📝 Typography:")
         output.append(f"   Primary: {typo.get('primary_size', 'N/A')}")
         output.append(f"   Secondary: {typo.get('secondary_size', 'N/A')}")
         output.append(f"   Contrast: {typo.get('weight_contrast', 'N/A')}")
 
     if context.get("color_treatment"):
         color = context["color_treatment"]
-        output.append(f"\n🎨 Color Treatment:")
+        output.append("\n🎨 Color Treatment:")
         output.append(f"   Background: {color.get('background', 'N/A')}")
         output.append(f"   Text: {color.get('text_color', 'N/A')}")
         output.append(f"   Accent: {color.get('accent_usage', 'N/A')}")
 
     if context.get("should_break_pattern"):
-        output.append(f"\n⚡ Pattern Break: YES (use contrasting layout)")
+        output.append("\n⚡ Pattern Break: YES (use contrasting layout)")
 
     if context.get("should_use_full_bleed"):
-        output.append(f"\n🖼️ Full Bleed: Recommended for emotional impact")
+        output.append("\n🖼️ Full Bleed: Recommended for emotional impact")
 
     if context.get("use_background_image") and context.get("background"):
         bg = context["background"]
-        output.append(f"\n📸 Background Image:")
+        output.append("\n📸 Background Image:")
         output.append(f"   Category: {bg.get('image_category', 'N/A')}")
         output.append(f"   Overlay: {bg.get('overlay_style', 'N/A')}")
         output.append(f"   Keywords: {bg.get('search_keywords', 'N/A')}")

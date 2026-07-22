@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from database.services.unit_of_work import UnitOfWork
 from database.models.review import ReviewAssignmentModel, ReviewActivityLogModel
 from review.receipts.transition import ReviewTransitionReceipt

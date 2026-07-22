@@ -1,9 +1,8 @@
 import json
 import time
-import os
 import subprocess
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Optional
 
 
 class BenchmarkHistoryManager:

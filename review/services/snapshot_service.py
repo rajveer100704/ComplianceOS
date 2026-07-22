@@ -1,7 +1,6 @@
 import logging
-import json
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from database.services.unit_of_work import UnitOfWork
 from database.models.review import ReviewSnapshotModel, ReviewActivityLogModel
 from review.receipts.snapshot import SnapshotReceipt

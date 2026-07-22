@@ -21,9 +21,6 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-import fitz  # PyMuPDF
 
 import db
 import pipeline
@@ -34,7 +31,7 @@ from observability.config import setup_logging
 from auth.middleware import SecurityHeadersMiddleware
 from auth.middleware_request_id import RequestIDMiddleware
 from auth.middleware_tenant import TenantMiddleware
-from fastapi.responses import JSONResponse, Response, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.requests import Request
 
 # Configure structured logging
@@ -992,7 +989,9 @@ from auth.router import router as auth_router
 from organizations.router import router as organizations_router
 
 app.include_router(auth_router)
-app.include_router(organizations_router, prefix="/api/v1/organizations", tags=["Organizations"])
+app.include_router(
+    organizations_router, prefix="/api/v1/organizations", tags=["Organizations"]
+)
 
 app.mount("/", StaticFiles(directory=Path(__file__).parent, html=True), name="frontend")
 

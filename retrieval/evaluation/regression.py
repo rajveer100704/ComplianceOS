@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Tuple
+from typing import Tuple
 
 logger = logging.getLogger("regression_gates")
 

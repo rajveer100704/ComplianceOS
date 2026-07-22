@@ -1,5 +1,4 @@
 import logging
-from typing import Callable, Any
 
 logger = logging.getLogger("worker_retry")
 

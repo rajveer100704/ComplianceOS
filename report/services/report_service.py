@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
 from database.services.unit_of_work import UnitOfWork
 from database.models.report import (
     ReportModel,
@@ -9,7 +8,6 @@ from database.models.report import (
     ReportCitationModel,
     ReportActivityLogModel,
 )
-from report.receipts.generation import ReportGenerationReceipt
 from report.receipts.approval import ReportApprovalReceipt
 from report.events import ReportEventPublisher
 

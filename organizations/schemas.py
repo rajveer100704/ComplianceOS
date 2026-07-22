@@ -1,13 +1,18 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
-from database.models.enums import MembershipRole, OrganizationPlan, InvitationStatus
+from database.models.enums import MembershipRole, OrganizationPlan
 
 
 class CreateOrganizationRequest(BaseModel):
     """Request body for POST /api/v1/organizations."""
 
-    name: str = Field(..., min_length=2, max_length=255, description="Display name of the organization")
+    name: str = Field(
+        ...,
+        min_length=2,
+        max_length=255,
+        description="Display name of the organization",
+    )
     slug: Optional[str] = Field(
         default=None,
         min_length=2,

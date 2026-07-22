@@ -98,12 +98,15 @@ class OrganizationService:
             session=self._db,
         )
 
-        logger.info("Organization created: id=%s slug=%s by user=%s", org.id, org.slug, creator.id)
+        logger.info(
+            "Organization created: id=%s slug=%s by user=%s",
+            org.id,
+            org.slug,
+            creator.id,
+        )
         return org, membership
 
-    async def list_user_organizations(
-        self, user_id: str
-    ) -> list[dict]:
+    async def list_user_organizations(self, user_id: str) -> list[dict]:
         """Returns all organizations the user is a member of, with their role."""
         orgs = await self._org_repo.list_for_user(user_id)
         result = []
@@ -146,7 +149,9 @@ class OrganizationService:
         self._enforce_admin_or_owner(security_context, org_id)
 
         # Check caller is actually in this org
-        caller_membership = await self._mem_repo.find_by_org_and_user(org_id, security_context.user.id)
+        caller_membership = await self._mem_repo.find_by_org_and_user(
+            org_id, security_context.user.id
+        )
         if not caller_membership:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -155,10 +160,13 @@ class OrganizationService:
 
         # Prevent duplicate active membership
         from auth.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(self._db)
         existing_user = await user_repo.find_by_email(email)
         if existing_user:
-            existing_membership = await self._mem_repo.find_by_org_and_user(org_id, existing_user.id)
+            existing_membership = await self._mem_repo.find_by_org_and_user(
+                org_id, existing_user.id
+            )
             if existing_membership:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
@@ -215,6 +223,7 @@ class OrganizationService:
             HTTPException 409 — user already a member (invitation replay).
         """
         import hashlib
+
         token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
         invitation = await self._inv_repo.find_by_token_hash(token_hash)
 
@@ -230,7 +239,9 @@ class OrganizationService:
                 detail=f"Invitation is no longer valid (status: {invitation.status.value}).",
             )
 
-        if datetime.now(timezone.utc) > invitation.expires_at.replace(tzinfo=timezone.utc):
+        if datetime.now(timezone.utc) > invitation.expires_at.replace(
+            tzinfo=timezone.utc
+        ):
             await self._inv_repo.mark_revoked(invitation.id)
             raise HTTPException(
                 status_code=status.HTTP_410_GONE,
@@ -238,7 +249,9 @@ class OrganizationService:
             )
 
         # Check for replay (user already a member)
-        existing = await self._mem_repo.find_by_org_and_user(invitation.organization_id, user.id)
+        existing = await self._mem_repo.find_by_org_and_user(
+            invitation.organization_id, user.id
+        )
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -284,7 +297,9 @@ class OrganizationService:
         Raises:
             HTTPException 403 — caller is not a member of the org.
         """
-        caller_membership = await self._mem_repo.find_by_org_and_user(org_id, security_context.user.id)
+        caller_membership = await self._mem_repo.find_by_org_and_user(
+            org_id, security_context.user.id
+        )
         if not caller_membership:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

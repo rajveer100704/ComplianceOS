@@ -1,4 +1,3 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from database.session import async_session_factory
 from database.repositories.request import RequestRepository
 from database.repositories.document import DocumentRepository

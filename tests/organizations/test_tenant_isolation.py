@@ -7,16 +7,16 @@ This suite covers:
   - Invitation replay (accepting twice) → 409
   - Default org selection (no header → first membership selected)
 """
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
 from database.models.user import User
 from database.models.organization import Organization
 from database.models.membership import OrganizationMembership
-from database.models.enums import MembershipRole, InvitationStatus, OrganizationPlan
+from database.models.enums import MembershipRole, OrganizationPlan
 from database.repositories.organization_repository import OrganizationRepository
 from database.repositories.membership_repository import OrganizationMembershipRepository
 from database.repositories.invitation_repository import (
@@ -26,10 +26,10 @@ from database.repositories.invitation_repository import (
 from organizations.service import OrganizationService
 from auth.schemas import SecurityContext
 
-
 # ──────────────────────────────────────────────────────────────
 # Fixtures
 # ──────────────────────────────────────────────────────────────
+
 
 async def _make_user(db, email="alice@example.com") -> User:
     user = User(email=email, full_name="Alice", status="active", is_active=True)
@@ -39,13 +39,17 @@ async def _make_user(db, email="alice@example.com") -> User:
 
 
 async def _make_org(db, slug="acme") -> Organization:
-    org = Organization(name="Acme", slug=slug, plan=OrganizationPlan.FREE, is_active=True)
+    org = Organization(
+        name="Acme", slug=slug, plan=OrganizationPlan.FREE, is_active=True
+    )
     db.add(org)
     await db.flush()
     return org
 
 
-async def _make_membership(db, org_id, user_id, role=MembershipRole.OWNER) -> OrganizationMembership:
+async def _make_membership(
+    db, org_id, user_id, role=MembershipRole.OWNER
+) -> OrganizationMembership:
     mem = OrganizationMembership(
         organization_id=org_id,
         user_id=user_id,
@@ -57,7 +61,9 @@ async def _make_membership(db, org_id, user_id, role=MembershipRole.OWNER) -> Or
     return mem
 
 
-def _make_security_context(user: User, membership: OrganizationMembership | None = None) -> SecurityContext:
+def _make_security_context(
+    user: User, membership: OrganizationMembership | None = None
+) -> SecurityContext:
     return SecurityContext(
         user=user,
         membership=membership,
@@ -83,7 +89,9 @@ async def test_cross_tenant_list_members_returns_403(db_session):
     org_a = await _make_org(db_session, slug="org-a")
     org_b = await _make_org(db_session, slug="org-b")
 
-    mem_a = await _make_membership(db_session, org_a.id, user_a.id, MembershipRole.OWNER)
+    mem_a = await _make_membership(
+        db_session, org_a.id, user_a.id, MembershipRole.OWNER
+    )
     await _make_membership(db_session, org_b.id, user_b.id, MembershipRole.OWNER)
 
     # user_a's security context is scoped to org_a
@@ -155,7 +163,7 @@ async def test_invitation_replay_returns_409(db_session):
 
     raw_token, token_hash = generate_invitation_token()
     inv_repo = InvitationRepository(db_session)
-    inv = await inv_repo.create(
+    await inv_repo.create(
         organization_id=org.id,
         email="invitee@test.com",
         role=MembershipRole.REVIEWER,
@@ -218,8 +226,18 @@ async def test_default_org_is_first_membership(db_session):
 
     mem_repo = OrganizationMembershipRepository(db_session)
     # Create two memberships — first will have an earlier created_at
-    await mem_repo.create(organization_id=org_a.id, user_id=user.id, role=MembershipRole.REVIEWER, joined_at=datetime.now(timezone.utc))
-    await mem_repo.create(organization_id=org_b.id, user_id=user.id, role=MembershipRole.REVIEWER, joined_at=datetime.now(timezone.utc))
+    await mem_repo.create(
+        organization_id=org_a.id,
+        user_id=user.id,
+        role=MembershipRole.REVIEWER,
+        joined_at=datetime.now(timezone.utc),
+    )
+    await mem_repo.create(
+        organization_id=org_b.id,
+        user_id=user.id,
+        role=MembershipRole.REVIEWER,
+        joined_at=datetime.now(timezone.utc),
+    )
     await db_session.flush()
 
     all_mems = await mem_repo.list_members_for_user(user.id)
