@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Domain Outbox Events**: Events published for `LoginStarted`, `OAuthCallbackSucceeded`, `SessionCreated`, `RefreshRotated`, `RefreshTokenReplayDetected`, `LogoutCurrent`, `LogoutOthers`, `LogoutAll`, `SessionTouched`, `SessionRevoked`, `AllSessionsRevoked`, `ProfileViewed`.
 - **Comprehensive Unit & Integration Test Suite**: 54 test cases covering models, repositories, JWT cryptography, token rotation, sessions, dependencies, and API router endpoints with 82% overall test coverage.
 
+### Fixed
+- **SQLite Migration Compatibility**: Ensured Alembic migration scripts and test runners handle SQLite type constraints gracefully in local and CI environments.
+- **Development Key Fallback**: Added 4-tier key loading strategy with automatic ephemeral in-memory 2048-bit RSA keypair fallback for CI and headless testing.
+- **CI Dependency Resolution**: Resolved `PyJWT[crypto]` and `cryptography` dependency requirements in test execution workflows.
+- **Circular Import Elimination**: Decoupled `SecurityContext` into `auth/schemas.py` to prevent cyclic initialization dependencies between services and auth dependencies.
+
 ---
 
 ## [v1.0.0] - 2026-07-18
