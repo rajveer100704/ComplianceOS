@@ -80,10 +80,9 @@ class SessionService:
 
         # Emit SessionCreated event
         try:
-            from database.services.outbox_service import OutboxService
+            from database.events import EventPublisher
 
-            await OutboxService.publish_event(
-                session=self.session,
+            await EventPublisher.publish_event(
                 event_type="SessionCreated",
                 payload={
                     "session_id": created_session.id,
@@ -190,10 +189,9 @@ class SessionService:
 
         # Emit SessionTouched event
         try:
-            from database.services.outbox_service import OutboxService
+            from database.events import EventPublisher
 
-            await OutboxService.publish_event(
-                session=self.session,
+            await EventPublisher.publish_event(
                 event_type="SessionTouched",
                 payload={
                     "session_id": session_id,
@@ -213,10 +211,9 @@ class SessionService:
         success = await self.token_repo.revoke_session(session_id)
         if success:
             try:
-                from database.services.outbox_service import OutboxService
+                from database.events import EventPublisher
 
-                await OutboxService.publish_event(
-                    session=self.session,
+                await EventPublisher.publish_event(
                     event_type="SessionRevoked",
                     payload={"session_id": session_id},
                 )
@@ -259,10 +256,9 @@ class SessionService:
         await self.token_repo.revoke_all_for_user(user_id)
 
         try:
-            from database.services.outbox_service import OutboxService
+            from database.events import EventPublisher
 
-            await OutboxService.publish_event(
-                session=self.session,
+            await EventPublisher.publish_event(
                 event_type="AllSessionsRevoked",
                 payload={"user_id": user_id, "revoked_count": count},
             )

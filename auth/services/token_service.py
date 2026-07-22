@@ -96,23 +96,39 @@ class TokenService:
     async def rotate_refresh_token(
         self,
         raw_refresh_token: str,
-        email: str,
-        role: str,
+        email: Optional[str] = None,
+        role: Optional[str] = None,
         org: Optional[str] = None,
         scope: Optional[List[str]] = None,
         proof_key_thumbprint: Optional[str] = None,
         created_by_ip: Optional[str] = None,
         device_name: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        ip_address: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Rotates a refresh token. Validates token, handles replay detection & grace period, and issues new pair."""
         if not raw_refresh_token or not isinstance(raw_refresh_token, str):
             raise InvalidTokenError("Refresh token must be a non-empty string.")
+
+        created_by_ip = created_by_ip or ip_address
 
         token_hash = hash_refresh_token(raw_refresh_token)
         token_record = await self.token_repo.find_refresh_token_by_hash(token_hash)
 
         if not token_record:
             raise InvalidTokenError("Invalid refresh token.")
+
+        if not email or not role:
+            from auth.repositories.user_repository import UserRepository
+
+            user_repo = UserRepository(self.session)
+            user = await user_repo.find_by_id(token_record.user_id)
+            if user:
+                email = email or user.email
+                role = role or (
+                    user.role.value if hasattr(user.role, "value") else str(user.role)
+                )
+                org = org or user.organization_id
 
         now = datetime.now(timezone.utc)
         token_expires_at = _ensure_utc(token_record.expires_at)
@@ -162,10 +178,9 @@ class TokenService:
             )
             # Emit security event record
             try:
-                from database.services.outbox_service import OutboxService
+                from database.events import EventPublisher
 
-                await OutboxService.publish_event(
-                    session=self.session,
+                await EventPublisher.publish_event(
                     event_type="RefreshTokenReplayDetected",
                     payload={
                         "user_id": token_record.user_id,

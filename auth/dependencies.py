@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Optional, Set, Union
 from fastapi import Request, Header, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.settings import settings
@@ -11,6 +12,7 @@ from database.models.user import User
 from database.models.enums import UserRole
 from database.models.session_model import SessionModel
 from auth.enums import Permission, ROLE_PERMISSIONS_MAP, has_permission
+from auth.schemas import SecurityContext
 from auth.exceptions import (
     InvalidTokenError,
     TokenExpiredError,
@@ -25,18 +27,6 @@ oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/v1/auth/login",
     auto_error=False,
 )
-
-
-@dataclass
-class SecurityContext:
-    """Enterprise security context injected into FastAPI endpoint handlers."""
-
-    user: User
-    permissions: Set[Permission] = field(default_factory=set)
-    session: Optional[SessionModel] = None
-    token: str = ""
-    organization_id: Optional[str] = None
-    request_id: str = "unknown"
 
 
 async def get_db_session():
@@ -189,10 +179,13 @@ async def get_security_context(
     # Session Lookup if sid present
     session_entity: Optional[SessionModel] = None
     if session_id:
-        token_repo = TokenRepository(db)
-        session_entity = await token_repo.find_by_token_hash(
-            hash_refresh_token(session_id)
+        sess_res = await db.execute(
+            select(SessionModel).where(
+                SessionModel.id == session_id,
+                SessionModel.is_deleted.is_(False),
+            )
         )
+        session_entity = sess_res.scalar_one_or_none()
 
     return SecurityContext(
         user=user,

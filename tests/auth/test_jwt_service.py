@@ -249,8 +249,12 @@ def test_jwks_key_rotation_multiple_keys():
 
 def test_jwks_api_endpoint_response():
     """Test GET /.well-known/jwks.json returns 200 OK with caching headers and keys array."""
+    from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from main import app
+    from auth.router import router as auth_router
+
+    app = FastAPI()
+    app.include_router(auth_router)
 
     client = TestClient(app)
     res = client.get("/.well-known/jwks.json")
