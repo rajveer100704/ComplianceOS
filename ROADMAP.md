@@ -17,11 +17,12 @@ Each version is backed by a self-contained engineering implementation package in
 
 ---
 
-## 🔐 v1.1.0 — Authentication & Session Identity 🚀
+## 🔐 v1.1.0 — Authentication & Session Identity (Completed) ✅
 > 📦 **Specification Package**: [`roadmap/v1.1-auth/`](roadmap/v1.1-auth/)
-- [ ] **Google OAuth2 Integration**: Primary OAuth2 authentication provider.
-- [ ] **Production RS256 JWT Security**: Signed RS256 JWT token verification and key rotation.
-- [ ] **Session & Token Management**: Refresh token rotation, secure cookie handling, and session invalidation.
+- [x] **Google OAuth2 Integration**: Primary OAuth2 authentication provider with provider abstraction (`OAuthProvider`).
+- [x] **Production RS256 JWT Security**: Signed RS256 JWT token verification, dynamic JWKS key set (`/.well-known/jwks.json`), and key rotation.
+- [x] **Session & Token Management**: Single-use refresh token rotation with replay detection, secure HttpOnly cookies, 3-way logouts (`current`, `others`, `all`), device heartbeat tracking, and outbox audit events.
+- [x] **Permission-First Security Context**: Role-to-permission set mapping, fine-grained capability checks (`claims:read`, `reports:approve`), and `SecurityContext` dependency injection.
 
 ---
 
