@@ -987,10 +987,27 @@ async def compare_reports_endpoint(report_id_a: int, report_id_b: int):
 
 from auth.router import router as auth_router
 from organizations.router import router as organizations_router
+from storage.router import router as storage_router
+from integrations.router import router as integrations_router
+from integrations.registry import AdapterRegistry
+from integrations.adapters.slack import SlackAdapter
+from integrations.adapters.teams import TeamsAdapter
+from integrations.adapters.github import GitHubAdapter
+from integrations.adapters.jira import JiraAdapter
+
+# Register default integration adapters with AdapterRegistry
+AdapterRegistry.register(SlackAdapter())
+AdapterRegistry.register(TeamsAdapter())
+AdapterRegistry.register(GitHubAdapter())
+AdapterRegistry.register(JiraAdapter())
 
 app.include_router(auth_router)
 app.include_router(
     organizations_router, prefix="/api/v1/organizations", tags=["Organizations"]
+)
+app.include_router(storage_router, prefix="/api/v1/organizations", tags=["Storage"])
+app.include_router(
+    integrations_router, prefix="/api/v1/organizations", tags=["Integrations"]
 )
 
 app.mount("/", StaticFiles(directory=Path(__file__).parent, html=True), name="frontend")

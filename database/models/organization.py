@@ -42,3 +42,8 @@ class Organization(Base, AuditMixin):
         back_populates="organization",
         cascade="all, delete-orphan",
     )
+    integrations = relationship(
+        "IntegrationModel",
+        back_populates="organization",
+        cascade="all, delete-orphan",
+    )

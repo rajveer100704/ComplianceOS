@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.3.0] - 2026-07-22
+
+### Added
+- **Enterprise Business Connectors**: Standardized adapters (`SlackAdapter`, `TeamsAdapter`, `GitHubAdapter`, `JiraAdapter`) for notifications and automated issue creation.
+- **Provider Capabilities Engine**: Capabilities catalog (`ProviderCapabilities`) allowing dynamic event matching (`supports(event)`) without hardcoded provider branching.
+- **Credential AES-256-GCM Encryption**: `CredentialService` Fernet symmetric encryption and secret rotation (`POST /rotate-secret`) with version tracking (`credential_version`, `rotated_at`).
+- **Separated Runtime State & Operational Visibility**: `IntegrationRuntimeStateModel` tracking `health_status`, `consecutive_failures`, `last_success_at`, `last_failure_at`, `next_retry_at`, and `last_probe_duration_ms`.
+- **Integration Health Check Service**: `IntegrationHealthCheckService` performing automated probes (`POST /test`, `GET /health`) and updating health status metrics.
+- **Parallel Outbox Event Dispatcher**: `EventDispatcher` firing outbox events across active tenant integrations concurrently using `asyncio.gather(..., return_exceptions=True)` with SHA-256 idempotency key deduplication.
+- **Resilience Infrastructure**: `CircuitBreaker` state machine managing provider failure states (CLOSED, OPEN, HALF_OPEN) to prevent cascading outages.
+- **Object Storage Subsystem (`storage/`)**: Decoupled S3 and Cloudflare R2 object storage providers (`S3StorageProvider`, `R2StorageProvider`, `StorageService`) with presigned upload/download REST endpoints (`/api/v1/organizations/{org_id}/storage/presigned-upload`, `/presigned-download`).
+- **Integrations REST API**: Endpoints for creating (`POST`), listing (`GET`), updating (`PATCH`), deleting (`DELETE`), health probing (`GET /health`), testing connection (`POST /test`), and credential rotation (`POST /rotate-secret`).
+- **Alembic Migration**: `b4e2f6a8c0d2_add_v1_3_integrations_tables.py` creating `integrations`, `integration_runtime_states`, and `integration_delivery_logs` tables.
+- **Automated Test Suite**: 22 unit & integration test cases (`test_adapters.py`, `test_adapter_registry.py`, `test_credential_service.py`, `test_event_dispatcher.py`, `test_integration_models.py`, `test_integration_router.py`, `test_storage_providers.py`) validating connectors, outbox routing, encryption, API contracts, and presigned S3/R2 storage URLs. Total platform tests passing: 103/103.
+
+---
+
 ## [v1.2.0] - 2026-07-22
 
 ### Added

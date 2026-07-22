@@ -41,6 +41,11 @@ from database.models.outbox import OutboxEventModel
 from database.models.audit import AuditLogModel
 from database.models.run import RunModel
 from database.models.task import TaskModel
+from database.models.integration import (
+    IntegrationModel,
+    IntegrationRuntimeStateModel,
+    IntegrationDeliveryLogModel,
+)
 
 __all__ = [
     "Base",
@@ -52,11 +57,18 @@ __all__ = [
     "MembershipRole",
     "InvitationStatus",
     "OrganizationPlan",
+    "IntegrationProvider",
+    "IntegrationHealthStatus",
+    "DeliveryStatus",
     # v1.2 Multi-tenant models
     "Organization",
     "OrganizationMembership",
     "Team",
     "Invitation",
+    # v1.3 Integration models
+    "IntegrationModel",
+    "IntegrationRuntimeStateModel",
+    "IntegrationDeliveryLogModel",
     # Auth models
     "User",
     "OAuthAccount",

@@ -28,6 +28,14 @@ class Permission(str, Enum):
     SETTINGS_MANAGE = "settings:manage"
     AUDIT_LOGS_READ = "audit_logs:read"
 
+    # Organizations & Integrations
+    ORGANIZATIONS_READ = "organizations:read"
+    ORGANIZATIONS_WRITE = "organizations:write"
+    ORGANIZATIONS_ALL = "organizations:*"
+    INTEGRATIONS_READ = "integrations:read"
+    INTEGRATIONS_WRITE = "integrations:write"
+    INTEGRATIONS_ALL = "integrations:*"
+
 
 ROLE_PERMISSIONS_MAP: Dict[UserRole, Set[Permission]] = {
     UserRole.OWNER: {Permission.ALL},

@@ -46,3 +46,30 @@ class OrganizationPlan(str, Enum):
     PRO = "pro"
     BUSINESS = "business"
     ENTERPRISE = "enterprise"
+
+
+class IntegrationProvider(str, Enum):
+    """Supported enterprise third-party integration providers."""
+
+    SLACK = "slack"
+    TEAMS = "teams"
+    JIRA = "jira"
+    GITHUB = "github"
+
+
+class IntegrationHealthStatus(str, Enum):
+    """Operational health status of an active integration."""
+
+    HEALTHY = "healthy"
+    DEGRADED = "degraded"
+    DISCONNECTED = "disconnected"
+    EXPIRED = "expired"
+
+
+class DeliveryStatus(str, Enum):
+    """Status of an outbox event delivery attempt to an integration provider."""
+
+    PENDING = "pending"
+    DELIVERED = "delivered"
+    FAILED = "failed"
+    RETRYING = "retrying"
