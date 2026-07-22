@@ -62,3 +62,9 @@ class UnknownKeyIdError(InvalidTokenError):
     """Raised when JWT kid header does not match any known public key."""
 
     pass
+
+
+class InsufficientPrivilegesError(AuthError):
+    """Raised when user does not possess required role or permission for a resource."""
+
+    pass
