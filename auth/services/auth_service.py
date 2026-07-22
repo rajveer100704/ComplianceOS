@@ -81,7 +81,13 @@ class AuthService:
                 full_name=full_name,
                 provider_user_id=provider_user_id,
                 avatar_url=avatar_url,
-                role=UserRole.REVIEWER,
+            )
+            # Create personal organization & owner membership for new user
+            from organizations.service import OrganizationService
+            org_svc = OrganizationService(self.session)
+            await org_svc.create_organization(
+                name=f"{full_name}'s Organization",
+                creator=user,
             )
         else:
             # Record login activity
@@ -95,13 +101,19 @@ class AuthService:
         )
 
         # 5. Issue Token Pair
-        role_str = user.role.value if hasattr(user.role, "value") else str(user.role)
+        from database.repositories.membership_repository import OrganizationMembershipRepository
+        mem_repo = OrganizationMembershipRepository(self.session)
+        memberships = await mem_repo.list_members_for_user(user.id)
+        active_mem = memberships[0] if memberships else None
+        role_str = active_mem.role.value if active_mem else "reviewer"
+        org_id_str = active_mem.organization_id if active_mem else None
+
         token_pair = await self.token_service.issue_token_pair(
             user_id=user.id,
             email=user.email,
             role=role_str,
             session_id=sess_data["session_id"],
-            org=user.organization_id,
+            org=org_id_str,
             created_by_ip=ip_address,
         )
 
@@ -231,15 +243,21 @@ class AuthService:
         except Exception as e:
             logger.warning(f"Could not publish ProfileViewed event: {e}")
 
+        mem_role_str = (
+            context.membership.role.value
+            if context.membership and hasattr(context.membership.role, "value")
+            else str(context.membership.role) if context.membership else "reviewer"
+        )
+
         return UserProfileResponse(
             id=u.id,
             email=u.email,
             email_verified=u.email_verified,
             full_name=u.full_name,
             avatar_url=u.avatar_url,
-            role=u.role.value if hasattr(u.role, "value") else str(u.role),
+            role=mem_role_str,
             status=u.status.value if hasattr(u.status, "value") else str(u.status),
-            organization_id=u.organization_id,
+            organization_id=context.organization_id,
             permissions=perms,
             last_login_at=u.last_login_at.isoformat() if u.last_login_at else None,
             login_count=u.login_count,

@@ -1,5 +1,15 @@
 from database.models.base import Base, AuditMixin, generate_uuid
-from database.models.enums import UserRole, UserStatus
+from database.models.enums import (
+    UserRole,
+    UserStatus,
+    MembershipRole,
+    InvitationStatus,
+    OrganizationPlan,
+)
+from database.models.organization import Organization
+from database.models.membership import OrganizationMembership
+from database.models.team import Team
+from database.models.invitation import Invitation
 from database.models.user import User
 from database.models.oauth_account import OAuthAccount
 from database.models.refresh_token import RefreshToken
@@ -36,12 +46,23 @@ __all__ = [
     "Base",
     "AuditMixin",
     "generate_uuid",
+    # Enums
     "UserRole",
     "UserStatus",
+    "MembershipRole",
+    "InvitationStatus",
+    "OrganizationPlan",
+    # v1.2 Multi-tenant models
+    "Organization",
+    "OrganizationMembership",
+    "Team",
+    "Invitation",
+    # Auth models
     "User",
     "OAuthAccount",
     "RefreshToken",
     "SessionModel",
+    # Domain models
     "RequirementModel",
     "ClaimModel",
     "DocumentModel",

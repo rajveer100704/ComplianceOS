@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Dict, Set, Union
-from database.models.enums import UserRole
+from database.models.enums import UserRole, MembershipRole
 
 
 class Permission(str, Enum):
@@ -89,3 +89,47 @@ def has_permission(
             return True
 
     return False
+
+
+# v1.2: Authoritative permission map keyed on MembershipRole
+MEMBERSHIP_ROLE_PERMISSIONS_MAP: Dict[MembershipRole, Set[Permission]] = {
+    MembershipRole.OWNER: {Permission.ALL},
+    MembershipRole.ADMIN: {
+        Permission.CLAIMS_ALL,
+        Permission.REPORTS_ALL,
+        Permission.USERS_ALL,
+        Permission.SETTINGS_MANAGE,
+        Permission.AUDIT_LOGS_READ,
+    },
+    MembershipRole.LEAD_REVIEWER: {
+        Permission.CLAIMS_READ,
+        Permission.CLAIMS_WRITE,
+        Permission.REPORTS_READ,
+        Permission.REPORTS_WRITE,
+        Permission.REPORTS_APPROVE,
+        Permission.AUDIT_LOGS_READ,
+    },
+    MembershipRole.REVIEWER: {
+        Permission.CLAIMS_READ,
+        Permission.CLAIMS_WRITE,
+        Permission.REPORTS_READ,
+        Permission.REPORTS_WRITE,
+    },
+    MembershipRole.AUDITOR: {
+        Permission.CLAIMS_READ,
+        Permission.REPORTS_READ,
+        Permission.AUDIT_LOGS_READ,
+    },
+}
+
+
+def resolve_permissions(
+    membership_role: MembershipRole | None = None,
+) -> Set[Permission]:
+    """Returns the permission set for a given MembershipRole.
+
+    Falls back to an empty set if no membership role is available.
+    """
+    if membership_role is None:
+        return set()
+    return MEMBERSHIP_ROLE_PERMISSIONS_MAP.get(membership_role, set())

@@ -33,6 +33,7 @@ from config.settings import settings
 from observability.config import setup_logging
 from auth.middleware import SecurityHeadersMiddleware
 from auth.middleware_request_id import RequestIDMiddleware
+from auth.middleware_tenant import TenantMiddleware
 from fastapi.responses import JSONResponse, Response, PlainTextResponse
 from starlette.requests import Request
 
@@ -65,6 +66,7 @@ app = FastAPI(title="Compliance Evidence Checker")
 # Security & Observability Middlewares
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(TenantMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -987,8 +989,10 @@ async def compare_reports_endpoint(report_id_a: int, report_id_b: int):
 
 
 from auth.router import router as auth_router
+from organizations.router import router as organizations_router
 
 app.include_router(auth_router)
+app.include_router(organizations_router, prefix="/api/v1/organizations", tags=["Organizations"])
 
 app.mount("/", StaticFiles(directory=Path(__file__).parent, html=True), name="frontend")
 

@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class UserRole(str, Enum):
-    """Role-based access control roles."""
+    """Role-based access control roles (deprecated — use MembershipRole)."""
 
     OWNER = "Owner"
     ADMIN = "Admin"
@@ -18,3 +18,31 @@ class UserStatus(str, Enum):
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
     PENDING_VERIFICATION = "pending_verification"
+
+
+class MembershipRole(str, Enum):
+    """Per-organization role assigned to an OrganizationMembership."""
+
+    OWNER = "owner"
+    ADMIN = "admin"
+    LEAD_REVIEWER = "lead_reviewer"
+    REVIEWER = "reviewer"
+    AUDITOR = "auditor"
+
+
+class InvitationStatus(str, Enum):
+    """Lifecycle status of an organization invitation."""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+
+
+class OrganizationPlan(str, Enum):
+    """Subscription plan tier for an organization."""
+
+    FREE = "free"
+    PRO = "pro"
+    BUSINESS = "business"
+    ENTERPRISE = "enterprise"

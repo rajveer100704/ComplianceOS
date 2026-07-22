@@ -7,7 +7,7 @@ from database.models.user import User
 from database.models.oauth_account import OAuthAccount
 from database.models.refresh_token import RefreshToken
 from database.models.session_model import SessionModel
-from database.models.enums import UserRole, UserStatus
+from database.models.enums import UserStatus
 
 
 @pytest.mark.asyncio
@@ -16,8 +16,7 @@ async def test_create_user_and_oauth_account(db_session):
     user = User(
         email="reviewer@complianceos.io",
         full_name="Jane Reviewer",
-        role=UserRole.LEAD_REVIEWER,
-        status=UserStatus.ACTIVE,
+        status=UserStatus.ACTIVE.value,
     )
     db_session.add(user)
     await db_session.flush()
@@ -33,7 +32,7 @@ async def test_create_user_and_oauth_account(db_session):
 
     await db_session.refresh(user, ["oauth_accounts"])
     assert user.id is not None
-    assert user.role == UserRole.LEAD_REVIEWER
+    # role removed from User in v1.2 — authorization now via OrganizationMembership
     assert len(user.oauth_accounts) == 1
     assert user.oauth_accounts[0].provider == "google"
 

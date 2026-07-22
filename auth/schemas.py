@@ -1,9 +1,13 @@
 from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
-from typing import List, Optional, Set, Any
+from typing import List, Optional, Set, Any, TYPE_CHECKING
 from database.models.user import User
 from database.models.session_model import SessionModel
 from auth.enums import Permission
+
+if TYPE_CHECKING:
+    from database.models.membership import OrganizationMembership
+    from database.models.organization import Organization
 
 
 @dataclass
@@ -13,6 +17,8 @@ class SecurityContext:
     user: User
     permissions: Set[Permission] = field(default_factory=set)
     session: Optional[SessionModel] = None
+    membership: Optional["OrganizationMembership"] = None
+    organization: Optional["Organization"] = None
     token: str = ""
     organization_id: Optional[str] = None
     request_id: str = "unknown"

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from fastapi import HTTPException, Request, status
 
 from config.settings import settings
-from auth.enums import Permission, ROLE_PERMISSIONS_MAP, has_permission
+from auth.enums import Permission, MEMBERSHIP_ROLE_PERMISSIONS_MAP, has_permission
 from auth.dependencies import (
     SecurityContext,
     get_token_from_request,
@@ -17,41 +17,49 @@ from auth.dependencies import (
 )
 from auth.services.jwt_service import JWTService
 from auth.repositories.user_repository import UserRepository
-from database.models.enums import UserRole, UserStatus
+from database.models.enums import MembershipRole, UserStatus
+from database.models.membership import OrganizationMembership
+from database.models.organization import Organization
 
 
 @pytest_asyncio.fixture
 async def sample_users(db_session):
-    """Creates a set of users with different roles and statuses for testing dependencies."""
-    repo = UserRepository(db_session)
+    """Creates a set of users and org memberships for testing dependencies."""
+    user_repo = UserRepository(db_session)
 
-    reviewer = await repo.create_google_user(
+    reviewer = await user_repo.create_google_user(
         email="reviewer@complianceos.io",
         provider_user_id="g_rev_123",
-        role=UserRole.REVIEWER,
         full_name="Standard Reviewer",
     )
-    admin = await repo.create_google_user(
+    admin = await user_repo.create_google_user(
         email="admin_dep@complianceos.io",
         provider_user_id="g_adm_123",
-        role=UserRole.ADMIN,
         full_name="Admin User",
     )
-    owner = await repo.create_google_user(
+    owner = await user_repo.create_google_user(
         email="owner@complianceos.io",
         provider_user_id="g_own_123",
-        role=UserRole.OWNER,
         full_name="Platform Owner",
     )
-    suspended = await repo.create_google_user(
+    suspended = await user_repo.create_google_user(
         email="suspended@complianceos.io",
         provider_user_id="g_sus_123",
-        role=UserRole.REVIEWER,
         full_name="Suspended User",
     )
-    suspended.status = UserStatus.SUSPENDED
+    suspended.status = UserStatus.SUSPENDED.value
     suspended.is_active = False
 
+    org = Organization(name="Test Org", slug="test-org")
+    db_session.add(org)
+    await db_session.flush()
+
+    mem_rev = OrganizationMembership(organization_id=org.id, user_id=reviewer.id, role=MembershipRole.REVIEWER)
+    mem_adm = OrganizationMembership(organization_id=org.id, user_id=admin.id, role=MembershipRole.ADMIN)
+    mem_own = OrganizationMembership(organization_id=org.id, user_id=owner.id, role=MembershipRole.OWNER)
+    mem_sus = OrganizationMembership(organization_id=org.id, user_id=suspended.id, role=MembershipRole.REVIEWER)
+
+    db_session.add_all([mem_rev, mem_adm, mem_own, mem_sus])
     await db_session.flush()
 
     return {
@@ -59,6 +67,10 @@ async def sample_users(db_session):
         "admin": admin,
         "owner": owner,
         "suspended": suspended,
+        "org": org,
+        "mem_rev": mem_rev,
+        "mem_adm": mem_adm,
+        "mem_own": mem_own,
     }
 
 
@@ -67,9 +79,9 @@ async def sample_users(db_session):
 
 def test_permission_wildcard_matching():
     """Test has_permission helper for exact matches, domain wildcards, and global * wildcard."""
-    reviewer_perms = ROLE_PERMISSIONS_MAP[UserRole.REVIEWER]
-    admin_perms = ROLE_PERMISSIONS_MAP[UserRole.ADMIN]
-    owner_perms = ROLE_PERMISSIONS_MAP[UserRole.OWNER]
+    reviewer_perms = MEMBERSHIP_ROLE_PERMISSIONS_MAP[MembershipRole.REVIEWER]
+    admin_perms = MEMBERSHIP_ROLE_PERMISSIONS_MAP[MembershipRole.ADMIN]
+    owner_perms = MEMBERSHIP_ROLE_PERMISSIONS_MAP[MembershipRole.OWNER]
 
     # Reviewer tests
     assert has_permission(reviewer_perms, Permission.CLAIMS_READ) is True
@@ -126,11 +138,13 @@ async def test_get_security_context_valid_token(db_session, sample_users):
     token = jwt_svc.generate_access_token(
         user_id=reviewer.id,
         email=reviewer.email,
-        role=reviewer.role.value,
+        role="reviewer",
     )
 
     req = MagicMock(spec=Request)
     req.state.request_id = "req_test_123"
+    req.headers = {}
+    req.cookies = {}
 
     ctx = await get_security_context(request=req, token=token, db=db_session)
 
@@ -170,7 +184,7 @@ async def test_get_security_context_expired_token_raises_401(db_session, sample_
     token = jwt_svc.generate_access_token(
         user_id=reviewer.id,
         email=reviewer.email,
-        role=reviewer.role.value,
+        role="reviewer",
         extra_claims={"exp": int(time.time()) - 60},
     )
 
@@ -190,7 +204,7 @@ async def test_get_security_context_suspended_user_raises_403(db_session, sample
     token = jwt_svc.generate_access_token(
         user_id=suspended.id,
         email=suspended.email,
-        role=suspended.role.value,
+        role="reviewer",
     )
 
     req = MagicMock(spec=Request)
@@ -209,7 +223,7 @@ async def test_require_permission_guard_success_and_denied(sample_users):
     """Test require_permission dependency guard passes allowed permission and rejects missing permission."""
     reviewer_ctx = SecurityContext(
         user=sample_users["reviewer"],
-        permissions=ROLE_PERMISSIONS_MAP[UserRole.REVIEWER],
+        permissions=MEMBERSHIP_ROLE_PERMISSIONS_MAP[MembershipRole.REVIEWER],
     )
 
     # 1. Success check
@@ -231,7 +245,7 @@ async def test_require_permission_multiple_permissions(sample_users):
     """Test requiring multiple permissions simultaneously."""
     admin_ctx = SecurityContext(
         user=sample_users["admin"],
-        permissions=ROLE_PERMISSIONS_MAP[UserRole.ADMIN],
+        permissions=MEMBERSHIP_ROLE_PERMISSIONS_MAP[MembershipRole.ADMIN],
     )
 
     checker = require_permission(Permission.CLAIMS_READ, Permission.REPORTS_APPROVE)
@@ -241,12 +255,12 @@ async def test_require_permission_multiple_permissions(sample_users):
 
 @pytest.mark.asyncio
 async def test_require_role_guard_success_denied_and_owner(sample_users):
-    """Test require_role dependency guard enforcing roles and allowing Owner implicitly."""
-    reviewer_ctx = SecurityContext(user=sample_users["reviewer"])
-    admin_ctx = SecurityContext(user=sample_users["admin"])
-    owner_ctx = SecurityContext(user=sample_users["owner"])
+    """Test require_role dependency guard enforcing membership roles and allowing Owner implicitly."""
+    reviewer_ctx = SecurityContext(user=sample_users["reviewer"], membership=sample_users["mem_rev"])
+    admin_ctx = SecurityContext(user=sample_users["admin"], membership=sample_users["mem_adm"])
+    owner_ctx = SecurityContext(user=sample_users["owner"], membership=sample_users["mem_own"])
 
-    admin_checker = require_role(UserRole.ADMIN)
+    admin_checker = require_role(MembershipRole.ADMIN)
 
     # Admin passes
     res_admin = await admin_checker(context=admin_ctx)

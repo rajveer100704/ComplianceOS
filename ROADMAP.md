@@ -26,15 +26,17 @@ Each version is backed by a self-contained engineering implementation package in
 
 ---
 
-## 🏢 v1.2.0 — Multi-Tenant SaaS Architecture 🏢
+## 🏢 v1.2.0 — Multi-Tenant SaaS Architecture (Completed) ✅
 > 📦 **Specification Package**: [`roadmap/v1.2-multitenant/`](roadmap/v1.2-multitenant/)
-- [ ] **Organization & Team Isolation**: Tenant-scoped database schemas and organization-level RBAC.
-- [ ] **Team Invitations**: Invitation workflows with role assignments (`Admin`, `Lead Reviewer`, `Reviewer`).
-- [ ] **Project Isolation**: Tenant-scoped compliance project namespaces and audit boundaries.
+- [x] **Organization & Team Model**: Multi-tenant database models (`Organization`, `OrganizationMembership`, `Team`, `Invitation`).
+- [x] **Membership Role Authorization**: Authorization moved off `User.role` to `OrganizationMembership` (`Owner`, `Admin`, `Lead Reviewer`, `Reviewer`, `Auditor`).
+- [x] **Team Invitations Workflow**: Cryptographically hashed single-use token invitations with strict status lifecycle (`pending`, `accepted`, `expired`, `revoked`).
+- [x] **Tenant Middleware & Resolution**: Request header (`X-Organization-Id`) and cookie (`org_id`) tenant resolution order with fallback to user's primary membership.
+- [x] **Tenant-Isolated API Router & Repositories**: Scoped data access (`OrganizationRepository`, `OrganizationMembershipRepository`, `InvitationRepository`) and `/api/v1/organizations` router endpoints.
 
 ---
 
-## 🔌 v1.3.0 — Enterprise Integrations & Connectors 🔌
+## 🔌 v1.3.0 — Enterprise Integrations & Background Automation 🔌
 > 📦 **Specification Package**: [`roadmap/v1.3-integrations/`](roadmap/v1.3-integrations/)
 - [ ] **Issue Tracker Sync**: Automatic creation and status synchronization with Jira and GitHub Issues.
 - [ ] **Messaging Notifications**: Webhook event dispatchers for Slack and Microsoft Teams alerts.

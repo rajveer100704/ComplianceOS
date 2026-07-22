@@ -4,7 +4,6 @@ from datetime import datetime, timezone, timedelta
 
 from auth.services.session_service import SessionService, SessionState
 from auth.repositories.user_repository import UserRepository
-from database.models.enums import UserRole
 
 
 @pytest_asyncio.fixture
@@ -14,7 +13,6 @@ async def sample_user(db_session):
     user = await repo.create_google_user(
         email="session_user@complianceos.io",
         provider_user_id="g_session_user_123",
-        role=UserRole.REVIEWER,
         full_name="Session Test User",
     )
     await db_session.commit()

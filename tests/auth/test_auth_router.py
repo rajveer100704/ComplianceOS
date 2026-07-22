@@ -89,9 +89,10 @@ async def test_google_callback_and_me_flow(db_session):
         me_resp = client.get("/api/v1/auth/me")
         assert me_resp.status_code == 200
         profile = me_resp.json()
+        from auth.enums import has_permission
         assert profile["email"].endswith("@complianceos.io")
-        assert profile["role"] == "Reviewer"
-        assert "claims:read" in profile["permissions"]
+        assert profile["role"].lower() in ("owner", "reviewer")
+        assert has_permission(profile["permissions"], "claims:read") is True
         assert profile["current_session"] is not None
     finally:
         app.dependency_overrides.clear()
@@ -207,10 +208,9 @@ async def test_suspended_user_profile_request_returns_403(db_session):
         user = await repo.create_google_user(
             email="suspended_router@complianceos.io",
             provider_user_id="g_sus_router",
-            role=UserRole.REVIEWER,
             full_name="Suspended Router User",
         )
-        user.status = UserStatus.SUSPENDED
+        user.status = "suspended"
         user.is_active = False
         await db_session.flush()
 
@@ -220,7 +220,7 @@ async def test_suspended_user_profile_request_returns_403(db_session):
         token = jwt_svc.generate_access_token(
             user_id=user.id,
             email=user.email,
-            role=user.role.value,
+            role="reviewer",
         )
 
         client = TestClient(app)

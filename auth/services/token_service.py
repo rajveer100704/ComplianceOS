@@ -120,15 +120,19 @@ class TokenService:
 
         if not email or not role:
             from auth.repositories.user_repository import UserRepository
+            from database.repositories.membership_repository import (
+                OrganizationMembershipRepository,
+            )
 
             user_repo = UserRepository(self.session)
             user = await user_repo.find_by_id(token_record.user_id)
             if user:
                 email = email or user.email
-                role = role or (
-                    user.role.value if hasattr(user.role, "value") else str(user.role)
-                )
-                org = org or user.organization_id
+                mem_repo = OrganizationMembershipRepository(self.session)
+                mems = await mem_repo.list_members_for_user(user.id)
+                active_mem = mems[0] if mems else None
+                role = role or (active_mem.role.value if active_mem else "reviewer")
+                org = org or (active_mem.organization_id if active_mem else None)
 
         now = datetime.now(timezone.utc)
         token_expires_at = _ensure_utc(token_record.expires_at)

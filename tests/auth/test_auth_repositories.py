@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 
 from auth.repositories.user_repository import UserRepository
 from auth.repositories.token_repository import TokenRepository
-from database.models.enums import UserRole, UserStatus
+from database.models.enums import UserStatus
 from database.models.session_model import SessionModel
 
 
@@ -16,10 +16,9 @@ async def test_user_repository_create_google_user_and_find(db_session):
         full_name="Google Tester",
         provider_user_id="google_sub_999",
         avatar_url="https://example.com/avatar.png",
-        role=UserRole.ADMIN,
     )
     assert user.id is not None
-    assert user.role == UserRole.ADMIN
+    # role is now on OrganizationMembership — not on User in v1.2
 
     found_by_email = await repo.find_by_email("GOOGLE_TEST@COMPLIANCEOS.IO ")
     assert found_by_email is not None
@@ -32,7 +31,10 @@ async def test_user_repository_create_google_user_and_find(db_session):
 
 @pytest.mark.asyncio
 async def test_user_repository_lifecycle_updates(db_session):
-    """Test UserRepository lifecycle methods (record_login, change_role, deactivate, activate)."""
+    """Test UserRepository lifecycle methods (record_login, deactivate, activate).
+
+    Note: change_role was removed in v1.2. Role is now managed via OrganizationMembership.
+    """
     repo = UserRepository(db_session)
     user = await repo.create_google_user(
         email="lifecycle@complianceos.io",
@@ -45,19 +47,15 @@ async def test_user_repository_lifecycle_updates(db_session):
     assert refreshed.login_count == 1
     assert refreshed.last_login_at is not None
 
-    await repo.change_role(user.id, UserRole.LEAD_REVIEWER)
-    refreshed = await repo.find_by_id(user.id)
-    assert refreshed.role == UserRole.LEAD_REVIEWER
-
     await repo.deactivate(user.id)
     refreshed = await repo.find_by_id(user.id)
     assert refreshed.is_active is False
-    assert refreshed.status == UserStatus.INACTIVE
+    assert refreshed.status == "inactive"
 
     await repo.activate(user.id)
     refreshed = await repo.find_by_id(user.id)
     assert refreshed.is_active is True
-    assert refreshed.status == UserStatus.ACTIVE
+    assert refreshed.status == "active"
 
 
 @pytest.mark.asyncio

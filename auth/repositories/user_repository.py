@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from database.models.user import User
 from database.models.oauth_account import OAuthAccount
-from database.models.enums import UserRole, UserStatus
+from database.models.enums import UserStatus
 
 
 class UserRepository:
@@ -58,17 +58,18 @@ class UserRepository:
         full_name: str,
         provider_user_id: str,
         avatar_url: Optional[str] = None,
-        role: UserRole = UserRole.REVIEWER,
         provider_metadata: Optional[str] = None,
     ) -> User:
-        """Create a new user and link Google OAuth account in a single transaction."""
+        """Create a new user and link Google OAuth account in a single transaction.
+
+        Note: role is no longer set on User. Assign a role via OrganizationMembership.
+        """
         user = User(
             email=email.lower().strip(),
             email_verified=True,
             full_name=full_name,
             avatar_url=avatar_url,
-            role=role,
-            status=UserStatus.ACTIVE,
+            status=UserStatus.ACTIVE.value,
             is_active=True,
         )
         self.session.add(user)
@@ -124,15 +125,6 @@ class UserRepository:
         )
         await self.session.execute(stmt)
         await self.session.flush()
-
-    async def change_role(self, user_id: str, new_role: UserRole) -> Optional[User]:
-        """Update user role."""
-        user = await self.find_by_id(user_id)
-        if user:
-            user.role = new_role
-            user.updated_at = datetime.now(timezone.utc)
-            await self.session.flush()
-        return user
 
     async def deactivate(self, user_id: str) -> Optional[User]:
         """Deactivate user account."""

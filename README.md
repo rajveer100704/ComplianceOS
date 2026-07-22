@@ -4,19 +4,25 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688)
 ![License](https://img.shields.io/badge/License-MIT-purple)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
-![Tests](https://img.shields.io/badge/Tests-43%20Passed-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688)
+![License](https://img.shields.io/badge/License-MIT-purple)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED)
+![Tests](https://img.shields.io/badge/Tests-81%20Passed-brightgreen)
 
-**ComplianceOS** is an enterprise-grade, human-in-the-loop AI compliance verification platform. It automates complex regulatory claim verification against engineering standards (FAA Part 450, NRC 10 CFR, ASME BPVC) while maintaining a strict audit trail, versioned review snapshots, structured report generation, and operational production hardening.
+**ComplianceOS** is an enterprise-grade, human-in-the-loop AI compliance verification platform. It automates complex regulatory claim verification against engineering standards (FAA Part 450, NRC 10 CFR, ASME BPVC) while maintaining a strict audit trail, multi-tenant organization boundaries, versioned review snapshots, structured report generation, and production operational hardening.
 
 ---
 
 ## Key Features
 
-- 🎯 **Automated Claim Verification**: Parses engineering specs and matches compliance claims against regulatory corpora using hybrid dense-lexical vector search.
-- 🖥️ **3-Pane Review Workstation**: Interactive human workstation for reviewing claim evidence, accepting/rejecting decisions, pinning evidence, and adding threaded comments.
-- ⚡ **Asynchronous Background Workers**: Outbox event dispatching for heavy document parsing, vector embedding generation, and report compilation.
-- 📜 **Compliance Report Studio**: Automated PDF/HTML/Markdown report compilation with risk matrices, version lineage, and semantic snapshot diffs.
-- 🛡️ **Production Hardened**: Pluggable auth (API Key / JWT), request tracing (`X-Request-ID`), liveness/readiness probes (`/healthz`, `/readyz`), and Prometheus metrics (`/metrics`).
+- ✅ **Hybrid Retrieval Core**: Qdrant + BM25 dense-lexical vector retrieval with SentenceTransformers embeddings and TF-IDF overlap scoring.
+- ✅ **Enterprise Authentication**: Google OAuth2 integration, asymmetric RS256 JWT token signing, RFC 7517 JWKS key set, single-use refresh token rotation, and 3-way logouts (`current`, `others`, `all`).
+- ✅ **Multi-Tenant SaaS Architecture**: Organization workspaces, team management, membership-scoped RBAC (`Owner`, `Admin`, `Lead Reviewer`, `Reviewer`, `Auditor`), tenant middleware (`X-Organization-Id`), and SHA-256 token-hashed team invitations.
+- ✅ **3-Pane Review Workstation**: Interactive human workstation for reviewing claim evidence, recording decisions (`SUPPORTED`, `PARTIAL`, `UNSUPPORTED`), pinning evidence, and adding threaded comments.
+- ✅ **Compliance Report Studio**: Automated PDF/HTML/Markdown report compilation with risk matrices, version lineage tracking, and semantic snapshot diffs.
+- ✅ **Asynchronous Background Workers**: Outbox pattern event dispatching for heavy document parsing, vector embedding generation, and report compilation.
+- ✅ **Production Hardening**: Pluggable security, request tracing (`X-Request-ID`), liveness/readiness probes (`/healthz`, `/readyz`), and Prometheus text metrics (`/metrics`).
 
 
 ---
@@ -38,23 +44,43 @@
 ## High-Level System Architecture
 
 ```
-                                  ┌────────────────────────┐
-                                  │   Review Workstation   │
-                                  │      (index.html)      │
-                                  └───────────┬────────────┘
-                                              │ HTTP / JSON
-                                              ▼
+User Context
+    │
+    ▼
+OrganizationMembership ─── (Role: Owner, Admin, Lead Reviewer, Reviewer, Auditor)
+    │
+    ▼
+Organization (Tenant Root)
+    │
+    ├───────────────► Projects & Workspaces
+    │                      │
+    │                      ▼
+    │                  Documents & Engineering Specs
+    │                      │
+    │                      ▼
+    │                  Claims & Verification Verdicts
+    │                      │
+    │                      ▼
+    └───────────────► Compliance Reports & Versioned Snapshots
+
+
+                                 ┌────────────────────────┐
+                                 │   Review Workstation   │
+                                 │      (index.html)      │
+                                 └───────────┬────────────┘
+                                             │ HTTP / JSON (X-Organization-Id)
+                                             ▼
 ┌───────────────────────────────────────────────────────────────────────────────────────────┐
 │                                   FastAPI Web Platform                                    │
-│   (X-Request-ID Tracing • RBAC Auth • Security Headers • Rate Limiter • JSON Logging)      │
+│   (X-Request-ID Tracing • Tenant Middleware • RS256 JWT • Security Headers • CORS)       │
 └────────┬─────────────────────────────┬────────────────────────────┬───────────────────────┘
          │                             │                            │
          ▼                             ▼                            ▼
 ┌─────────────────┐           ┌─────────────────┐          ┌─────────────────┐
-│ Review Domain   │           │ Report Domain   │          │ Retrieval Core  │
-│ • State Machine │           │ • Snapshots     │          │ • SentenceTrans │
-│ • Snapshots     │           │ • Risk Matrix   │          │ • Overlap Plan  │
-│ • Comments/Pins │           │ • Exporters     │          │ • Receipts      │
+│ Review Domain   │           │ Report Domain   │          │ Organizations   │
+│ • State Machine │           │ • Snapshots     │          │ • Memberships   │
+│ • Snapshots     │           │ • Risk Matrix   │          │ • Invitations   │
+│ • Comments/Pins │           │ • Exporters     │          │ • Repositories  │
 └────────┬────────┘           └────────┬────────┘          └────────┬────────┘
          │                             │                            │
          └──────────────────────┬──────┴────────────────────────────┘

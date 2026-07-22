@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.2.0] - 2026-07-22
+
+### Added
+- **Multi-Tenant SaaS Models**: New ORM models (`Organization`, `OrganizationMembership`, `Team`, `Invitation`) and enums (`MembershipRole`, `InvitationStatus`, `OrganizationPlan`).
+- **Organization & Team Domain Package**: `organizations/` package containing business service (`OrganizationService`), outbox events (`events.py`), DTO schemas (`schemas.py`), and API router (`router.py`).
+- **Tenant Middleware**: `TenantMiddleware` extracting and attaching active organization ID (`X-Organization-Id` header, `org_id` cookie) to request state.
+- **Tenant-Scoped Data Access**: Scoped repositories (`OrganizationRepository`, `OrganizationMembershipRepository`, `InvitationRepository`) with tenant boundaries and soft delete support.
+- **Single-Use Invitation Workflow**: Secure single-use token invitations hashed with SHA-256 (`InvitationRepository`, `OrganizationService.invite_member`, `OrganizationService.accept_invitation`).
+- **Organization API Endpoints**:
+  - `POST /api/v1/organizations`: Creates workspace and assigns creator as OWNER.
+  - `GET /api/v1/organizations/me`: Lists organizations for the authenticated user with membership roles.
+  - `POST /api/v1/organizations/{org_id}/invitations`: Invites new member with role assignment (`Owner` or `Admin` authorization).
+  - `GET /api/v1/organizations/{org_id}/members`: Lists active organization members.
+- **Tenant Isolation Test Suite**: 27 unit & integration tests (`test_org_models.py`, `test_org_repositories.py`, `test_tenant_isolation.py`) covering tenant isolation (403), deleted orgs, suspended memberships, invitation replay (410), duplicate invites (409), and default org resolution.
+
+### Changed
+- **User Role Migration**: Deprecated and dropped `users.role` and `users.organization_id` columns; membership role (`OrganizationMembership.role`) is now the single source of truth for authorization.
+- **SecurityContext Extension**: Injected active `membership` (`OrganizationMembership`) and `organization` (`Organization`) into `SecurityContext`.
+- **Alembic Migration**: `a3f1c2d4e5b6_add_v1_2_multitenant_tables.py` creating multi-tenant schema and auto-provisioning a personal organization + OWNER membership for every existing user.
+
+### Fixed
+- **Last Owner Removal Protection**: Added `count_owners()` check in `OrganizationMembershipRepository` to prevent removing or downgrading the last organization owner.
+- **Deterministic Tenant Resolution**: Enforced multi-tenant context resolution order (`X-Organization-Id` header → `org_id` cookie → default membership by creation timestamp).
+- **Invitation Replay Hardening**: Rejection of accepted/expired invitation token replay attempts with explicit HTTP status codes (`410 GONE` / `409 CONFLICT`).
+
+---
+
 ## [v1.1.0] - 2026-07-22
 
 ### Added

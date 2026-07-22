@@ -13,7 +13,6 @@ from auth.exceptions import (
     TokenReplayError,
 )
 from database.models.refresh_token import RefreshToken
-from database.models.enums import UserRole
 
 
 @pytest_asyncio.fixture
@@ -23,11 +22,15 @@ async def sample_user(db_session):
     user = await repo.create_google_user(
         email="token_user@complianceos.io",
         provider_user_id="g_token_user_123",
-        role=UserRole.REVIEWER,
         full_name="Token Test User",
     )
     await db_session.commit()
     return user
+
+
+# v1.2: role is now on OrganizationMembership, not User.
+# Token service tests use a fixed role string for JWT payload testing.
+_TEST_ROLE = "reviewer"
 
 
 @pytest.mark.asyncio
@@ -40,7 +43,7 @@ async def test_issue_token_pair_returns_valid_access_and_refresh_tokens(
     pair = await service.issue_token_pair(
         user_id=sample_user.id,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
         device_name="Chrome MacOS",
     )
 
@@ -74,7 +77,7 @@ async def test_rotate_refresh_token_success(db_session, sample_user):
     pair1 = await service.issue_token_pair(
         user_id=sample_user.id,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
     raw_rt1 = pair1["refresh_token"]
 
@@ -82,7 +85,7 @@ async def test_rotate_refresh_token_success(db_session, sample_user):
     pair2 = await service.rotate_refresh_token(
         raw_refresh_token=raw_rt1,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
     raw_rt2 = pair2["refresh_token"]
 
@@ -110,7 +113,7 @@ async def test_replay_used_refresh_token_revokes_family(db_session, sample_user)
     pair1 = await service.issue_token_pair(
         user_id=sample_user.id,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
     raw_rt1 = pair1["refresh_token"]
 
@@ -118,7 +121,7 @@ async def test_replay_used_refresh_token_revokes_family(db_session, sample_user)
     pair2 = await service.rotate_refresh_token(
         raw_refresh_token=raw_rt1,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
     raw_rt2 = pair2["refresh_token"]
 
@@ -133,7 +136,7 @@ async def test_replay_used_refresh_token_revokes_family(db_session, sample_user)
         await service.rotate_refresh_token(
             raw_refresh_token=raw_rt1,
             email=sample_user.email,
-            role=sample_user.role.value,
+            role=_TEST_ROLE,
         )
 
     # Verify both RT1 and RT2 are marked revoked in DB
@@ -151,7 +154,7 @@ async def test_concurrent_refresh_within_grace_period_succeeds(db_session, sampl
     pair1 = await service.issue_token_pair(
         user_id=sample_user.id,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
     raw_rt1 = pair1["refresh_token"]
 
@@ -159,14 +162,14 @@ async def test_concurrent_refresh_within_grace_period_succeeds(db_session, sampl
     await service.rotate_refresh_token(
         raw_refresh_token=raw_rt1,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
 
     # Concurrent request immediately following (0.1s later, within 10s grace period)
     grace_pair = await service.rotate_refresh_token(
         raw_refresh_token=raw_rt1,
         email=sample_user.email,
-        role=sample_user.role.value,
+        role=_TEST_ROLE,
     )
     assert "access_token" in grace_pair
 
@@ -198,7 +201,7 @@ async def test_expired_refresh_token_raises_token_expired_error(
         await service.rotate_refresh_token(
             raw_refresh_token=raw_rt,
             email=sample_user.email,
-            role=sample_user.role.value,
+            role=_TEST_ROLE,
         )
 
 
@@ -211,14 +214,14 @@ async def test_invalid_token_format_raises_invalid_token_error(db_session, sampl
         await service.rotate_refresh_token(
             raw_refresh_token="",
             email=sample_user.email,
-            role=sample_user.role.value,
+            role=_TEST_ROLE,
         )
 
     with pytest.raises(InvalidTokenError):
         await service.rotate_refresh_token(
             raw_refresh_token="rt_non_existent_token_9999",
             email=sample_user.email,
-            role=sample_user.role.value,
+            role=_TEST_ROLE,
         )
 
 
@@ -228,10 +231,10 @@ async def test_revoke_all_for_user(db_session, sample_user):
     service = TokenService(db_session)
 
     await service.issue_token_pair(
-        user_id=sample_user.id, email=sample_user.email, role=sample_user.role.value
+        user_id=sample_user.id, email=sample_user.email, role=_TEST_ROLE
     )
     await service.issue_token_pair(
-        user_id=sample_user.id, email=sample_user.email, role=sample_user.role.value
+        user_id=sample_user.id, email=sample_user.email, role=_TEST_ROLE
     )
 
     revoked_count = await service.revoke_all_for_user(sample_user.id)

@@ -9,9 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config.settings import settings
 from database.session import async_session_factory
 from database.models.user import User
-from database.models.enums import UserRole
+from database.models.enums import MembershipRole
 from database.models.session_model import SessionModel
-from auth.enums import Permission, ROLE_PERMISSIONS_MAP, has_permission
+from database.models.membership import OrganizationMembership
+from database.models.organization import Organization
+from database.repositories.membership_repository import OrganizationMembershipRepository
+from database.repositories.organization_repository import OrganizationRepository
+from auth.enums import Permission, resolve_permissions, has_permission
 from auth.schemas import SecurityContext
 from auth.exceptions import (
     InvalidTokenError,
@@ -64,12 +68,55 @@ def get_token_from_request(
     return None
 
 
+async def _resolve_organization(
+    request: Request,
+    user: User,
+    db: AsyncSession,
+) -> tuple[Optional[OrganizationMembership], Optional[Organization]]:
+    """Resolves the active organization for the request.
+
+    Resolution order:
+      1. X-Organization-Id request header
+      2. org_id cookie
+      3. Default — first active membership (earliest created)
+
+    Returns (membership, organization) or (None, None) if user has no memberships.
+    """
+    membership_repo = OrganizationMembershipRepository(db)
+    org_repo = OrganizationRepository(db)
+
+    # Determine desired org_id from header or cookie
+    desired_org_id: Optional[str] = (
+        request.headers.get("X-Organization-Id")
+        or request.cookies.get("org_id")
+    )
+
+    if desired_org_id:
+        membership = await membership_repo.find_by_org_and_user(desired_org_id, user.id)
+        if not membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of the requested organization.",
+            )
+        org = await org_repo.find_by_id(desired_org_id)
+        return membership, org
+
+    # Default: first active membership
+    all_memberships = await membership_repo.list_members_for_user(user.id)
+    if not all_memberships:
+        return None, None
+
+    membership = all_memberships[0]
+    org = await org_repo.find_by_id(membership.organization_id)
+    return membership, org
+
+
 async def get_security_context(
     request: Request,
     token: Optional[str] = Depends(get_token_from_request),
     db: AsyncSession = Depends(get_db_session),
 ) -> SecurityContext:
-    """Security translation layer validating token, loading User + Role + Permissions + Session from DB."""
+    """Security translation layer validating token, loading User + Membership + Permissions + Session from DB."""
     request_id = getattr(request.state, "request_id", "unknown")
 
     # Static API Key check (for explicit API key header or match)
@@ -80,17 +127,19 @@ async def get_security_context(
             user = await repo.create_google_user(
                 email="admin@complianceos.io",
                 provider_user_id="static_api_key_admin",
-                role=UserRole.ADMIN,
                 full_name="System Admin",
             )
             await db.flush()
 
-        perms = ROLE_PERMISSIONS_MAP.get(user.role, set())
+        membership, org = await _resolve_organization(request, user, db)
+        perms = resolve_permissions(membership.role if membership else None)
         return SecurityContext(
             user=user,
             permissions=perms,
+            membership=membership,
+            organization=org,
             token=token,
-            organization_id=user.organization_id,
+            organization_id=org.id if org else None,
             request_id=request_id,
         )
 
@@ -104,17 +153,19 @@ async def get_security_context(
                 user = await repo.create_google_user(
                     email="dev@complianceos.io",
                     provider_user_id="dev_user_default",
-                    role=UserRole.REVIEWER,
                     full_name="Development User",
                 )
                 await db.flush()
 
-            perms = ROLE_PERMISSIONS_MAP.get(user.role, set())
+            membership, org = await _resolve_organization(request, user, db)
+            perms = resolve_permissions(membership.role if membership else None)
             return SecurityContext(
                 user=user,
                 permissions=perms,
+                membership=membership,
+                organization=org,
                 token="dev_fallback_token",
-                organization_id=user.organization_id,
+                organization_id=org.id if org else None,
                 request_id=request_id,
             )
 
@@ -163,18 +214,18 @@ async def get_security_context(
         )
 
     # User Status & Active Check
-    status_str = (
-        user.status.value if isinstance(user.status, Enum) else str(user.status)
-    )
-    if not user.is_active or status_str.lower() != "active":
+    status_val = user.status if isinstance(user.status, str) else str(user.status)
+    if not user.is_active or status_val.lower() != "active":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"User account is inactive or suspended (status: {status_str}).",
+            detail=f"User account is inactive or suspended (status: {status_val}).",
         )
 
-    # Resolve Role & Permissions
-    user_role = user.role
-    permissions = ROLE_PERMISSIONS_MAP.get(user_role, set())
+    # Resolve active organization from header/cookie/default (NOT from JWT claims)
+    membership, org = await _resolve_organization(request, user, db)
+
+    # Permissions from membership role
+    permissions = resolve_permissions(membership.role if membership else None)
 
     # Session Lookup if sid present
     session_entity: Optional[SessionModel] = None
@@ -191,8 +242,10 @@ async def get_security_context(
         user=user,
         permissions=permissions,
         session=session_entity,
+        membership=membership,
+        organization=org,
         token=token,
-        organization_id=user.organization_id,
+        organization_id=org.id if org else None,
         request_id=request_id,
     )
 
@@ -229,19 +282,22 @@ def require_permission(*required_permissions: Permission):
     return permission_checker
 
 
-def require_role(*allowed_roles: Union[UserRole, str]):
-    """Dependency factory enforcing that the authenticated user has one of the allowed roles (Owner always allowed)."""
+def require_role(*allowed_roles: Union[MembershipRole, str]):
+    """Dependency factory enforcing that the authenticated user has one of the allowed membership roles."""
 
     async def role_checker(
         context: SecurityContext = Depends(get_security_context),
     ) -> SecurityContext:
-        user_role = context.user.role
-        # Owner role always has full access
-        if (
-            user_role == UserRole.OWNER
-            or user_role.value == "Owner"
-            or "Owner" in allowed_roles
-        ):
+        if not context.membership:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No active organization membership found.",
+            )
+
+        user_role = context.membership.role
+
+        # Owner always has full access
+        if user_role == MembershipRole.OWNER or "owner" in allowed_roles:
             return context
 
         allowed_values = {

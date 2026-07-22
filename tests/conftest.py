@@ -1,6 +1,13 @@
+import sys
+from pathlib import Path
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+
+# Ensure project root directory is on pythonpath for tests
+root_dir = Path(__file__).parent.parent
+if str(root_dir) not in sys.path:
+    sys.path.insert(0, str(root_dir))
 
 from database.models.base import Base
 
