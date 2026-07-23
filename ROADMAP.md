@@ -67,7 +67,7 @@ Each version is backed by a self-contained engineering implementation package in
 ### Execution Breakdown (8 Iterative Sprints)
 
 #### 1. Sprint 1 — Agent Runtime & Foundation (`sprint-1-agent-runtime/`)
-- [ ] **LangGraph StateGraph Engine**: Core execution runtime for stateful agent workflows.
+- [ ] **LangGraph StateGraph Engine**: Operating system for agent execution (`StateGraph`, `Checkpointer`, `Scheduler`, `Event Bus`, `Budget Manager`, `Tool Registry`, `Memory Manager`, `Interrupt Manager`, `Stream Manager`, `Observability Hooks`).
 - [ ] **Agent & Tool Registry**: Dynamic registration of agents, tools, and execution capabilities.
 - [ ] **Shared Context & State Machine**: Strongly-typed state container passed across agent nodes.
 - [ ] **Cost & Budget Manager**: Per-request token budget enforcement, cost tracking, and model fallback.
@@ -75,7 +75,7 @@ Each version is backed by a self-contained engineering implementation package in
 - [ ] **Streaming Event Bus**: Server-sent events (SSE) / WebSocket streaming for real-time agent thought & tool execution traces.
 
 #### 2. Sprint 2 — Multi-Agent System (`sprint-2-multi-agent/`)
-- [ ] 👑 **Supervisor Agent**: Central coordinator managing routing, node dispatch, and completion gates.
+- [ ] 👑 **Supervisor Agent**: Central coordinator decomposed into `Planner` ➔ `Executor` ➔ `Evaluator` ➔ `Recovery Manager`.
 - [ ] 🔍 **Requirement Analysis Agent**: Extracts regulatory requirement clauses from standards (FAA Part 450, NRC 10 CFR, ASME BPVC).
 - [ ] 🎯 **Evidence Retrieval Agent**: Orchestrates hybrid vector search, BM25 lexical match, and cross-encoder reranking.
 - [ ] ⚖️ **Verification Agent**: Grounding check & claim verification against retrieved standard clauses.
@@ -84,20 +84,18 @@ Each version is backed by a self-contained engineering implementation package in
 - [ ] 🔍 **Reflection & Critique Agent**: Self-correction loop evaluating claim reasoning, hallucination risk, and grounding score before final output.
 
 #### 3. Sprint 3 — Shared Memory Layer (`sprint-3-memory/`)
-- [ ] **Semantic Memory**: Vector-backed historical claim & requirement similarity store.
-- [ ] **Episodic Memory**: Full trace history of previous audit reviews and decision trajectories.
-- [ ] **Organizational Memory**: Organization-wide compliance rules, override history, and custom standard interpretations.
-- [ ] **Reviewer Memory**: Individual reviewer preferences, feedback patterns, and recurring approval styles.
-- [ ] **Workflow Memory**: State persistence across long-running review cycles.
+- [ ] **Multi-Tier Memory Architecture**: `Semantic`, `Episodic`, `Organizational`, `Reviewer`, and `Workflow` memory stores.
+- [ ] **Memory Lifecycle Pipeline**: `Memory Ranking` ➔ `Memory Compression` ➔ `Memory Expiration` ➔ `Memory Importance Scoring` ➔ `Context Window Builder`.
 
 #### 4. Sprint 4 — Compliance Knowledge Graph (`sprint-4-knowledge-graph/`)
+- [ ] **Knowledge Graph Architecture ADR**: Architectural Decision Record selecting graph database engine (PostgreSQL + Apache AGE vs. Neo4j / Memgraph).
 - [ ] **Rich Lineage Graph Schema**: End-to-end entity link graph:
   `Regulation` ➔ `Requirement` ➔ `Evidence Chunk` ➔ `Claim` ➔ `Verification` ➔ `Policy Decision` ➔ `Workflow` ➔ `Report` ➔ `Reviewer` ➔ `Audit Event`.
 - [ ] **Graph Query Engine**: Cypher/GraphQL interface for impact analysis, requirement dependency tracing, and historical provenance audits.
 
 #### 5. Sprint 5 — Real-Time Collaboration (`sprint-5-collaboration/`)
 - [ ] **WebSocket Gateway**: Bidirectional real-time presence indicators (who is viewing/editing a claim).
-- [ ] **Live Collaboration**: Live comment streams, optimistic concurrency locking, task assignment notifications, and streaming review updates.
+- [ ] **Live Collaboration**: Live comment streams, optimistic concurrency locking, task assignment notifications, activity timelines, conflict resolution, and streaming review updates.
 
 #### 6. Sprint 6 — AI Governance & Safety (`sprint-6-ai-governance/`)
 - [ ] **Prompt Registry & Versioning**: Version-controlled prompt templates with checksums, rollback, and A/B variant tracking.
@@ -105,14 +103,10 @@ Each version is backed by a self-contained engineering implementation package in
 - [ ] **Safety & Guardrails**: Prompt injection defense, PII masking, safety policy enforcement, and AI output audit trail.
 
 #### 7. Sprint 7 — RAG & Agent Evaluation Suite (`sprint-7-evaluation/`)
-- [ ] **Continuous Evaluation Metrics**: Automated evaluation pipeline computing:
-  - *Faithfulness & Hallucination Frequency*
-  - *Context Precision & Context Recall*
-  - *Answer Relevancy & Citation Accuracy*
-  - *Retrieval & Agent Latency (P50/P95/P99)*
-  - *Cost Per Verification Request*
-- [ ] **Evaluation Benchmark Dashboard**: Automated regression testing against ground-truth compliance datasets.
+- [ ] **RAG Quality Metrics**: Faithfulness, Hallucination Frequency, Context Precision, Context Recall, Answer Relevancy, Citation Accuracy.
+- [ ] **Operational & Agent Performance Metrics**: Agent Success Rate, Tool Failure Rate, Retry Rate, Avg Reasoning Steps, Avg Tool Calls, Human Override Rate, Avg Approval Time, Cost Per Request, P95/P99 Latency.
+- [ ] **AI Experimentation Framework (`experiments/`)**: Variant assignment, A/B prompt/model evaluation, run history, metric collection, and winner selection dashboard.
 
 #### 8. Sprint 8 — Model Context Protocol (MCP) Ecosystem (`sprint-8-mcp/`)
-- [ ] **MCP Gateway & Tool Registry**: Extensible MCP gateway with permission management and tool scope authorization.
+- [ ] **MCP Gateway Architecture**: `Permission Engine` ➔ `Capability Discovery` ➔ `Tool Registry` ➔ `MCP Adapter`.
 - [ ] **Enterprise MCP Adapters**: Native support for connecting external MCP servers (Jira, Slack, GitHub, Google Drive, Confluence, Microsoft Teams).
