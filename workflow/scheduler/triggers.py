@@ -2,7 +2,6 @@
 
 import enum
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
 
 
 class TriggerType(str, enum.Enum):

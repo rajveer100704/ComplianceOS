@@ -48,7 +48,9 @@ class SystemPolicyPackModel(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     version: Mapped[str] = mapped_column(String(32), default="1.0.0")
     is_system_pack: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
 
 
 class OrganizationPolicyPackModel(Base):
@@ -66,7 +68,9 @@ class OrganizationPolicyPackModel(Base):
         nullable=True,
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
-    installed_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    installed_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
 
 
 class PolicyModel(Base):
@@ -89,7 +93,9 @@ class PolicyModel(Base):
     current_version_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     priority: Mapped[int] = mapped_column(Integer, default=100)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     versions: Mapped[List["PolicyVersionModel"]] = relationship(
@@ -114,7 +120,9 @@ class PolicyVersionModel(Base):
         SQLEnum(PolicyVersionStatus), default=PolicyVersionStatus.DRAFT, index=True
     )
     created_by_user_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
 
     policy: Mapped["PolicyModel"] = relationship(
         "PolicyModel", back_populates="versions"

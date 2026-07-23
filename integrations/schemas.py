@@ -4,7 +4,6 @@ from datetime import datetime
 from database.models.enums import (
     IntegrationProvider,
     IntegrationHealthStatus,
-    DeliveryStatus,
 )
 
 

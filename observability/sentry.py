@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Any
+from typing import Optional
 
 logger = logging.getLogger("observability_sentry")
 

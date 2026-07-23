@@ -1,6 +1,5 @@
 """Admin REST API router for Policy CRUD, Versioning, System Packs, Rollbacks, and Simulation."""
 
-from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,14 +9,12 @@ from policy.repository import PolicyRepository
 from policy.schemas import (
     PolicyCreate,
     PolicyResponse,
-    PolicyVersionResponse,
     PolicySimulationRequest,
     PolicySimulationResponse,
 )
 from policy_engine.compiler import PolicyCompiler
 from policy_engine.validator import PolicyValidator, PolicyValidationError
 from policy_engine.simulator import PolicySimulator
-from policy_engine.impact_analyzer import PolicyImpactAnalyzer
 
 router = APIRouter(prefix="/admin/policies", tags=["Admin Policy Governance"])
 

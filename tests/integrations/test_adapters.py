@@ -1,7 +1,6 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
-from database.models.enums import IntegrationProvider
 from integrations.events import DomainEvent, DomainEventType
 from integrations.adapters.slack import SlackAdapter
 from integrations.adapters.teams import TeamsAdapter

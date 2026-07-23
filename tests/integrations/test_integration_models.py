@@ -1,4 +1,3 @@
-import pytest
 from database.models.enums import (
     IntegrationProvider,
     IntegrationHealthStatus,
@@ -7,7 +6,6 @@ from database.models.enums import (
 from database.models.integration import (
     IntegrationModel,
     IntegrationRuntimeStateModel,
-    IntegrationDeliveryLogModel,
 )
 
 

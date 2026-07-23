@@ -1,7 +1,11 @@
 """Unit tests for Generic StateMachine[T] and Audit Exporter."""
 
 import pytest
-from review.state_machine import StateMachine, StandardState, InvalidStateTransitionError
+from review.state_machine import (
+    StateMachine,
+    StandardState,
+    InvalidStateTransitionError,
+)
 from audit.exporter import AuditExporter
 from audit.models import EnterpriseAuditLogModel
 from datetime import datetime
@@ -59,4 +63,7 @@ def test_audit_exporter_json_and_csv():
     assert "claim.approved" in json_output
 
     csv_output = AuditExporter.export_to_csv([log])
-    assert "log-1,org-1,usr-1,claim.approved,claim,clm-100,ver-1,127.0.0.1,req-555" in csv_output
+    assert (
+        "log-1,org-1,usr-1,claim.approved,claim,clm-100,ver-1,127.0.0.1,req-555"
+        in csv_output
+    )

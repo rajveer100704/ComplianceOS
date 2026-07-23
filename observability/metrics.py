@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Optional
 from prometheus_client import (
     Counter,
     Histogram,

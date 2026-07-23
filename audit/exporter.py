@@ -3,7 +3,7 @@
 import json
 import csv
 import io
-from typing import Sequence, Dict, Any
+from typing import Sequence
 from audit.models import EnterpriseAuditLogModel
 
 
@@ -27,7 +27,9 @@ class AuditExporter:
                     "changes_json": log.changes_json,
                     "ip_address": log.ip_address,
                     "request_id": log.request_id,
-                    "created_at": log.created_at.isoformat() if log.created_at else None,
+                    "created_at": (
+                        log.created_at.isoformat() if log.created_at else None
+                    ),
                 }
             )
         return json.dumps(payload, indent=2)

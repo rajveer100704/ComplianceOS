@@ -46,10 +46,14 @@ class WorkflowDefinitionModel(Base):
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     dag_topology_json: Mapped[dict] = mapped_column(JSON, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
 
     executions: Mapped[List["WorkflowExecutionModel"]] = relationship(
-        "WorkflowExecutionModel", back_populates="workflow_definition", cascade="all, delete-orphan"
+        "WorkflowExecutionModel",
+        back_populates="workflow_definition",
+        cascade="all, delete-orphan",
     )
 
 
@@ -60,14 +64,20 @@ class WorkflowExecutionModel(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     workflow_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("workflow_definitions.id", ondelete="CASCADE"), index=True
+        String(36),
+        ForeignKey("workflow_definitions.id", ondelete="CASCADE"),
+        index=True,
     )
     policy_version_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     trigger_type: Mapped[str] = mapped_column(String(32), default="EVENT")
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     status: Mapped[WorkflowExecutionStatus] = mapped_column(
-        SQLEnum(WorkflowExecutionStatus), default=WorkflowExecutionStatus.PENDING, index=True
+        SQLEnum(WorkflowExecutionStatus),
+        default=WorkflowExecutionStatus.PENDING,
+        index=True,
     )
     dry_run: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -75,7 +85,9 @@ class WorkflowExecutionModel(Base):
         "WorkflowDefinitionModel", back_populates="executions"
     )
     steps: Mapped[List["WorkflowStepExecutionModel"]] = relationship(
-        "WorkflowStepExecutionModel", back_populates="execution", cascade="all, delete-orphan"
+        "WorkflowStepExecutionModel",
+        back_populates="execution",
+        cascade="all, delete-orphan",
     )
 
 
@@ -89,7 +101,9 @@ class WorkflowStepExecutionModel(Base):
         String(36), ForeignKey("workflow_executions.id", ondelete="CASCADE"), index=True
     )
     action_key: Mapped[str] = mapped_column(String(64), nullable=False)
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC)
+    )
     finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     latency_ms: Mapped[float] = mapped_column(Float, default=0.0)
     status: Mapped[WorkflowStepStatus] = mapped_column(

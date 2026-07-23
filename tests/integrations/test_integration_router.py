@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from fastapi import status
 
 from main import app
-from database.models.enums import IntegrationProvider, MembershipRole
+from database.models.enums import MembershipRole
 from database.repositories.organization_repository import OrganizationRepository
 from database.repositories.membership_repository import OrganizationMembershipRepository
 from auth.dependencies import SecurityContext, get_security_context, get_db_session

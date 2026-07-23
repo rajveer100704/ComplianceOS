@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Optional, Any
+from typing import Optional
 from fastapi import FastAPI, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 

@@ -1,8 +1,7 @@
-import json
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime, timezone
-from sqlalchemy import select, update, delete, and_
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models.integration import (

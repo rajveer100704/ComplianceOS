@@ -15,7 +15,9 @@ class ImpactAnalysisResult:
     would_escalate: int
     estimated_false_positive_rate: float
     avg_latency_increase_ms: float
-    recommendation: str  # "SAFE_TO_ACTIVATE", "HIGH_BLOCK_RATE_WARNING", "REQUIRES_REVIEW"
+    recommendation: (
+        str  # "SAFE_TO_ACTIVATE", "HIGH_BLOCK_RATE_WARNING", "REQUIRES_REVIEW"
+    )
 
 
 class PolicyImpactAnalyzer:
@@ -28,7 +30,9 @@ class PolicyImpactAnalyzer:
         self, expression: str, sample_claims: List[Dict[str, Any]], organization_id: str
     ) -> ImpactAnalysisResult:
         """Runs batch simulation and derives pre-activation metrics and recommendations."""
-        sim_res = self.simulator.simulate_expression(expression, sample_claims, organization_id)
+        sim_res = self.simulator.simulate_expression(
+            expression, sample_claims, organization_id
+        )
         total = sim_res.total_evaluated or 1
 
         block_rate = (sim_res.blocked_count / total) * 100.0

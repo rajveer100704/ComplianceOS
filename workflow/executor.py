@@ -37,7 +37,9 @@ class WorkflowExecutor:
         for step_key in steps:
             action = action_registry.get(step_key)
             if not action:
-                logger.warning(f"Workflow action key '{step_key}' not found in ActionRegistry")
+                logger.warning(
+                    f"Workflow action key '{step_key}' not found in ActionRegistry"
+                )
                 result.step_results.append(
                     {
                         "action_key": step_key,
@@ -62,9 +64,7 @@ class WorkflowExecutor:
                     step_success = True
                     break
                 except Exception as e:
-                    logger.error(
-                        f"Action '{step_key}' failed attempt {attempt}: {e}"
-                    )
+                    logger.error(f"Action '{step_key}' failed attempt {attempt}: {e}")
                     delay = calculate_delay_seconds(action.retry_policy, attempt)
                     if delay > 0:
                         import asyncio
@@ -84,7 +84,9 @@ class WorkflowExecutor:
 
             if not step_success:
                 result.success = False
-                logger.error(f"Workflow '{workflow_id}' halted on failed step '{step_key}'")
+                logger.error(
+                    f"Workflow '{workflow_id}' halted on failed step '{step_key}'"
+                )
                 break
 
         return result

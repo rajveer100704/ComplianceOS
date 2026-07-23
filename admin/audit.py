@@ -1,10 +1,10 @@
 """Admin REST API router for Audit Search, Filtering, and Exporting."""
 
-from typing import Optional, List
-from fastapi import APIRouter, Depends, Query, Response, status
+from typing import Optional
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.dependencies import SecurityContext, require_permission, get_db_session
+from auth.dependencies import require_permission, get_db_session
 from auth.enums import Permission
 from audit.repository import AuditLogRepository
 from audit.exporter import AuditExporter
@@ -59,5 +59,7 @@ async def export_audit_logs_api(
         return Response(
             content=csv_content,
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=audit_trail_{org_id}.csv"},
+            headers={
+                "Content-Disposition": f"attachment; filename=audit_trail_{org_id}.csv"
+            },
         )

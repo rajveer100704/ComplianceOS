@@ -1,4 +1,3 @@
-import pytest
 from storage.providers.s3 import S3StorageProvider
 from storage.providers.r2 import R2StorageProvider
 from storage.service import StorageService

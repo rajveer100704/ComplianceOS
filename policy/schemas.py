@@ -3,7 +3,7 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from policy.models import PolicyVersionStatus, PolicyRuleType, AnalyticsPeriodType
+from policy.models import PolicyVersionStatus, PolicyRuleType
 
 
 class PolicyRuleCreate(BaseModel):

@@ -1,4 +1,3 @@
-import pytest
 from database.models.enums import IntegrationProvider
 from integrations.events import DomainEvent, DomainEventType
 from integrations.adapters.base import (

@@ -2,8 +2,7 @@
 
 import uuid
 import hashlib
-import json
-from typing import Optional, List, Sequence
+from typing import Optional, Sequence
 from datetime import datetime, UTC
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,11 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from policy.models import (
     PolicyModel,
     PolicyVersionModel,
-    PolicyRuleModel,
     PolicyVersionStatus,
     SystemPolicyPackModel,
     OrganizationPolicyPackModel,
-    PolicyDependencyModel,
 )
 
 

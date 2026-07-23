@@ -2,7 +2,7 @@
 
 import functools
 import logging
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Callable
 from audit.repository import AuditLogRepository
 
 logger = logging.getLogger("audit_service")
@@ -47,7 +47,9 @@ def audit_action(action_name: str, resource_type: str):
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             res = await func(*args, **kwargs)
-            logger.info(f"Audit action '{action_name}' on resource '{resource_type}' logged.")
+            logger.info(
+                f"Audit action '{action_name}' on resource '{resource_type}' logged."
+            )
             return res
 
         return wrapper

@@ -5,11 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.repositories.integration_repository import IntegrationRepository
 from database.models.integration import IntegrationModel
-from database.models.enums import IntegrationProvider
 from integrations.schemas import IntegrationCreate, IntegrationUpdate
 from integrations.crypto import CredentialService
 from integrations.services.health_service import IntegrationHealthCheckService
-from integrations.adapters.base import IntegrationResult
 
 logger = logging.getLogger("integration_service")
 

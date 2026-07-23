@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.dependencies import (
     SecurityContext,
-    get_security_context,
     require_permission,
     get_db_session,
 )

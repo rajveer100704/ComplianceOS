@@ -1,7 +1,7 @@
 """Generic StateMachine[T] managing formal state transitions across entities (Claim, Report, Evidence)."""
 
 import enum
-from typing import Generic, TypeVar, List, Dict, Set, Optional, Any
+from typing import Generic, TypeVar, Dict, Set
 
 
 class StandardState(str, enum.Enum):

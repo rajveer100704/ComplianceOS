@@ -1,6 +1,6 @@
 """Admin REST API router for Worker Queue Monitoring and Outbox Controls."""
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends
 from auth.dependencies import require_permission
 from auth.enums import Permission
 

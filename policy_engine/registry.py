@@ -1,6 +1,6 @@
 """PolicyRegistry mapping DomainEventCatalog types to registered policy evaluators."""
 
-from typing import Dict, List, Callable, Any
+from typing import Dict, List, Callable
 from events.catalog import DomainEventCatalog
 from policy_engine.context import PolicyContext
 from policy_engine.decision import PolicyDecision
@@ -13,7 +13,9 @@ class PolicyRegistry:
         self._handlers: Dict[str, List[Callable[[PolicyContext], PolicyDecision]]] = {}
 
     def register(
-        self, event_type: DomainEventCatalog, handler: Callable[[PolicyContext], PolicyDecision]
+        self,
+        event_type: DomainEventCatalog,
+        handler: Callable[[PolicyContext], PolicyDecision],
     ):
         """Registers an evaluator handler function for a domain event type."""
         key = event_type.value if hasattr(event_type, "value") else str(event_type)

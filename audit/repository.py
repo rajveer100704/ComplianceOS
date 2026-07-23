@@ -2,8 +2,8 @@
 
 import uuid
 from datetime import datetime
-from typing import Optional, List, Sequence
-from sqlalchemy import select, delete
+from typing import Optional, Sequence
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from audit.models import EnterpriseAuditLogModel
 

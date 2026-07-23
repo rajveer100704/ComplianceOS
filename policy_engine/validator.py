@@ -1,6 +1,6 @@
 """Semantic AST validator for Policy Engine expressions and rules."""
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 class PolicyValidationError(Exception):

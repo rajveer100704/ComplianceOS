@@ -1,7 +1,7 @@
 import uuid
 from enum import Enum
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 

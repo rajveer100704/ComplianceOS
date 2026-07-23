@@ -35,7 +35,9 @@ def test_action_registry_registration():
 @pytest.mark.asyncio
 async def test_workflow_executor_live_run():
     executor = WorkflowExecutor()
-    ctx = WorkflowContext(organization_id="org-test", report_id="rep-101", dry_run=False)
+    ctx = WorkflowContext(
+        organization_id="org-test", report_id="rep-101", dry_run=False
+    )
 
     steps = ["pdf_exporter", "storage_uploader", "slack_notifier"]
     res = await executor.execute_dag("wf-1", steps, ctx)
