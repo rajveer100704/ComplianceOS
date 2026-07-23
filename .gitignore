@@ -18,6 +18,9 @@ config/keys/*.pem
 
 # Databases & local runtime storage
 *.db
+*.db-journal
+*.db-shm
+*.db-wal
 *.sqlite3
 compliance.db
 test.db

@@ -1,6 +1,15 @@
 import os
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from retrieval.config.loader import ConfigLoader
+
+
+def _set_sqlite_pragmas(dbapi_connection, connection_record):
+    """Enables Write-Ahead Logging (WAL) and 60s busy timeout for SQLite connections to avoid locking conflicts."""
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA busy_timeout=60000")
+    cursor.close()
 
 
 def get_database_url() -> str:
@@ -35,4 +44,8 @@ def create_db_engine() -> AsyncEngine:
         kwargs["pool_timeout"] = db_config.get("timeout", 30)
         kwargs["pool_recycle"] = 1800
 
-    return create_async_engine(url, echo=db_config.get("echo", False), **kwargs)
+    engine = create_async_engine(url, echo=db_config.get("echo", False), **kwargs)
+    if "sqlite" in url:
+        event.listen(engine.sync_engine, "connect", _set_sqlite_pragmas)
+
+    return engine

@@ -7,8 +7,20 @@ from concurrent.futures import ThreadPoolExecutor
 
 from database.services.persistence_service import (
     PersistenceService,
-    LockedError,
-)  # noqa: F401
+    LockedError as _LockedError,  # noqa: F401 — public re-export consumed by main.py
+)
+
+# Explicit public API for this facade module.
+# LockedError is re-exported so callers can reference it as `db.LockedError`
+# without importing from the internal persistence layer directly.
+LockedError = _LockedError
+
+__all__ = [
+    "PersistenceService",
+    "LockedError",
+    "TransitionError",
+]
+
 from database.migration_manager import MigrationManager
 from database.bootstrap import bootstrap_database
 

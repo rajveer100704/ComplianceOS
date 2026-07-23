@@ -20,9 +20,14 @@ def fallback_to_sqlite():
     logger.warning(
         "PostgreSQL connection refused. Falling back to local SQLite database..."
     )
+    from sqlalchemy import event
     from sqlalchemy.ext.asyncio import create_async_engine
+    from database.engine import _set_sqlite_pragmas
 
     engine = create_async_engine(
-        "sqlite+aiosqlite:///compliance.db?timeout=30", echo=False
+        "sqlite+aiosqlite:///compliance.db?timeout=60",
+        echo=False,
+        connect_args={"timeout": 60},
     )
+    event.listen(engine.sync_engine, "connect", _set_sqlite_pragmas)
     async_session_factory.configure(bind=engine)
