@@ -14,6 +14,7 @@ from agents.evidence_retrieval import EvidenceRetrievalAgent
 from agents.verification import VerificationAgent
 from agents.risk_assessment import RiskAssessmentAgent
 from agents.report_drafting import ReportDraftingAgent
+from agents.reflection import ReflectionAgent
 
 __all__ = [
     "Agent",
@@ -30,4 +31,5 @@ __all__ = [
     "VerificationAgent",
     "RiskAssessmentAgent",
     "ReportDraftingAgent",
+    "ReflectionAgent",
 ]

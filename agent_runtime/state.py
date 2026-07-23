@@ -40,6 +40,10 @@ class AgentRuntimeState(BaseAgentState):
     report: Dict[str, Any] = Field(default_factory=dict)
     report_sections: List[Dict[str, Any]] = Field(default_factory=list)
     report_trace: Dict[str, Any] = Field(default_factory=dict)
+    reflection: Dict[str, Any] = Field(default_factory=dict)
+    reflection_trace: Dict[str, Any] = Field(default_factory=dict)
+    reflection_recommendations: List[str] = Field(default_factory=list)
+    approval_ready: bool = False
 
     # Runtime tracking & tools
     tool_calls: List[Dict[str, Any]] = Field(default_factory=list)
