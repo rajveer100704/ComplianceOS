@@ -9,6 +9,8 @@ from agents.supervisor import (
     RecoveryManagerSubModule,
 )
 from agents.requirement_analysis import RequirementAnalysisAgent
+from agents.retrieval_schemas import RetrievalTrace, RetrievalContext, EvidenceBundle
+from agents.evidence_retrieval import EvidenceRetrievalAgent
 
 __all__ = [
     "Agent",
@@ -18,4 +20,8 @@ __all__ = [
     "EvaluatorSubModule",
     "RecoveryManagerSubModule",
     "RequirementAnalysisAgent",
+    "RetrievalTrace",
+    "RetrievalContext",
+    "EvidenceBundle",
+    "EvidenceRetrievalAgent",
 ]
