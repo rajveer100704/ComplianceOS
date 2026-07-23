@@ -24,7 +24,27 @@ class ExecutionStep(BaseModel):
 
 
 class AgentRuntimeState(BaseAgentState):
-    """Extended agent state carrying execution step history and runtime controls."""
+    """Frozen shared agent state carrying execution step history, multi-agent artifacts, and runtime controls."""
+
+    user_id: Optional[str] = None
+    workflow_id: Optional[str] = None
+    current_step: str = "initial"
+
+    # Multi-agent artifacts (Sprint 2 & beyond)
+    retrieved_documents: List[Dict[str, Any]] = Field(default_factory=list)
+    requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    claims: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_results: List[Dict[str, Any]] = Field(default_factory=list)
+    risk_assessment: Dict[str, Any] = Field(default_factory=dict)
+    report: Dict[str, Any] = Field(default_factory=dict)
+
+    # Runtime tracking & tools
+    tool_calls: List[Dict[str, Any]] = Field(default_factory=list)
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+    budget: Dict[str, Any] = Field(default_factory=dict)
+    checkpoints: List[str] = Field(default_factory=list)
+    memory_refs: Dict[str, Any] = Field(default_factory=dict)
 
     steps: List[ExecutionStep] = Field(default_factory=list)
     budget_limit_usd: float = 5.0

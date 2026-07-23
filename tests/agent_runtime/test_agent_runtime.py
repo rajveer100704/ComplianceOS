@@ -125,3 +125,30 @@ async def test_agent_event_bus():
 
     assert len(events_received) == 1
     assert events_received[0]["event_type"] == "test_event"
+
+
+@pytest.mark.asyncio
+async def test_execution_coordinator():
+    from agent_runtime import ExecutionCoordinator
+
+    coord = ExecutionCoordinator()
+    state = AgentRuntimeState(run_id="run-303", organization_id="org-1")
+
+    async def step1(st: AgentRuntimeState) -> AgentRuntimeState:
+        st.requirements.append({"id": "REQ-1", "title": "Safety Standard"})
+        return st
+
+    async def step2(st: AgentRuntimeState) -> AgentRuntimeState:
+        st.claims.append({"id": "CLM-1", "status": "SUPPORTED"})
+        return st
+
+    nodes = [
+        {"node_name": "node_1", "agent_name": "req_agent", "func": step1},
+        {"node_name": "node_2", "agent_name": "verify_agent", "func": step2},
+    ]
+
+    final_state = await coord.run_pipeline(state, nodes)
+    assert len(final_state.steps) == 2
+    assert len(final_state.requirements) == 1
+    assert len(final_state.claims) == 1
+    assert final_state.current_node == "node_2"

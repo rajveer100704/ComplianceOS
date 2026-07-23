@@ -19,6 +19,7 @@ from agent_runtime.registry import (
 from agent_runtime.checkpoint import InMemoryCheckpointStore
 from agent_runtime.events import AgentEventBus, agent_event_bus
 from agent_runtime.engine import AgentRuntimeEngine
+from agent_runtime.coordinator import ExecutionCoordinator
 
 __all__ = [
     "BaseAgentState",
@@ -39,4 +40,5 @@ __all__ = [
     "AgentEventBus",
     "agent_event_bus",
     "AgentRuntimeEngine",
+    "ExecutionCoordinator",
 ]
