@@ -5,7 +5,10 @@ from datetime import datetime, timezone
 from sqlalchemy import func
 from concurrent.futures import ThreadPoolExecutor
 
-from database.services.persistence_service import PersistenceService
+from database.services.persistence_service import (
+    PersistenceService,
+    LockedError,
+)  # noqa: F401
 from database.migration_manager import MigrationManager
 from database.bootstrap import bootstrap_database
 
