@@ -12,6 +12,7 @@ from agents.requirement_analysis import RequirementAnalysisAgent
 from agents.retrieval_schemas import RetrievalTrace, RetrievalContext, EvidenceBundle
 from agents.evidence_retrieval import EvidenceRetrievalAgent
 from agents.verification import VerificationAgent
+from agents.risk_assessment import RiskAssessmentAgent
 
 __all__ = [
     "Agent",
@@ -26,4 +27,5 @@ __all__ = [
     "EvidenceBundle",
     "EvidenceRetrievalAgent",
     "VerificationAgent",
+    "RiskAssessmentAgent",
 ]
