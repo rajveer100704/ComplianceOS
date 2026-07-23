@@ -36,38 +36,47 @@ Each version is backed by a self-contained engineering implementation package in
 
 ---
 
-## 🔌 v1.3.0 — Enterprise Integrations & Background Automation 🔌
+## 🔌 v1.3.0 — Enterprise Integrations & Storage (Completed) ✅
 > 📦 **Specification Package**: [`roadmap/v1.3-integrations/`](roadmap/v1.3-integrations/)
-- [ ] **Issue Tracker Sync**: Automatic creation and status synchronization with Jira and GitHub Issues.
-- [ ] **Messaging Notifications**: Webhook event dispatchers for Slack and Microsoft Teams alerts.
-- [ ] **Cloud Object Storage**: Direct presigned URL uploads to AWS S3 and Cloudflare R2.
+- [x] **Issue Tracker Sync**: Automatic ticket creation and status synchronization with Jira and GitHub Issues adapters.
+- [x] **Messaging Notifications**: Resilience-backed event dispatchers for Slack and Microsoft Teams alerts with CircuitBreaker.
+- [x] **Cloud Object Storage**: AES-256 presigned URL upload/download services for AWS S3 and Cloudflare R2 object storage.
 
 ---
 
-## 📈 v1.4.0 — Platform Reliability & Observability 📊
+## 📈 v1.4.0 — Platform Reliability & Observability (Completed) ✅
 > 📦 **Specification Package**: [`roadmap/v1.4-observability/`](roadmap/v1.4-observability/)
-- [ ] **Distributed Tracing**: OpenTelemetry instrumentation with Jaeger trace propagation.
-- [ ] **Metrics & Dashboards**: Grafana Cloud dashboard templates for P95 latency and retrieval recall.
-- [ ] **Error Tracking & Alerting**: Production exception capture via Sentry and Prometheus alert manager.
+- [x] **Distributed Tracing**: OpenTelemetry instrumentation with Jaeger trace propagation and `@trace_span` decorator.
+- [x] **Metrics & Dashboards**: Prometheus metrics engine (`/metrics`) and Grafana dashboard templates for P95 latency and worker health.
+- [x] **Error Tracking & Health Diagnostics**: Production exception capture via Sentry scope correlation and 5-probe health framework (`/healthz`, `/readyz`).
 
 ---
 
-## ⚙️ v1.5.0 — Policy Engine & Admin Operational Console ⚙️
+## ⚙️ v1.5.0 — Policy Engine & Enterprise Governance Platform (Completed) ✅
 > 📦 **Specification Package**: [`roadmap/v1.5-policy-engine/`](roadmap/v1.5-policy-engine/)
-- [ ] **Configurable Approval Rules**: Automated enforcement gates (e.g. require dual approval for high-risk claims, block publication of unsupported claims).
-- [ ] **Automatic Risk Escalation**: Automatic escalation of unsupported or high-risk claims to lead reviewers.
-- [ ] **Workflow Event Automation**: Automated post-approval actions (compile PDF → upload S3 → create Jira ticket → send Slack alert).
-- [ ] **Admin Operational Console**: Dedicated dashboard for User CRUD, Organization Management, API Key provisioning, Audit Log viewing, Worker Queue monitoring, and Vector Collection management.
+- [x] **Immutable Policy Storage & Versioning**: Versioned policies with SHA-256 checksums, atomic activation, and rollback capabilities.
+- [x] **AST Compiler & Policy Evaluator**: Condition expression compiler with LRU cache, validator, evaluator with explainable `EvaluationTrace`, and batch dry-run simulator.
+- [x] **DAG Workflow Engine**: Action plugins (`PDFReportAction`, `StorageUploadAction`, `SlackNotificationAction`, `JiraIssueAction`), typed context, linear/exponential jitter retry policies, and step execution logs.
+- [x] **Platform Audit & Admin REST API**: Enterprise audit service (`AuditService`), CSV exporter, and Admin REST API endpoints (`/admin/policies`, `/admin/policies/simulate`, `/admin/audit-logs`, `/admin/workers/queue`).
 
 ---
 
 ## 🌟 v2.0.0 — AI-Native Enterprise SaaS & Knowledge Graph 🚀
 > 📦 **Specification Package**: [`roadmap/v2.0-ai-platform/`](roadmap/v2.0-ai-platform/)
-- [ ] **Compliance Knowledge Graph**: Graph-based entity modeling (`Requirement` -- supported by --> `Evidence` -- referenced in --> `Report` -- verified by --> `Reviewer`).
-- [ ] **Real-Time WebSockets**: Live reviewer presence indicators, real-time comment streams, and collaborative editing.
-- [ ] **Multi-Agent Reasoning Pipeline**: Centralized agent orchestration:
-  - 🔍 *Requirement Analysis Agent*: Extracts regulatory requirements from standard PDFs.
-  - 🎯 *Evidence Retrieval Agent*: Executes hybrid vector retrieval and reranking.
-  - ⚖️ *Verification Agent*: Evaluates claim evidence against regulatory criteria.
-  - ⚠️ *Risk Assessment Agent*: Computes casualty risk metrics and risk matrix scores.
+- [ ] **LangGraph Multi-Agent Reasoning Architecture**:
+  - 👑 *Supervisor Agent*: Dynamic workflow routing & agent coordination.
+  - 🔍 *Requirement Analysis Agent*: Automated PDF regulatory parsing & requirement extraction.
+  - 🎯 *Evidence Retrieval Agent*: Hybrid dense-lexical vector retrieval & reranking.
+  - ⚖️ *Verification Agent*: Claim evidence grounding & compliance verification.
+  - ⚠️ *Risk Assessment Agent*: Casualty probability scoring & risk matrix generation.
   - 📝 *Report Drafting Agent*: Synthesizes structured compliance reports.
+  - 🔍 *Reflection & Critique Agent*: Self-correcting hallucination check & confidence verification.
+  - 🧠 *Memory Agent*: Long-term organization review memory & reviewer preference recall.
+- [ ] **Compliance Knowledge Graph**:
+  - Entity-relationship modeling (`Requirement` ➔ `Evidence` ➔ `Claim` ➔ `Policy Decision` ➔ `Report` ➔ `Reviewer`) supporting graph traversal, explainability, and impact analysis.
+- [ ] **Real-Time Collaboration & WebSockets**:
+  - Live reviewer presence indicators, real-time comment streams, collaborative editing, optimistic locking, and streaming review updates.
+- [ ] **RAG & Agent Benchmark Suite**:
+  - Grounding evaluation metrics (Faithfulness, Precision, Recall@k, Citation Accuracy, Hallucination Rate).
+- [ ] **Model Context Protocol (MCP) Ecosystem**:
+  - Standardized MCP server integration for external tools (Jira, Slack, GitHub, Google Drive).
