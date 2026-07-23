@@ -11,6 +11,7 @@ from agents.supervisor import (
 from agents.requirement_analysis import RequirementAnalysisAgent
 from agents.retrieval_schemas import RetrievalTrace, RetrievalContext, EvidenceBundle
 from agents.evidence_retrieval import EvidenceRetrievalAgent
+from agents.verification import VerificationAgent
 
 __all__ = [
     "Agent",
@@ -24,4 +25,5 @@ __all__ = [
     "RetrievalContext",
     "EvidenceBundle",
     "EvidenceRetrievalAgent",
+    "VerificationAgent",
 ]
