@@ -1,5 +1,5 @@
 import pytest
-from observability.tracing import trace_span, get_tracer
+from observability.tracing import trace_span
 
 
 @pytest.mark.asyncio

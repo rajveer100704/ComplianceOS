@@ -1,6 +1,5 @@
-import pytest
 from fastapi import FastAPI
-from observability import ObservabilityService
+from observability.service import ObservabilityService
 from config.settings import Settings
 
 

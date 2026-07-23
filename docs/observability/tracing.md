@@ -19,7 +19,7 @@ HTTP POST /api/v1/claims/verify
 
 Use `@trace_span("span_name")` to instrument critical functions:
 ```python
-from observability import trace_span
+from observability.tracing import trace_span
 
 @trace_span("execute_hybrid_retrieval")
 async def retrieve_regulations(claim_text: str):

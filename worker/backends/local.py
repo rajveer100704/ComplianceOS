@@ -60,7 +60,9 @@ class LocalQueueBackend(QueueBackend):
                     continue
 
                 try:
-                    if asyncio.iscoroutinefunction(func):
+                    import inspect
+
+                    if inspect.iscoroutinefunction(func):
                         res = await func(*args, **kwargs)
                     else:
                         res = func(*args, **kwargs)

@@ -1,4 +1,3 @@
-import pytest
 from prometheus_client import CollectorRegistry
 from observability.metrics import MetricsService
 

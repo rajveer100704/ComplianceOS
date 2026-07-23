@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
-from auth.dependencies import SecurityContext, get_security_context, require_permission
+from auth.dependencies import SecurityContext, require_permission
 from auth.enums import Permission
 from storage.service import StorageService
 
