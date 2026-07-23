@@ -8,6 +8,7 @@ from agents.supervisor import (
     EvaluatorSubModule,
     RecoveryManagerSubModule,
 )
+from agents.requirement_analysis import RequirementAnalysisAgent
 
 __all__ = [
     "Agent",
@@ -16,4 +17,5 @@ __all__ = [
     "ExecutorSubModule",
     "EvaluatorSubModule",
     "RecoveryManagerSubModule",
+    "RequirementAnalysisAgent",
 ]
