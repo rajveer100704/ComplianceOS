@@ -47,6 +47,23 @@ from database.models.integration import (
     IntegrationDeliveryLogModel,
 )
 
+# v1.5 Policy Engine & Workflow ORM models (live outside database/models/ by domain design)
+# Must be imported here so Base.metadata.create_all() includes their tables.
+from policy.models import (
+    SystemPolicyPackModel,
+    OrganizationPolicyPackModel,
+    PolicyModel,
+    PolicyVersionModel,
+    PolicyRuleModel,
+    PolicyDependencyModel,
+    PolicyAnalyticsSnapshotModel,
+)
+from workflow.models import (
+    WorkflowDefinitionModel,
+    WorkflowExecutionModel,
+    WorkflowStepExecutionModel,
+)
+
 __all__ = [
     "Base",
     "AuditMixin",
@@ -96,4 +113,16 @@ __all__ = [
     "AuditLogModel",
     "RunModel",
     "TaskModel",
+    # v1.5 Policy Engine
+    "SystemPolicyPackModel",
+    "OrganizationPolicyPackModel",
+    "PolicyModel",
+    "PolicyVersionModel",
+    "PolicyRuleModel",
+    "PolicyDependencyModel",
+    "PolicyAnalyticsSnapshotModel",
+    # v1.5 Workflow Engine
+    "WorkflowDefinitionModel",
+    "WorkflowExecutionModel",
+    "WorkflowStepExecutionModel",
 ]

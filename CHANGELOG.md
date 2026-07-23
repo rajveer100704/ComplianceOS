@@ -5,6 +5,74 @@ All notable changes to the ComplianceOS platform will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.5.0] - 2026-07-23
+
+### Added
+
+#### Policy Storage Domain (`policy/`)
+- **Immutable Policy Versioning**: `PolicyModel` + `PolicyVersionModel` ORM pair — every policy change creates a new, append-only version with SHA-256 checksum. Active version pointer (`current_version_id`) updated atomically.
+- **Policy Rollback**: `PolicyRepository.rollback_version()` restores any prior version by creating a new ACTIVE version, fully preserving lineage and audit trail.
+- **System Policy Packs**: `SystemPolicyPackModel` — global immutable compliance framework templates (FAA Part 450, NRC 10 CFR, SOC 2). Organizations install packs via `OrganizationPolicyPackModel`.
+- **Policy Dependency Graph**: `PolicyDependencyModel` recording parent→child relationships between policies for cycle detection and DAG-ready ordering.
+- **Policy Analytics Snapshots**: `PolicyAnalyticsSnapshotModel` — time-series rollups (`HOURLY` / `DAILY` / `MONTHLY`) tracking `times_executed`, `allow_rate`, `block_rate`, and `avg_latency_ms` without expensive runtime aggregation.
+- **Policy Pydantic Schemas**: `policy/schemas.py` — full Pydantic v2 (`ConfigDict`) DTO set covering Create / Response / Simulation payloads.
+
+#### Policy Engine Domain (`policy_engine/`)
+- **AST Compiler + LRU Cache**: `PolicyCompiler` tokenises and compiles human-readable condition expressions (`risk_score > 80 AND status == UNSUPPORTED`) into a JSON AST. SHA-256-keyed `CompilerCache` prevents repeated compilation.
+- **Policy Validator**: `PolicyValidator` statically validates compiled ASTs before activation, rejecting malformed or incomplete trees.
+- **Policy Evaluator**: `PolicyEvaluator` evaluates a compiled AST against a `PolicyContext`, producing a structured `PolicyDecision` object with `allowed`, `matched_rules`, `blocked_rules`, and an `EvaluationTrace` containing per-rule status/value/latency.
+- **Policy Simulator**: `PolicySimulator` runs dry-run batch evaluations over historical claim samples, returning per-sample decisions for pre-activation impact analysis.
+- **Policy Impact Analyzer**: `PolicyImpactAnalyzer` runs the simulator and computes aggregate metrics (`would_allow`, `would_block`, `would_escalate`, `block_rate`, `escalate_rate`, `avg_latency_ms`).
+- **Policy Registry**: `PolicyRegistry` maps `DomainEventCatalog` trigger types to registered evaluator pipelines, enabling event-driven policy dispatch.
+
+#### Workflow Engine Domain (`workflow/`)
+- **DAG Workflow Models**: `WorkflowDefinitionModel`, `WorkflowExecutionModel`, `WorkflowStepExecutionModel` — full execution history with step-level latency, retry count, and error messages.
+- **Retry Policy Strategies**: `RetryPolicy` enum with `NONE`, `LINEAR`, `EXPONENTIAL`, and `EXPONENTIAL_JITTER` delay calculators.
+- **Typed Workflow Context**: `WorkflowContext` strongly-typed context dataclass carrying `organization_id`, `policy_id`, `claim`, `event_type`, and arbitrary metadata through action pipelines.
+- **Pluggable Action Interface**: `BaseWorkflowAction` ABC defining `action_key`, `retry_policy`, and async `execute(context)` contract.
+- **Action Registry**: `ActionRegistry` maintaining named action plugins, supporting `register`, `get`, `list_registered`.
+- **Built-in Action Plugins**: `PDFReportAction`, `StorageUploadAction`, `SlackNotificationAction`, `JiraIssueAction` — production-ready adapters wired to existing v1.3 connectors.
+- **DAG Workflow Executor**: `WorkflowExecutor` resolving action dependency order, executing steps with configurable retry/back-off, and recording per-step execution history.
+
+#### Events Domain (`events/`)
+- **Domain Event Catalog**: `DomainEventCatalog` centralising all platform event type constants (`claim.approved`, `review.completed`, `policy.violated`, `report.generated`, etc.) as a single source of truth for trigger routing.
+
+#### Admin Domain (`admin/`)
+- **Admin REST API**: `GET/POST /api/v1/organizations/{org_id}/admin/policies` — policy CRUD with expression compilation on write.
+- **Policy Simulation Endpoint**: `POST /api/v1/organizations/{org_id}/admin/policies/simulate` — dry-run batch evaluation returning `total_evaluated`, `allowed_count`, `blocked_count`, `escalated_count`.
+- **Audit Log Endpoints**: `GET /api/v1/organizations/{org_id}/admin/audit-logs` (filtered query) and `GET .../audit-logs/export?format=csv` (streaming CSV export).
+- **Worker Queue Status**: `GET /api/v1/organizations/{org_id}/admin/workers/queue` — worker health and queue depth dashboard endpoint.
+
+#### Audit Domain (`audit/`)
+- **Platform-Wide Audit Service**: `AuditService` recording immutable `AuditLogModel` entries for every governance action with actor, resource, event type, and JSON diff payload.
+
+#### Generic State Machine (`review/state_machine.py`)
+- **Reusable State Machine**: `StateMachine` generic class enforcing valid transitions, raising `InvalidTransitionError` on illegal state changes. Consumed by workflow executor and review workflows.
+
+#### Alembic Migration
+- `c5f1a3b7d9e4_add_v1_5_policy_workflow_tables.py` — creates 9 new tables: `system_policy_packs`, `organization_policy_packs`, `policies`, `policy_versions`, `policy_rules`, `policy_dependencies`, `policy_analytics_snapshots`, `workflow_definitions`, `workflow_executions`, `workflow_step_executions`.
+
+#### Test Suite
+- **Policy Engine Unit Tests** (`tests/policy/test_policy_engine.py`): Compiler + cache, validator, evaluator pass/fail — 4 cases.
+- **Workflow Engine Unit Tests** (`tests/workflow/test_workflow_engine.py`): Live run and dry-run executor — 2 cases.
+- **Admin API Integration Tests** (`tests/admin/test_admin_router.py`): Policy CRUD, simulation, audit log query/export, worker queue — 1 integration test covering 5 endpoints.
+- **Audit Service Unit Tests** (`tests/audit/test_audit_service.py`): Append and query audit log entries.
+- **Total platform tests passing: 167/167.**
+
+### Changed
+- **`database/models/__init__.py`**: Registered all 10 v1.5 ORM models with `Base.metadata` so `create_all` correctly provisions policy/workflow tables in the test fixture in-memory SQLite database.
+- **`main.py`**: Mounted `admin_router` and `policy_router` under `/api/v1/organizations/{org_id}/admin`.
+- **`roadmap/v1.5-policy-engine/ADR.md`**: Finalized architectural decisions for immutable versioning, AST compiler, policy simulator, DAG workflow engine, and centralized event catalog.
+
+### Fixed
+- **Test Isolation** (`tests/admin/test_admin_router.py`): Migrated from persistent `compliance.db` session to isolated in-memory `db_session` fixture + `dependency_overrides`, eliminating `UNIQUE constraint failed` failures on repeated runs.
+- **Pydantic v2 Deprecations** (`policy/schemas.py`): Replaced 4 class-based `Config` inner classes with `model_config = ConfigDict(from_attributes=True)`.
+- **Timezone-Aware Datetimes**: Replaced all `datetime.utcnow()` calls in `policy/repository.py`, `policy/models.py`, and `workflow/models.py` with `datetime.now(UTC)` — resolves Python 3.12+ `DeprecationWarning`.
+
+---
+
+
+
 ## [v1.4.0] - 2026-07-23
 
 ### Added

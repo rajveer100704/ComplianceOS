@@ -835,6 +835,7 @@ async def test_benchmark_runner_execution(tmp_path):
     from retrieval.container import Container
     from database.services.persistence_service import PersistenceService
     import json
+    import asyncio
     from pathlib import Path
 
     # Initialize container to load defaults
@@ -842,8 +843,12 @@ async def test_benchmark_runner_execution(tmp_path):
     service = Container.get_retrieval_service()
     indexing_service = Container.get_indexing_service()
 
-    # 1. Create request and documents in DB with retry for locks
-    import asyncio
+    # 1. Create request and documents in DB.
+    # Proactively remove any stale SQLite journal lock left by a previous test run,
+    # then retry with exponential back-off to survive transient write-lock contention.
+    journal = Path("compliance.db-journal")
+    if journal.exists():
+        journal.unlink(missing_ok=True)
 
     for attempt in range(5):
         try:
@@ -862,7 +867,7 @@ async def test_benchmark_runner_execution(tmp_path):
         except Exception:
             if attempt == 4:
                 raise
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.5 * (2**attempt))  # 0.5s, 1s, 2s, 4s
 
     # 2. Index documents
     indexing_service.index_document(

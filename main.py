@@ -998,6 +998,26 @@ app.include_router(
 )
 app.include_router(health_router)
 
+from admin.policies import router as admin_policies_router
+from admin.audit import router as admin_audit_router
+from admin.workers import router as admin_workers_router
+
+app.include_router(
+    admin_policies_router,
+    prefix="/api/v1/organizations/{org_id}",
+    tags=["Admin Policy Governance"],
+)
+app.include_router(
+    admin_audit_router,
+    prefix="/api/v1/organizations/{org_id}",
+    tags=["Admin Audit Trail"],
+)
+app.include_router(
+    admin_workers_router,
+    prefix="/api/v1/organizations/{org_id}",
+    tags=["Admin Worker Monitoring"],
+)
+
 
 @app.get("/metrics", tags=["Metrics"])
 async def prometheus_metrics_exposition():
