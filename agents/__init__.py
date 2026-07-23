@@ -13,6 +13,7 @@ from agents.retrieval_schemas import RetrievalTrace, RetrievalContext, EvidenceB
 from agents.evidence_retrieval import EvidenceRetrievalAgent
 from agents.verification import VerificationAgent
 from agents.risk_assessment import RiskAssessmentAgent
+from agents.report_drafting import ReportDraftingAgent
 
 __all__ = [
     "Agent",
@@ -28,4 +29,5 @@ __all__ = [
     "EvidenceRetrievalAgent",
     "VerificationAgent",
     "RiskAssessmentAgent",
+    "ReportDraftingAgent",
 ]

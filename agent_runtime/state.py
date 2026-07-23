@@ -38,6 +38,8 @@ class AgentRuntimeState(BaseAgentState):
     policy_results: List[Dict[str, Any]] = Field(default_factory=list)
     risk_assessment: Dict[str, Any] = Field(default_factory=dict)
     report: Dict[str, Any] = Field(default_factory=dict)
+    report_sections: List[Dict[str, Any]] = Field(default_factory=list)
+    report_trace: Dict[str, Any] = Field(default_factory=dict)
 
     # Runtime tracking & tools
     tool_calls: List[Dict[str, Any]] = Field(default_factory=list)
