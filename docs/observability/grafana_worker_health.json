@@ -1,0 +1,31 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Outbox Queue Depth",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "outbox_queue_depth",
+          "legendFormat": "Pending Jobs"
+        }
+      ]
+    },
+    {
+      "title": "Integration Dispatches & Failures",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(integration_dispatch_total[1m])) by (provider)",
+          "legendFormat": "Dispatches: {{provider}}"
+        },
+        {
+          "expr": "sum(rate(integration_dispatch_failures_total[1m])) by (provider)",
+          "legendFormat": "Failures: {{provider}}"
+        }
+      ]
+    }
+  ],
+  "title": "ComplianceOS - Worker & Integration Health"
+}

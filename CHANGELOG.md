@@ -5,6 +5,19 @@ All notable changes to the ComplianceOS platform will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.4.0] - 2026-07-23
+
+### Added
+- **Unified Observability Architecture**: Architectural five-pillar framework (`Logging`, `Metrics`, `Tracing`, `Health`, `Alerting`) encapsulated by the `ObservabilityService` facade.
+- **Correlation-Rich Structured JSON Logging**: `JSONLogFormatter` in `observability/logging.py` automatically parsing and injecting distributed context (`trace_id`, `span_id`, `request_id`, `organization_id`, `user_id`, `session_id`, `endpoint`, `method`, `status_code`, `latency_ms`).
+- **OpenTelemetry Distributed Tracing**: OpenTelemetry SDK initialization (`observability/tracing.py`) supporting OTLP exporters, FastAPI auto-instrumentation, and `@trace_span(name)` decorator.
+- **Prometheus Metrics Engine & Catalog**: Decoupled `MetricsService` facade (`observability/metrics.py`) providing system performance counters, latency histograms, active request gauges, vector search durations, worker task queues, and Prometheus exposition (`GET /metrics`).
+- **Sentry Error Tracking & Scope Correlation**: `setup_sentry` and `set_sentry_context` helper in `observability/sentry.py` injecting tenant, request, and user tags into error tracebacks.
+- **Modular Health Diagnostic Framework**: Extensible `BaseHealthChecker` abstract base class and 5 specialized checkers (`DatabaseChecker`, `QdrantChecker`, `WorkerChecker`, `StorageChecker`, `IntegrationChecker`) exposing `/healthz` (liveness), `/readyz` (readiness), and `/health/dependencies` diagnostics endpoints.
+- **Observability Middleware**: `ObservabilityMiddleware` in `observability/service.py` timing HTTP request durations, recording Prometheus metrics, setting OpenTelemetry span attributes, and propagating request context headers.
+- **Production Monitoring Stack & Dashboards**: Docker Compose stack expanded with Jaeger, Prometheus, Grafana, Loki, Promtail, alongside pre-configured Grafana dashboard JSON definitions (`grafana_api_performance.json`, `grafana_retrieval_pipeline.json`, `grafana_worker_health.json`) and runbooks in `docs/observability/`.
+- **Observability Test Suite**: 8 unit & integration test suites (`tests/observability/`) validating facade lifecycle, JSON log correlation, Prometheus exposition, trace propagation, Sentry scopes, and health aggregation probes. Total platform test suite passing: 111/111.
+
 ---
 
 ## [v1.3.0] - 2026-07-22

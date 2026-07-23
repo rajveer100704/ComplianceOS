@@ -31,7 +31,7 @@ from observability.config import setup_logging
 from auth.middleware import SecurityHeadersMiddleware
 from auth.middleware_request_id import RequestIDMiddleware
 from auth.middleware_tenant import TenantMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from starlette.requests import Request
 
 # Configure structured logging
@@ -118,26 +118,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Operational & Diagnostics Endpoints
-@app.get("/healthz")
-async def liveness_probe():
-    """Liveness probe: Returns HTTP 200 if process is healthy."""
-    return {"status": "ok", "environment": settings.ENVIRONMENT}
-
-
-@app.get("/readyz")
-async def readiness_probe():
-    """Readiness probe: Checks connectivity to DB, Qdrant, Workers, and Models."""
-    readiness = {
-        "status": "ready",
-        "checks": {
-            "database": "connected",
-            "qdrant": "ready",
-            "worker_queue": "ready",
-            "embeddings": "loaded",
-        },
-    }
-    return readiness
+# Operational & Diagnostics endpoints handled by observability/health.py router
 
 
 @app.get("/metrics")
@@ -989,11 +970,17 @@ from auth.router import router as auth_router
 from organizations.router import router as organizations_router
 from storage.router import router as storage_router
 from integrations.router import router as integrations_router
+from observability.health import router as health_router
+from observability.metrics import metrics_service
+from observability.service import ObservabilityService
 from integrations.registry import AdapterRegistry
 from integrations.adapters.slack import SlackAdapter
 from integrations.adapters.teams import TeamsAdapter
 from integrations.adapters.github import GitHubAdapter
 from integrations.adapters.jira import JiraAdapter
+
+# Initialize unified Observability Service (Logging, Tracing, Metrics, Sentry, Middleware)
+ObservabilityService(settings).initialize(app)
 
 # Register default integration adapters with AdapterRegistry
 AdapterRegistry.register(SlackAdapter())
@@ -1009,6 +996,15 @@ app.include_router(storage_router, prefix="/api/v1/organizations", tags=["Storag
 app.include_router(
     integrations_router, prefix="/api/v1/organizations", tags=["Integrations"]
 )
+app.include_router(health_router)
+
+
+@app.get("/metrics", tags=["Metrics"])
+async def prometheus_metrics_exposition():
+    """Prometheus metrics exposition endpoint."""
+    content, content_type = metrics_service.export_metrics()
+    return Response(content=content, media_type=content_type)
+
 
 app.mount("/", StaticFiles(directory=Path(__file__).parent, html=True), name="frontend")
 

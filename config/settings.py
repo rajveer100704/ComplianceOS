@@ -82,6 +82,23 @@ class Settings(BaseSettings):
         default=2.0, description="Worker queue polling interval in seconds"
     )
 
+    # Observability & Monitoring Settings
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(
+        default=None, description="OpenTelemetry OTLP exporter gRPC/HTTP endpoint"
+    )
+    OTEL_SERVICE_NAME: str = Field(
+        default="complianceos-api", description="OpenTelemetry service name tag"
+    )
+    TRACING_ENABLED: bool = Field(
+        default=True, description="Enable OpenTelemetry distributed tracing"
+    )
+    PROMETHEUS_METRICS_ENABLED: bool = Field(
+        default=True, description="Enable Prometheus metrics exposition"
+    )
+    SENTRY_DSN: str | None = Field(
+        default=None, description="Sentry DSN for exception tracking"
+    )
+
     def validate_startup(self) -> List[str]:
         """Perform fail-fast startup checks. Returns list of warning or error messages."""
         issues = []

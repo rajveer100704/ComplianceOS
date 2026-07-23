@@ -1,0 +1,31 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "title": "Retrieval Search Latency (P95)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(retrieval_duration_seconds_bucket[5m])) by (le, search_type))",
+          "legendFormat": "{{search_type}} P95"
+        }
+      ]
+    },
+    {
+      "title": "Embedding & Reranking Latency",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(embedding_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "Embedding P95"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(reranker_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "Reranker P95"
+        }
+      ]
+    }
+  ],
+  "title": "ComplianceOS - Retrieval Pipeline"
+}
