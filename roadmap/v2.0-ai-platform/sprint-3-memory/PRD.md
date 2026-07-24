@@ -1,7 +1,7 @@
 # Sprint 3 — Shared Memory Engine: Product Requirements Document (PRD)
 
 > **Version**: 2.0.0  
-> **Status**: Approved  
+> **Status**: Approved & Refined  
 > **Target Milestone**: v2.0-alpha
 
 ---
@@ -22,9 +22,37 @@ Sprint 3 delivers the **Shared Memory Engine** (`memory/`), providing multi-tier
 
 ---
 
-## 3. Non-Functional Requirements
+## 3. Memory Lifecycle Specification
+
+Memories transition through a deterministic 6-stage lifecycle:
+
+$$\text{Store} \longrightarrow \text{Version} \longrightarrow \text{Compress} \longrightarrow \text{Expire} \longrightarrow \text{Archive} \longrightarrow \text{Delete}$$
+
+- **Store**: Initial memory item creation with `source_agent`, `source_entity`, and `version` metadata.
+- **Version**: Append-only updates creating new versions without mutating past historical traces.
+- **Compress**: Multi-item summarization during Context Building.
+- **Expire**: Temporal decay and TTL expiration (unless `is_pinned = True`).
+- **Archive**: Soft-deletion marking `is_archived = True` while retaining graph traceability for Sprint 4.
+- **Delete**: Soft/Hard removal per organization data retention policies.
+
+---
+
+## 4. Agent Memory Writer Ownership Matrix
+
+| Agent | Memory Tier Written | Purpose |
+| :--- | :--- | :--- |
+| **Requirement Analysis Agent** | Semantic Memory | Store extracted regulatory requirements and definitions. |
+| **Verification Agent** | Episodic Memory | Store verification claims, grounding scores, and reasoning steps. |
+| **Reflection Agent** | Reviewer Memory | Store QA critique feedback, missing citations, and reviewer overrides. |
+| **Supervisor Agent** | Workflow Memory | Store execution checkpoints and graph state transitions. |
+| **Policy Engine Subsystem** | Organizational Memory | Store tenant compliance guidelines and policy rules. |
+
+---
+
+## 5. Non-Functional Requirements
 
 - **Latency**: Memory retrieval and context building must complete within $\le 50\text{ms}$.
 - **Decoupling**: Memory engines must be stateless infrastructure components; agents must consume memories solely via `MemoryContext`.
 - **Token Efficiency**: Memory context handed to agents must be compressed and ranked within strict token budget limits.
 - **Tenant Isolation**: Organizational and Reviewer memories must enforce strict tenant/organization-level isolation.
+- **Knowledge Graph Hooks**: Every `MemoryItem` includes `graph_node_id` and `linked_entities` ready for Sprint 4 indexing.

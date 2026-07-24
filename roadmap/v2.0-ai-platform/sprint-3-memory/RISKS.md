@@ -7,4 +7,8 @@
 2. **Cross-Tenant Data Leakage**: Organization or Reviewer memories leaking across tenant boundaries.
    - *Mitigation*: Mandatory `organization_id` filtering enforced at the storage engine level.
 3. **Stale Memory Contradiction**: Outdated memory items contradicting fresh regulatory guidelines.
-   - *Mitigation*: TTL expiration policies in `expiration.py` and importance decay scoring in `importance.py`.
+   - *Mitigation*: Temporal decay scoring in `importance.py` and TTL expiration policies in `expiration.py`.
+4. **Memory Deduplication & Poisoning**: Duplicate memories or inaccurate agent feedback contaminating memory tiers.
+   - *Mitigation*: Content checksum validation in `schemas.py` and QA critique filtering by `ReflectionAgent`.
+5. **Embedding Drift**: Upstream embedding model upgrades invalidating vector distances.
+   - *Mitigation*: Explicit `embedding_id` and model versioning fields stored with each `MemoryItem`.

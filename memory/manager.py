@@ -75,3 +75,37 @@ class MemoryManager:
             organization_id=organization_id,
             token_budget=token_budget,
         )
+
+    async def archive_memory(self, item_id: str, memory_type: MemoryType) -> bool:
+        """Archives a memory item by setting is_archived = True."""
+        store = self.stores.get(memory_type)
+        if store and hasattr(store, "_items") and item_id in store._items:
+            store._items[item_id].is_archived = True
+            logger.info(f"Archived memory item '{item_id}'")
+            return True
+        return False
+
+    async def pin_memory(self, item_id: str, memory_type: MemoryType) -> bool:
+        """Pins a memory item by setting is_pinned = True to prevent auto-expiration."""
+        store = self.stores.get(memory_type)
+        if store and hasattr(store, "_items") and item_id in store._items:
+            store._items[item_id].is_pinned = True
+            logger.info(f"Pinned memory item '{item_id}'")
+            return True
+        return False
+
+    async def search_by_metadata(
+        self,
+        organization_id: str,
+        key: str,
+        value: Any,
+        memory_types: Optional[List[MemoryType]] = None,
+    ) -> List[MemoryItem]:
+        """Searches memories matching specific metadata key-value filters."""
+        query = MemoryQuery(
+            query_text="",
+            organization_id=organization_id,
+            memory_types=memory_types or [],
+            filters={key: value},
+        )
+        return await self.retriever.retrieve(query)

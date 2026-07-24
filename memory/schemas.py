@@ -15,7 +15,7 @@ class MemoryType(str, Enum):
 
 
 class MemoryItem(BaseModel):
-    """Individual memory item entry."""
+    """Individual memory item entry with provenance and Knowledge Graph link hooks."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,6 +27,15 @@ class MemoryItem(BaseModel):
     importance_score: float = 1.0  # 0.0 (Trivial) to 1.0 (Critical)
     relevance_score: float = 1.0  # Computed dynamically during retrieval
     ttl_seconds: Optional[int] = None
+    version: str = "v1.0.0"
+    checksum: Optional[str] = None
+    source_agent: Optional[str] = None
+    source_entity: Optional[str] = None
+    linked_entities: List[str] = Field(default_factory=list)
+    embedding_id: Optional[str] = None
+    graph_node_id: Optional[str] = None
+    is_archived: bool = False
+    is_pinned: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

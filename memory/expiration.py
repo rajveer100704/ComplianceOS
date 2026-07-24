@@ -16,6 +16,9 @@ class MemoryExpirationManager:
         valid_items: List[MemoryItem] = []
 
         for item in items:
+            if item.is_pinned:
+                valid_items.append(item)
+                continue
             if item.ttl_seconds is not None:
                 age_seconds = (now - item.created_at).total_seconds()
                 if age_seconds > item.ttl_seconds:

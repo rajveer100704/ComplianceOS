@@ -24,6 +24,10 @@ async def test_memory_manager_crud_and_tier_isolation():
         memory_type=MemoryType.SEMANTIC,
         content="FAA Part 450 launch safety criteria regulation.",
         importance_score=0.9,
+        source_agent="RequirementAnalysisAgent",
+        source_entity="REQ-001",
+        linked_entities=["CLM-001"],
+        graph_node_id="node-101",
     )
     item_org = MemoryItem(
         id="mem-org-001",
@@ -31,6 +35,7 @@ async def test_memory_manager_crud_and_tier_isolation():
         memory_type=MemoryType.ORGANIZATIONAL,
         content="ACME internal dual-approval safety policy for mandatory clauses.",
         importance_score=0.95,
+        source_agent="PolicyEngine",
     )
 
     await manager.store(item_sem)
@@ -43,6 +48,8 @@ async def test_memory_manager_crud_and_tier_isolation():
     results_sem = await manager.search(q_sem)
     assert len(results_sem) == 1
     assert results_sem[0].id == "mem-sem-001"
+    assert results_sem[0].source_agent == "RequirementAnalysisAgent"
+    assert results_sem[0].graph_node_id == "node-101"
 
     # Unified context building
     context: MemoryContext = await manager.build_context(
@@ -51,6 +58,39 @@ async def test_memory_manager_crud_and_tier_isolation():
     assert len(context.semantic_memories) == 1
     assert len(context.organizational_memories) == 1
     assert context.total_tokens > 0
+
+
+@pytest.mark.asyncio
+async def test_memory_lifecycle_archiving_and_pinning():
+    manager = MemoryManager()
+
+    item = MemoryItem(
+        id="mem-pin-001",
+        organization_id="org-acme",
+        memory_type=MemoryType.REVIEWER,
+        content="Lead reviewer required for high risk clauses.",
+        importance_score=0.9,
+        ttl_seconds=10,
+    )
+
+    await manager.store(item)
+
+    # Pin memory
+    pinned = await manager.pin_memory("mem-pin-001", MemoryType.REVIEWER)
+    assert pinned is True
+
+    # Expiration check for pinned item
+    expiration = MemoryExpirationManager()
+    store_item = manager.stores[MemoryType.REVIEWER]._items["mem-pin-001"]
+    store_item.created_at = store_item.created_at.replace(year=2020)  # Make old
+
+    valid = expiration.filter_expired([store_item])
+    assert len(valid) == 1  # Pinned item survived expiration!
+
+    # Archive memory
+    archived = await manager.archive_memory("mem-pin-001", MemoryType.REVIEWER)
+    assert archived is True
+    assert store_item.is_archived is True
 
 
 @pytest.mark.asyncio
