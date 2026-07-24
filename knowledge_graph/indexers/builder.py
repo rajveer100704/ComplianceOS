@@ -50,13 +50,19 @@ class GraphBuilder:
 
         if req_id:
             req_node_id = f"node-req-{req_id}"
-            edge = GraphEdge(
-                organization_id=organization_id,
-                source_node_id=resolved_claim.id,
-                target_node_id=req_node_id,
-                edge_type=EdgeType.REQUIRES,
-            )
-            await self.store.add_edge(edge)
+            req_target = await self.store.get_node(req_node_id)
+            if req_target:
+                edge = GraphEdge(
+                    organization_id=organization_id,
+                    source_node_id=resolved_claim.id,
+                    target_node_id=req_node_id,
+                    edge_type=EdgeType.REQUIRES,
+                )
+                await self.store.add_edge(edge)
+            else:
+                logger.warning(
+                    f"Target requirement node '{req_node_id}' not found; skipping edge creation"
+                )
 
         return resolved_claim
 
@@ -80,14 +86,20 @@ class GraphBuilder:
         resolved_evi = await self.resolver.resolve_or_create(node)
 
         claim_node_id = f"node-claim-{claim_id}"
-        edge_type = EdgeType.SUPPORTS if is_supporting else EdgeType.CONTRADICTS
-        edge = GraphEdge(
-            organization_id=organization_id,
-            source_node_id=resolved_evi.id,
-            target_node_id=claim_node_id,
-            edge_type=edge_type,
-        )
-        await self.store.add_edge(edge)
+        claim_target = await self.store.get_node(claim_node_id)
+        if claim_target:
+            edge_type = EdgeType.SUPPORTS if is_supporting else EdgeType.CONTRADICTS
+            edge = GraphEdge(
+                organization_id=organization_id,
+                source_node_id=resolved_evi.id,
+                target_node_id=claim_node_id,
+                edge_type=edge_type,
+            )
+            await self.store.add_edge(edge)
+        else:
+            logger.warning(
+                f"Target claim node '{claim_node_id}' not found; skipping edge creation"
+            )
 
         return resolved_evi
 
@@ -109,15 +121,17 @@ class GraphBuilder:
         )
         resolved_mem = await self.resolver.resolve_or_create(node)
 
-        # Connect memory to linked entity nodes
+        # Connect memory to linked entity nodes if target exists
         for target_entity_id in memory_item.linked_entity_ids:
             target_node_id = f"node-claim-{target_entity_id}"
-            edge = GraphEdge(
-                organization_id=memory_item.organization_id,
-                source_node_id=resolved_mem.id,
-                target_node_id=target_node_id,
-                edge_type=EdgeType.GENERATED_BY,
-            )
-            await self.store.add_edge(edge)
+            claim_target = await self.store.get_node(target_node_id)
+            if claim_target:
+                edge = GraphEdge(
+                    organization_id=memory_item.organization_id,
+                    source_node_id=resolved_mem.id,
+                    target_node_id=target_node_id,
+                    edge_type=EdgeType.GENERATED_BY,
+                )
+                await self.store.add_edge(edge)
 
         return resolved_mem
