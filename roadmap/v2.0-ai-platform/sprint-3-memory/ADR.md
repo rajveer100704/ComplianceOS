@@ -19,7 +19,8 @@ We implement a **Multi-Tiered Shared Memory Subsystem** (`memory/`) with 5 stora
 
 ### Decision 009: Append-Only & Versioned Memories
 Memories are **append-only and versioned**. Existing memory items are never mutated in place; updates generate a new `version` (e.g. `v1.0.1`), preserving full historical auditability.
-- **Reference InMemoryStore**: Maintains the active latest version per `item.id` for fast $O(1)$ lookup and context building.
+- **Historical Immutability**: Historical `MemoryItem` instances are immutable records. Repository implementations may maintain a separate "latest" index for efficient retrieval, but historical versions must never be deleted or rewritten.
+- **Reference InMemoryStore**: Maintains the active latest version per `logical_id` for fast search, alongside an immutable version history list (`_history[logical_id]`).
 - **Production Persistent Store**: Persists all historical version rows indexed by `(logical_id, version, record_id, is_latest)` to guarantee complete immutable auditability for regulatory compliance.
 
 ### Decision 010: Mandatory Memory Provenance & Knowledge Graph Hooks
