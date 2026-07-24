@@ -51,6 +51,7 @@ class AgentRuntimeState(BaseAgentState):
     budget: Dict[str, Any] = Field(default_factory=dict)
     checkpoints: List[str] = Field(default_factory=list)
     memory_refs: Dict[str, Any] = Field(default_factory=dict)
+    memory_context: Dict[str, Any] = Field(default_factory=dict)
 
     steps: List[ExecutionStep] = Field(default_factory=list)
     budget_limit_usd: float = 5.0

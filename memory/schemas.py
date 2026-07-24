@@ -1,0 +1,60 @@
+"""Canonical DTOs and models for Shared Memory Engine (Sprint 3)."""
+
+from enum import Enum
+from typing import Dict, Any, List, Optional
+from datetime import datetime, UTC
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class MemoryType(str, Enum):
+    SEMANTIC = "semantic"  # Similar regulations & clause embeddings
+    EPISODIC = "episodic"  # Execution trajectories & reasoning traces
+    ORGANIZATIONAL = "organizational"  # Tenant policies & organization standards
+    REVIEWER = "reviewer"  # Reviewer preferences & past override feedback
+    WORKFLOW = "workflow"  # Execution graph state checkpoints
+
+
+class MemoryItem(BaseModel):
+    """Individual memory item entry."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    organization_id: str = "default"
+    memory_type: MemoryType
+    content: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    importance_score: float = 1.0  # 0.0 (Trivial) to 1.0 (Critical)
+    relevance_score: float = 1.0  # Computed dynamically during retrieval
+    ttl_seconds: Optional[int] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class MemoryQuery(BaseModel):
+    """Query parameter container for memory retrieval."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    query_text: str
+    organization_id: str = "default"
+    memory_types: List[MemoryType] = Field(default_factory=list)
+    top_k: int = 5
+    min_importance: float = 0.0
+    filters: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MemoryContext(BaseModel):
+    """Token-budgeted, unified memory context bundle handed to agents."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    query: str
+    organization_id: str
+    semantic_memories: List[MemoryItem] = Field(default_factory=list)
+    episodic_memories: List[MemoryItem] = Field(default_factory=list)
+    organizational_memories: List[MemoryItem] = Field(default_factory=list)
+    reviewer_memories: List[MemoryItem] = Field(default_factory=list)
+    workflow_memories: List[MemoryItem] = Field(default_factory=list)
+    total_tokens: int = 0
+    token_budget: int = 2000
+    compressed_summary: Optional[str] = None
