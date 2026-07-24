@@ -19,6 +19,21 @@ class BaseMemoryStore(ABC):
         pass
 
     @abstractmethod
+    async def latest(self, logical_id: str) -> Optional[MemoryItem]:
+        """Retrieves the latest active version of a memory item by logical_id."""
+        pass
+
+    @abstractmethod
+    async def history(self, logical_id: str) -> List[MemoryItem]:
+        """Retrieves the complete immutable version history for a logical_id."""
+        pass
+
+    @abstractmethod
+    async def insert_version(self, item: MemoryItem) -> MemoryItem:
+        """Inserts a new immutable version for a logical_id and bumps the patch version."""
+        pass
+
+    @abstractmethod
     async def archive(self, memory_id: str) -> Optional[MemoryItem]:
         """Archives a memory item by storing an append-only new version with is_archived=True."""
         pass

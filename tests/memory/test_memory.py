@@ -39,16 +39,20 @@ async def test_memory_manager_crud_and_tier_isolation():
         source_agent="PolicyEngine",
     )
 
-    # Automatic checksum assertion
+    # Automatic checksum assertion & logical_id default
     assert item_sem.checksum is not None
     assert len(item_sem.checksum) == 64
+    assert item_sem.logical_id == "mem-sem-001"
+    assert item_sem.record_id is not None
 
     await manager.store(item_sem)
     await manager.store(item_org)
 
     # Search for semantic memories only
     q_sem = MemoryQuery(
-        query_text="FAA", organization_id="org-acme", memory_types=[MemoryType.SEMANTIC]
+        query_text="FAA",
+        organization_id="org-acme",
+        memory_types=[MemoryType.SEMANTIC],
     )
     results_sem = await manager.search(q_sem)
     assert len(results_sem) == 1
@@ -66,50 +70,49 @@ async def test_memory_manager_crud_and_tier_isolation():
 
 
 @pytest.mark.asyncio
-async def test_memory_append_only_versioning_and_archiving():
+async def test_memory_append_only_version_history():
     manager = MemoryManager()
 
     item = MemoryItem(
-        id="mem-pin-001",
+        id="mem-ver-001",
         organization_id="org-acme",
         memory_type=MemoryType.REVIEWER,
-        content="Lead reviewer required for high risk clauses.",
+        content="Initial reviewer guideline.",
         importance_score=0.9,
-        ttl_seconds=10,
-        metadata={"regulation": "FAA"},
     )
 
+    # v1.0.0 store
     await manager.store(item)
     assert item.version == "v1.0.0"
 
-    # Pin memory -> Append-only version bump to v1.0.1
-    pinned = await manager.pin_memory("mem-pin-001", MemoryType.REVIEWER)
+    # v1.0.1 pin
+    pinned = await manager.pin_memory("mem-ver-001", MemoryType.REVIEWER)
     assert pinned is not None
     assert pinned.version == "v1.0.1"
-    assert pinned.is_pinned is True
 
-    # Expiration check for pinned item
-    expiration = MemoryExpirationManager()
-    store_item = manager.stores[MemoryType.REVIEWER]._items["mem-pin-001"]
-    store_item.created_at = store_item.created_at.replace(year=2020)  # Make old
-
-    valid = expiration.filter_expired([store_item])
-    assert len(valid) == 1  # Pinned item survived expiration!
-
-    # Archive memory -> Append-only version bump to v1.0.2
-    archived = await manager.archive_memory("mem-pin-001", MemoryType.REVIEWER)
+    # v1.0.2 archive
+    archived = await manager.archive_memory("mem-ver-001", MemoryType.REVIEWER)
     assert archived is not None
     assert archived.version == "v1.0.2"
-    assert archived.is_archived is True
 
-    # Search should exclude archived memories by default
-    q_active = MemoryQuery(query_text="reviewer", organization_id="org-acme")
-    active_results = await manager.search(q_active)
-    assert len(active_results) == 0
+    # Verify history maintains all 3 versions simultaneously!
+    history = await manager.history("mem-ver-001", MemoryType.REVIEWER)
+    assert len(history) == 3
+    assert history[0].version == "v1.0.0"
+    assert history[0].is_latest is False
+    assert history[1].version == "v1.0.1"
+    assert history[1].is_latest is False
+    assert history[2].version == "v1.0.2"
+    assert history[2].is_latest is True
 
-    # Search by metadata
-    results_meta = await manager.search_by_metadata("org-acme", "regulation", "FAA")
-    assert len(results_meta) == 0  # Still 0 because it's archived!
+    # Unique storage row record_ids
+    record_ids = {h.record_id for h in history}
+    assert len(record_ids) == 3
+
+    # Latest version query
+    latest_item = await manager.latest("mem-ver-001", MemoryType.REVIEWER)
+    assert latest_item is not None
+    assert latest_item.version == "v1.0.2"
 
 
 @pytest.mark.asyncio

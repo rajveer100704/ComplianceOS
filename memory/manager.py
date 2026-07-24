@@ -76,6 +76,27 @@ class MemoryManager:
             token_budget=token_budget,
         )
 
+    async def latest(
+        self, logical_id: str, memory_type: MemoryType
+    ) -> Optional[MemoryItem]:
+        """Retrieves the latest active version of a memory item."""
+        store = self.stores.get(memory_type)
+        return await store.latest(logical_id) if store else None
+
+    async def history(
+        self, logical_id: str, memory_type: MemoryType
+    ) -> List[MemoryItem]:
+        """Retrieves the full immutable version history list for a logical_id."""
+        store = self.stores.get(memory_type)
+        return await store.history(logical_id) if store else []
+
+    async def insert_version(
+        self, item: MemoryItem, memory_type: MemoryType
+    ) -> Optional[MemoryItem]:
+        """Inserts a new immutable version entry for a logical_id."""
+        store = self.stores.get(memory_type)
+        return await store.insert_version(item) if store else None
+
     async def archive_memory(
         self, item_id: str, memory_type: MemoryType
     ) -> Optional[MemoryItem]:

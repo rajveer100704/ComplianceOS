@@ -1,5 +1,6 @@
 """Canonical DTOs and models for Shared Memory Engine (Sprint 3)."""
 
+import uuid
 import hashlib
 from enum import Enum
 from typing import Dict, Any, List, Optional
@@ -16,11 +17,15 @@ class MemoryType(str, Enum):
 
 
 class MemoryItem(BaseModel):
-    """Individual memory item entry with provenance, Knowledge Graph links, and automatic checksum computation."""
+    """Individual memory item entry with provenance, version identity, and Knowledge Graph link hooks."""
 
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: str  # Permanent identity (equivalent to logical_id)
+    logical_id: Optional[str] = None  # Explicit permanent identity
+    record_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4())
+    )  # Unique storage row ID
     organization_id: str = "default"
     memory_type: MemoryType
     content: str
@@ -29,6 +34,7 @@ class MemoryItem(BaseModel):
     relevance_score: float = 1.0  # Computed dynamically during retrieval
     ttl_seconds: Optional[int] = None
     version: str = "v1.0.0"
+    is_latest: bool = True
     checksum: Optional[str] = None
     source_agent: Optional[str] = None
     source_entity: Optional[str] = None
@@ -43,7 +49,9 @@ class MemoryItem(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     @model_validator(mode="after")
-    def compute_checksum_if_missing(self) -> "MemoryItem":
+    def populate_defaults(self) -> "MemoryItem":
+        if not self.logical_id:
+            self.logical_id = self.id
         if not self.checksum and self.content:
             self.checksum = hashlib.sha256(self.content.encode("utf-8")).hexdigest()
         return self
