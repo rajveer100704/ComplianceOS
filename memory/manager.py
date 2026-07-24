@@ -1,7 +1,7 @@
 """Centralized MemoryManager facade orchestrating all 5 memory storage tiers and intelligence pipelines."""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from memory.schemas import (
     MemoryItem,
     MemoryQuery,
@@ -45,7 +45,7 @@ class MemoryManager:
             )
         item_id = await store.store(item)
         logger.info(
-            f"Memory item '{item_id}' stored in tier '{item.memory_type.value}'"
+            f"Memory item '{item_id}' stored in tier '{item.memory_type.value}' version '{item.version}'"
         )
         return item_id
 
@@ -76,23 +76,29 @@ class MemoryManager:
             token_budget=token_budget,
         )
 
-    async def archive_memory(self, item_id: str, memory_type: MemoryType) -> bool:
-        """Archives a memory item by setting is_archived = True."""
+    async def archive_memory(
+        self, item_id: str, memory_type: MemoryType
+    ) -> Optional[MemoryItem]:
+        """Archives a memory item by delegating append-only update to the tier store."""
         store = self.stores.get(memory_type)
-        if store and hasattr(store, "_items") and item_id in store._items:
-            store._items[item_id].is_archived = True
-            logger.info(f"Archived memory item '{item_id}'")
-            return True
-        return False
+        if store:
+            archived = await store.archive(item_id)
+            if archived:
+                logger.info(f"Archived memory item '{item_id}' via store facade")
+                return archived
+        return None
 
-    async def pin_memory(self, item_id: str, memory_type: MemoryType) -> bool:
-        """Pins a memory item by setting is_pinned = True to prevent auto-expiration."""
+    async def pin_memory(
+        self, item_id: str, memory_type: MemoryType
+    ) -> Optional[MemoryItem]:
+        """Pins a memory item by delegating append-only update to the tier store."""
         store = self.stores.get(memory_type)
-        if store and hasattr(store, "_items") and item_id in store._items:
-            store._items[item_id].is_pinned = True
-            logger.info(f"Pinned memory item '{item_id}'")
-            return True
-        return False
+        if store:
+            pinned = await store.pin(item_id)
+            if pinned:
+                logger.info(f"Pinned memory item '{item_id}' via store facade")
+                return pinned
+        return None
 
     async def search_by_metadata(
         self,

@@ -1,9 +1,10 @@
 """Canonical DTOs and models for Shared Memory Engine (Sprint 3)."""
 
+import hashlib
 from enum import Enum
 from typing import Dict, Any, List, Optional
 from datetime import datetime, UTC
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class MemoryType(str, Enum):
@@ -15,7 +16,7 @@ class MemoryType(str, Enum):
 
 
 class MemoryItem(BaseModel):
-    """Individual memory item entry with provenance and Knowledge Graph link hooks."""
+    """Individual memory item entry with provenance, Knowledge Graph links, and automatic checksum computation."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,12 +32,21 @@ class MemoryItem(BaseModel):
     checksum: Optional[str] = None
     source_agent: Optional[str] = None
     source_entity: Optional[str] = None
-    linked_entities: List[str] = Field(default_factory=list)
+    linked_entity_ids: List[str] = Field(default_factory=list)
     embedding_id: Optional[str] = None
+    embedding_model: str = "all-MiniLM-L6-v2"
     graph_node_id: Optional[str] = None
+    graph_edge_ids: List[str] = Field(default_factory=list)
     is_archived: bool = False
     is_pinned: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+    @model_validator(mode="after")
+    def compute_checksum_if_missing(self) -> "MemoryItem":
+        if not self.checksum and self.content:
+            self.checksum = hashlib.sha256(self.content.encode("utf-8")).hexdigest()
+        return self
 
 
 class MemoryQuery(BaseModel):
@@ -49,6 +59,7 @@ class MemoryQuery(BaseModel):
     memory_types: List[MemoryType] = Field(default_factory=list)
     top_k: int = 5
     min_importance: float = 0.0
+    include_archived: bool = False
     filters: Dict[str, Any] = Field(default_factory=dict)
 
 

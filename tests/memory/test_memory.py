@@ -26,8 +26,9 @@ async def test_memory_manager_crud_and_tier_isolation():
         importance_score=0.9,
         source_agent="RequirementAnalysisAgent",
         source_entity="REQ-001",
-        linked_entities=["CLM-001"],
+        linked_entity_ids=["CLM-001"],
         graph_node_id="node-101",
+        graph_edge_ids=["edge-501"],
     )
     item_org = MemoryItem(
         id="mem-org-001",
@@ -37,6 +38,10 @@ async def test_memory_manager_crud_and_tier_isolation():
         importance_score=0.95,
         source_agent="PolicyEngine",
     )
+
+    # Automatic checksum assertion
+    assert item_sem.checksum is not None
+    assert len(item_sem.checksum) == 64
 
     await manager.store(item_sem)
     await manager.store(item_org)
@@ -61,7 +66,7 @@ async def test_memory_manager_crud_and_tier_isolation():
 
 
 @pytest.mark.asyncio
-async def test_memory_lifecycle_archiving_and_pinning():
+async def test_memory_append_only_versioning_and_archiving():
     manager = MemoryManager()
 
     item = MemoryItem(
@@ -71,13 +76,17 @@ async def test_memory_lifecycle_archiving_and_pinning():
         content="Lead reviewer required for high risk clauses.",
         importance_score=0.9,
         ttl_seconds=10,
+        metadata={"regulation": "FAA"},
     )
 
     await manager.store(item)
+    assert item.version == "v1.0.0"
 
-    # Pin memory
+    # Pin memory -> Append-only version bump to v1.0.1
     pinned = await manager.pin_memory("mem-pin-001", MemoryType.REVIEWER)
-    assert pinned is True
+    assert pinned is not None
+    assert pinned.version == "v1.0.1"
+    assert pinned.is_pinned is True
 
     # Expiration check for pinned item
     expiration = MemoryExpirationManager()
@@ -87,10 +96,20 @@ async def test_memory_lifecycle_archiving_and_pinning():
     valid = expiration.filter_expired([store_item])
     assert len(valid) == 1  # Pinned item survived expiration!
 
-    # Archive memory
+    # Archive memory -> Append-only version bump to v1.0.2
     archived = await manager.archive_memory("mem-pin-001", MemoryType.REVIEWER)
-    assert archived is True
-    assert store_item.is_archived is True
+    assert archived is not None
+    assert archived.version == "v1.0.2"
+    assert archived.is_archived is True
+
+    # Search should exclude archived memories by default
+    q_active = MemoryQuery(query_text="reviewer", organization_id="org-acme")
+    active_results = await manager.search(q_active)
+    assert len(active_results) == 0
+
+    # Search by metadata
+    results_meta = await manager.search_by_metadata("org-acme", "regulation", "FAA")
+    assert len(results_meta) == 0  # Still 0 because it's archived!
 
 
 @pytest.mark.asyncio

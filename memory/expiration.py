@@ -16,9 +16,17 @@ class MemoryExpirationManager:
         valid_items: List[MemoryItem] = []
 
         for item in items:
+            # 1. Archived memories are discarded immediately
+            if item.is_archived:
+                logger.debug(f"Discarding archived memory '{item.id}' from context")
+                continue
+
+            # 2. Pinned memories bypass TTL expiration
             if item.is_pinned:
                 valid_items.append(item)
                 continue
+
+            # 3. Check TTL expiration
             if item.ttl_seconds is not None:
                 age_seconds = (now - item.created_at).total_seconds()
                 if age_seconds > item.ttl_seconds:
@@ -26,6 +34,7 @@ class MemoryExpirationManager:
                         f"Memory item '{item.id}' expired (age {age_seconds}s > ttl {item.ttl_seconds}s)"
                     )
                     continue
+
             valid_items.append(item)
 
         return valid_items

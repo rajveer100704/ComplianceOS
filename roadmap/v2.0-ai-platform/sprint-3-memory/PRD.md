@@ -24,15 +24,16 @@ Sprint 3 delivers the **Shared Memory Engine** (`memory/`), providing multi-tier
 
 ## 3. Memory Lifecycle Specification
 
-Memories transition through a deterministic 6-stage lifecycle:
+Memories transition through a deterministic 7-stage lifecycle:
 
-$$\text{Store} \longrightarrow \text{Version} \longrightarrow \text{Compress} \longrightarrow \text{Expire} \longrightarrow \text{Archive} \longrightarrow \text{Delete}$$
+$$\text{Store} \longrightarrow \text{Version} \longrightarrow \text{Link (KG)} \longrightarrow \text{Compress} \longrightarrow \text{Expire} \longrightarrow \text{Archive} \longrightarrow \text{Delete}$$
 
 - **Store**: Initial memory item creation with `source_agent`, `source_entity`, and `version` metadata.
-- **Version**: Append-only updates creating new versions without mutating past historical traces.
+- **Version**: Append-only updates creating new versions (e.g. `v1.0.1`) without mutating historical records.
+- **Link (KG)**: Knowledge Graph entity indexing via `linked_entity_ids`, `graph_node_id`, and `graph_edge_ids`.
 - **Compress**: Multi-item summarization during Context Building.
 - **Expire**: Temporal decay and TTL expiration (unless `is_pinned = True`).
-- **Archive**: Soft-deletion marking `is_archived = True` while retaining graph traceability for Sprint 4.
+- **Archive**: Soft-deletion marking `is_archived = True`, excluding memories from active context building while retaining graph auditability.
 - **Delete**: Soft/Hard removal per organization data retention policies.
 
 ---
@@ -55,4 +56,4 @@ $$\text{Store} \longrightarrow \text{Version} \longrightarrow \text{Compress} \l
 - **Decoupling**: Memory engines must be stateless infrastructure components; agents must consume memories solely via `MemoryContext`.
 - **Token Efficiency**: Memory context handed to agents must be compressed and ranked within strict token budget limits.
 - **Tenant Isolation**: Organizational and Reviewer memories must enforce strict tenant/organization-level isolation.
-- **Knowledge Graph Hooks**: Every `MemoryItem` includes `graph_node_id` and `linked_entities` ready for Sprint 4 indexing.
+- **Knowledge Graph Hooks**: Every `MemoryItem` includes `graph_node_id`, `graph_edge_ids`, and `linked_entity_ids` ready for Sprint 4 indexing.
