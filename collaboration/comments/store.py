@@ -2,7 +2,7 @@
 
 import re
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any
 from collaboration.schemas import CommentThread
 
 logger = logging.getLogger("collaboration.comments.store")
@@ -41,3 +41,21 @@ class CommentStore:
         ]
         threads.sort(key=lambda x: x.created_at)
         return threads
+
+    async def get_nested_threads_for_section(
+        self, session_id: str, section_id: str, organization_id: str = "default"
+    ) -> List[Dict[str, Any]]:
+        """Returns hierarchical tree structure of root comments and child replies."""
+        flat = await self.get_threads_for_section(
+            session_id, section_id, organization_id
+        )
+        roots = [c for c in flat if not c.parent_comment_id]
+
+        def build_node(parent: CommentThread) -> Dict[str, Any]:
+            children = [c for c in flat if c.parent_comment_id == parent.id]
+            return {
+                "comment": parent,
+                "replies": [build_node(child) for child in children],
+            }
+
+        return [build_node(r) for r in roots]

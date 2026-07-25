@@ -6,6 +6,7 @@ from collaboration.schemas import ActivityEvent
 from memory.manager import MemoryManager
 from memory.schemas import MemoryItem, MemoryType
 from knowledge_graph.manager import KnowledgeGraphManager
+from knowledge_graph.schemas import GraphNode, NodeType
 
 logger = logging.getLogger("collaboration.webhooks.dispatcher")
 
@@ -44,6 +45,23 @@ class ActivityEventDispatcher:
                 linked_entity_ids=[event.target_entity_id],
             )
             await self.memory_manager.store(mem_item)
+
+        # Emit to Knowledge Graph if graph_manager is configured
+        if self.graph_manager:
+            node = GraphNode(
+                id=f"node-act-{event.id}",
+                logical_id=event.id,
+                organization_id=event.organization_id,
+                node_type=NodeType.DECISION,
+                label=f"Activity {event.event_type} ({event.actor_id})",
+                properties={
+                    "event_type": event.event_type,
+                    "actor_id": event.actor_id,
+                    "target": event.target_entity_id,
+                },
+                source_agent=f"Actor:{event.actor_id}",
+            )
+            await self.graph_manager.add_node(node)
 
         return event
 

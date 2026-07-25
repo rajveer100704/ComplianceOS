@@ -16,6 +16,18 @@ class SectionLockManager:
             {}
         )  # (session_id, section_id) -> SectionLock
 
+    def cleanup_expired(self) -> int:
+        """Prunes all expired locks from internal state and returns count pruned."""
+        now = datetime.now(UTC)
+        expired_keys = [
+            key for key, lock in self._locks.items() if now > lock.expires_at
+        ]
+        for key in expired_keys:
+            del self._locks[key]
+        if expired_keys:
+            logger.info(f"Pruned {len(expired_keys)} expired section lock(s)")
+        return len(expired_keys)
+
     async def acquire_lock(
         self,
         session_id: str,
@@ -24,17 +36,13 @@ class SectionLockManager:
         organization_id: str = "default",
         ttl_seconds: int = 300,
     ) -> Tuple[LockState, Optional[SectionLock]]:
+        self.cleanup_expired()
         key = (session_id, section_id)
         now = datetime.now(UTC)
 
         existing = self._locks.get(key)
         if existing:
-            # Check if expired
-            if now > existing.expires_at:
-                logger.info(
-                    f"Lock on section '{section_id}' expired; reassigning to '{owner_user_id}'"
-                )
-            elif existing.owner_user_id == owner_user_id:
+            if existing.owner_user_id == owner_user_id:
                 # Refresh lock TTL
                 existing.expires_at = now + timedelta(seconds=ttl_seconds)
                 return LockState.ACQUIRED, existing
