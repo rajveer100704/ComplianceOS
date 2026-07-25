@@ -1,4 +1,4 @@
-"""Activity event stream dispatcher indexing events to Memory and Knowledge Graph."""
+"""Activity event stream dispatcher indexing events to Memory, Knowledge Graph, and Platform EventBus."""
 
 import logging
 from typing import List, Dict, Optional
@@ -7,20 +7,24 @@ from memory.manager import MemoryManager
 from memory.schemas import MemoryItem, MemoryType
 from knowledge_graph.manager import KnowledgeGraphManager
 from knowledge_graph.schemas import GraphNode, NodeType
+from events.bus import EventBus
+from events.schemas import PlatformEvent, EventCategory
 
 logger = logging.getLogger("collaboration.webhooks.dispatcher")
 
 
 class ActivityEventDispatcher:
-    """Emits audit activity events to memory subsystem and Knowledge Graph."""
+    """Emits audit activity events to Memory, Knowledge Graph, and Platform EventBus."""
 
     def __init__(
         self,
         memory_manager: Optional[MemoryManager] = None,
         graph_manager: Optional[KnowledgeGraphManager] = None,
+        event_bus: Optional[EventBus] = None,
     ):
         self.memory_manager = memory_manager
         self.graph_manager = graph_manager
+        self.event_bus = event_bus
         self._events: Dict[str, List[ActivityEvent]] = (
             {}
         )  # session_id -> List[ActivityEvent]
@@ -62,6 +66,19 @@ class ActivityEventDispatcher:
                 source_agent=f"Actor:{event.actor_id}",
             )
             await self.graph_manager.add_node(node)
+
+        # Publish unified PlatformEvent if event_bus is configured
+        if self.event_bus:
+            platform_evt = PlatformEvent(
+                event_id=event.id,
+                event_type=event.event_type,
+                category=EventCategory.COLLABORATION,
+                organization_id=event.organization_id,
+                actor_id=event.actor_id,
+                target_id=event.target_entity_id,
+                payload=event.details,
+            )
+            await self.event_bus.publish(platform_evt)
 
         return event
 

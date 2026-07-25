@@ -1,7 +1,7 @@
 """Centralized CollaborationManager facade orchestrating workspaces, presence, locks, comments, and audit events."""
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 from collaboration.schemas import (
     Workspace,
     ReviewSession,
@@ -18,6 +18,7 @@ from collaboration.presence.tracker import PresenceTracker
 from collaboration.webhooks.dispatcher import ActivityEventDispatcher
 from memory.manager import MemoryManager
 from knowledge_graph.manager import KnowledgeGraphManager
+from events.bus import EventBus
 
 logger = logging.getLogger("collaboration.manager")
 
@@ -29,13 +30,16 @@ class CollaborationManager:
         self,
         memory_manager: Optional[MemoryManager] = None,
         graph_manager: Optional[KnowledgeGraphManager] = None,
+        event_bus: Optional[EventBus] = None,
     ):
         self.workspaces: Dict[str, Workspace] = {}
         self.sessions: Dict[str, ReviewSession] = {}
         self.comment_store = CommentStore()
         self.lock_manager = SectionLockManager()
         self.presence_tracker = PresenceTracker()
-        self.dispatcher = ActivityEventDispatcher(memory_manager, graph_manager)
+        self.dispatcher = ActivityEventDispatcher(
+            memory_manager, graph_manager, event_bus
+        )
 
     async def create_workspace(
         self,
