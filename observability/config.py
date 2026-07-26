@@ -1,8 +1,11 @@
 """Structured logging and OpenTelemetry distributed tracing setup for ComplianceOS."""
 
 import logging
-from typing import Optional
+from typing import Any, Optional, TYPE_CHECKING
 from observability.logging import JSONLogFormatter, setup_logging
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import Tracer
 
 try:
     from opentelemetry import trace
@@ -17,7 +20,7 @@ except ImportError:
 _tracer_provider: Optional[Any] = None
 
 
-def setup_telemetry(service_name: str = "ComplianceOS") -> Optional[trace.Tracer]:
+def setup_telemetry(service_name: str = "ComplianceOS") -> Optional[Any]:
     """Initialize OpenTelemetry TracerProvider and return configured Tracer."""
     global _tracer_provider
     if not OPENTELEMETRY_AVAILABLE:
