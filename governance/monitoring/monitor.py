@@ -6,6 +6,13 @@ from governance.schemas import ComplianceViolation, ViolationSeverity
 
 logger = logging.getLogger("governance.monitoring.monitor")
 
+SEVERITY_ORDER: Dict[ViolationSeverity, int] = {
+    ViolationSeverity.LOW: 1,
+    ViolationSeverity.MEDIUM: 2,
+    ViolationSeverity.HIGH: 3,
+    ViolationSeverity.CRITICAL: 4,
+}
+
 
 class ViolationMonitor:
     """Tracks and records compliance policy violations across platform operations."""
@@ -32,4 +39,11 @@ class ViolationMonitor:
         organization_id: str = "default",
         min_severity: Optional[ViolationSeverity] = None,
     ) -> List[ComplianceViolation]:
-        return self._violations.get(organization_id, [])
+        violations = self._violations.get(organization_id, [])
+        if min_severity is None:
+            return violations
+
+        target_rank = SEVERITY_ORDER.get(min_severity, 1)
+        return [
+            v for v in violations if SEVERITY_ORDER.get(v.severity, 1) >= target_rank
+        ]

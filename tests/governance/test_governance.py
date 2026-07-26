@@ -5,8 +5,10 @@ from events import EventBus, PlatformEvent, EventCategory
 from governance import (
     GovernanceManager,
     ComplianceRule,
+    ComplianceViolation,
     RuleOperator,
     GateStatus,
+    ViolationSeverity,
 )
 from collaboration.manager import CollaborationManager
 
@@ -105,3 +107,43 @@ async def test_governance_compliance_signoff_gates():
     )
     assert res_fail.status == GateStatus.REJECTED
     assert res_fail.failed_rules_count == 1
+
+
+@pytest.mark.asyncio
+async def test_governance_violation_severity_filtering():
+    gov = GovernanceManager()
+
+    v1 = ComplianceViolation(
+        rule_id="rule-low",
+        event_id="evt-1",
+        severity=ViolationSeverity.LOW,
+        organization_id="org-acme",
+    )
+    v2 = ComplianceViolation(
+        rule_id="rule-high",
+        event_id="evt-2",
+        severity=ViolationSeverity.HIGH,
+        organization_id="org-acme",
+    )
+    v3 = ComplianceViolation(
+        rule_id="rule-crit",
+        event_id="evt-3",
+        severity=ViolationSeverity.CRITICAL,
+        organization_id="org-acme",
+    )
+
+    await gov.monitor.record_violation(v1)
+    await gov.monitor.record_violation(v2)
+    await gov.monitor.record_violation(v3)
+
+    all_v = await gov.monitor.get_violations("org-acme")
+    assert len(all_v) == 3
+
+    high_v = await gov.monitor.get_violations(
+        "org-acme", min_severity=ViolationSeverity.HIGH
+    )
+    assert len(high_v) == 2
+    severities = [v.severity for v in high_v]
+    assert ViolationSeverity.HIGH in severities
+    assert ViolationSeverity.CRITICAL in severities
+    assert ViolationSeverity.LOW not in severities
