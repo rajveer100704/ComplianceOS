@@ -1,9 +1,11 @@
-"""Exposed MCP tools registry and execution handlers with live backend platform delegation."""
+"""Exposed MCP tools registry and execution handlers with live backend platform delegation and dependency injection."""
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from mcp_server.schemas import MCPTool
 import pipeline
+from core.ports.graph import GraphProviderPort
+from core.ports.memory import MemoryStorePort
 from knowledge_graph import KnowledgeGraphManager, GraphNode, NodeType
 from memory import MemoryManager, MemoryType
 
@@ -11,12 +13,16 @@ logger = logging.getLogger("mcp_server.tools.registry")
 
 
 class MCPToolsRegistry:
-    """Registry exposing ComplianceOS capabilities as MCP tools."""
+    """Registry exposing ComplianceOS capabilities as MCP tools using Dependency Injection."""
 
-    def __init__(self):
+    def __init__(
+        self,
+        kg_provider: Optional[GraphProviderPort] = None,
+        memory_store: Optional[MemoryStorePort] = None,
+    ):
         self._tools: Dict[str, MCPTool] = {}
-        self.kg_manager = KnowledgeGraphManager()
-        self.memory_manager = MemoryManager()
+        self.kg_manager = kg_provider or KnowledgeGraphManager()
+        self.memory_manager = memory_store or MemoryManager()
         self._register_default_tools()
 
     def _register_default_tools(self):
