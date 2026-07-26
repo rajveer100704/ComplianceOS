@@ -37,11 +37,8 @@ jobs:
       - name: Generate Development RSA Keys
         run: python scripts/generate_dev_keys.py
 
-      - name: Execute Parallel Unit Test Suite
-        run: python -m pytest tests/ -n auto -q
-
-      - name: Execute End-to-End Integration Suite & Coverage
-        run: python -m pytest test_main.py -q --cov=. --cov-report=xml
+      - name: Execute Automated Test Suite & Coverage
+        run: python -m pytest test_main.py tests/ -q --cov=. --cov-report=xml
 
       - name: Upload Test Coverage Artifact
         uses: actions/upload-artifact@v4
