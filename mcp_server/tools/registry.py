@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from mcp_server.schemas import MCPTool
 import pipeline
 from knowledge_graph import KnowledgeGraphManager, GraphNode, NodeType
-from memory import MemoryManager, MemoryItem, MemoryType
+from memory import MemoryManager, MemoryType
 
 logger = logging.getLogger("mcp_server.tools.registry")
 
