@@ -37,19 +37,17 @@ from starlette.requests import Request
 # Configure structured logging
 setup_logging(settings.LOG_LEVEL)
 
-db.init_db()
-
 REGS_PATH = Path(__file__).parent / "regulations.json"
-REGULATIONS = json.loads(REGS_PATH.read_text())
-db.seed_requirements(REGULATIONS)
+REGULATIONS = json.loads(REGS_PATH.read_text()) if REGS_PATH.exists() else []
 
-# Initialize retrieval container and index standard regulations
+db.init_db()
+if REGULATIONS:
+    db.seed_requirements(REGULATIONS)
+
 from retrieval.container import Container
 
 Container.initialize()
 idx_service = Container.get_indexing_service()
-
-# Seed regulations into the indexing service
 for i, reg in enumerate(REGULATIONS):
     idx_service.index_document(
         doc_id=-100 - i,
@@ -57,6 +55,14 @@ for i, reg in enumerate(REGULATIONS):
         raw_text=reg["text"],
         custom_metadata={"id": reg["id"], "title": reg["title"]},
     )
+
+
+async def seed_requirements():
+    """Seed initial engineering standards and regulatory dataset."""
+    db.init_db()
+    if REGULATIONS:
+        db.seed_requirements(REGULATIONS)
+
 
 app = FastAPI(title="Compliance Evidence Checker")
 

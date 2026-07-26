@@ -134,3 +134,33 @@ def run_pipeline(
     final_state["run_id"] = run_id
     final_state["version"] = version
     return final_state
+
+
+def verify_claim(claim_text: str) -> dict:
+    """Verify an engineering claim against the retrieval service."""
+    from retrieval.container import Container
+
+    retrieval_service = Container.get_retrieval_service()
+    bundle = retrieval_service.retrieve(claim_text, limit=3)
+    evidences = getattr(bundle, "evidences", [])
+    if evidences:
+        top = evidences[0]
+        score = getattr(top, "score", 0.5)
+        doc_id = getattr(top, "document_id", "DOC-001")
+        text = getattr(top, "text", "")
+        return {
+            "status": "SUPPORTED" if score >= 0.35 else "PARTIAL",
+            "grounding_score": round(float(score), 4),
+            "hallucination_risk": round(1.0 - float(score), 4),
+            "claim": claim_text,
+            "regulation": doc_id,
+            "snippet": text,
+        }
+    return {
+        "status": "UNSUPPORTED",
+        "grounding_score": 0.0,
+        "hallucination_risk": 1.0,
+        "claim": claim_text,
+        "regulation": None,
+        "snippet": None,
+    }
