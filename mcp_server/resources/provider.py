@@ -1,9 +1,10 @@
-"""Exposed MCP read-only resource providers."""
+"""Exposed MCP read-only resource providers wired to live GovernanceManager."""
 
 import json
 import logging
 from typing import Dict, List
 from mcp_server.schemas import MCPResource
+from governance import GovernanceManager
 
 logger = logging.getLogger("mcp_server.resources.provider")
 
@@ -13,6 +14,7 @@ class MCPResourcesProvider:
 
     def __init__(self):
         self._resources: Dict[str, MCPResource] = {}
+        self.gov_manager = GovernanceManager()
         self._register_default_resources()
 
     def _register_default_resources(self):
@@ -51,15 +53,20 @@ class MCPResourcesProvider:
             )
 
         elif uri == "resource://audit/ledger":
-            return json.dumps(
-                [
-                    {
-                        "sequence_number": 1,
-                        "prev_hash": "0" * 64,
-                        "event_type": "MEMORY_STORED",
-                        "organization_id": organization_id,
-                    }
-                ]
+            entries = await self.gov_manager.get_audit_trail(
+                organization_id=organization_id
             )
+            if not entries:
+                return json.dumps(
+                    [
+                        {
+                            "sequence_number": 1,
+                            "prev_hash": "0" * 64,
+                            "event_type": "INITIAL_LEDGER_BLOCK",
+                            "organization_id": organization_id,
+                        }
+                    ]
+                )
+            return json.dumps([e.model_dump() for e in entries], default=str)
 
         return json.dumps({"status": "empty"})

@@ -1,6 +1,7 @@
-"""Compliance sign-off gate evaluator enforcing quantitative threshold guardrails."""
+"""Compliance sign-off gate evaluator enforcing quantitative threshold guardrails and active decisions."""
 
 import logging
+from enum import Enum
 from typing import List, Dict, Any
 from governance.schemas import (
     ComplianceRule,
@@ -10,6 +11,13 @@ from governance.schemas import (
 )
 
 logger = logging.getLogger("governance.compliance_gates.evaluator")
+
+
+class PolicyAction(str, Enum):
+    ALLOW = "ALLOW"
+    BLOCK = "BLOCK"
+    ESCALATE = "ESCALATE"
+    REQUIRE_HUMAN_REVIEW = "REQUIRE_HUMAN_REVIEW"
 
 
 class ComplianceGateEvaluator:
@@ -77,6 +85,11 @@ class ComplianceGateEvaluator:
                         "metric_value": metric_val,
                         "threshold": rule.threshold_value,
                         "is_blocking": rule.is_blocking,
+                        "recommended_action": (
+                            PolicyAction.BLOCK.value
+                            if rule.is_blocking
+                            else PolicyAction.ESCALATE.value
+                        ),
                     }
                 )
                 if rule.is_blocking:
