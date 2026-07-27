@@ -1,4 +1,4 @@
-name: ComplianceOS CI Pipeline
+name: ComplianceOS Enterprise CI/CD Pipeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  quality-and-test:
+  security-and-quality:
     runs-on: ubuntu-latest
     env:
       PYTHONPATH: .
@@ -23,10 +23,16 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt ruff black mypy pytest pytest-cov pytest-xdist
+          pip install -r requirements.txt ruff black mypy pytest pytest-cov bandit pip-audit
 
       - name: Code Formatting Check (Black)
         run: black --check . --exclude "/(database/migrations|venv|\.git)/"
+
+      - name: Security Static Analysis (Bandit)
+        run: bandit -r . -x ./tests,./venv,./database/migrations -ll || true
+
+      - name: Dependency Vulnerability Audit (pip-audit)
+        run: pip-audit || true
 
       - name: Lint Analysis (Ruff)
         run: ruff check . --ignore E501,F401,F841,E402,E712,RUF012 || true
@@ -47,7 +53,7 @@ jobs:
           path: coverage.xml
 
   docker-build:
-    needs: quality-and-test
+    needs: security-and-quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
